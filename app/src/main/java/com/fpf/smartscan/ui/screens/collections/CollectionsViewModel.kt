@@ -12,6 +12,8 @@ import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.tags.Tag
+import com.fpf.smartscan.data.tags.TagCrossRef
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.events.CollectionEventType
 import com.fpf.smartscan.media.CollectionType
@@ -34,6 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.forEach
 
 class CollectionsViewModel( 
     application: Application,
@@ -106,6 +109,7 @@ class CollectionsViewModel(
         when(action){
             is CollectionAction.MergeCollections -> mergeCollections(action.primaryCollectionName, action.isNewMergedLabel)
             is CollectionAction.RenameCollection -> renameCollection(action.newName)
+            is CollectionAction.CreateNewTagAndTagClusters -> createNewTagAndTagClusters(action.newName)
             is CollectionAction.ToggleSelectedCollection -> toggleSelectedCollection(action.collection)
             is CollectionAction.SetCollectionToView -> setCollectionToView(action.collection)
             is CollectionAction.SetCollectionType -> setCollectionType(action.type)
@@ -149,12 +153,10 @@ class CollectionsViewModel(
                 val selectedCollections = getSelectedCollections()
                 tagRepository.deleteTagsByName(selectedCollections.map{it.name})
                 resetSelection()
-                val message = if(selectedCollections.size == 1 ) "Deleted ${selectedCollections.size} collection" else "Deleted ${selectedCollections.size} collections"
-                _event.emit(CollectionEvent(CollectionEventType.DELETE, success = true, message = message))
+                _event.emit(CollectionEvent(CollectionEventType.DELETE, success = true))
             }catch (e: Exception){
-                val message = "Error deleting collections"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionEvent(CollectionEventType.DELETE, success = false, message = message))
+                Log.e(TAG, "Error deleting collections: ${e.message}")
+                _event.emit(CollectionEvent(CollectionEventType.DELETE, success = false, message = "Error deleting collections"))
             }
         }
     }
@@ -165,7 +167,6 @@ class CollectionsViewModel(
         viewModelScope.launch (Dispatchers.IO) {
             try {
                 val selectedCollections = getSelectedCollections()
-                if(selectedCollections.size < 2 ) return@launch
                 var primaryCollection = selectedCollections.firstOrNull{it.name == primaryCollectionName}
 
                 if(isNewMergedLabel) {
@@ -186,16 +187,42 @@ class CollectionsViewModel(
                     }
                 }
                 resetSelection()
-                _event.emit(CollectionEvent(CollectionEventType.MERGE, success = true, "Merged ${selectedCollections.size} collections"))
+                _event.emit(CollectionEvent(CollectionEventType.MERGE, success = true))
             }
             catch (_: SQLiteConstraintException){
                 _event.emit(CollectionEvent(CollectionEventType.MERGE, success = false, message = "Collection already exists"))
             }
             catch (e: Exception){
-                val message = "Error merging collections"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionEvent(CollectionEventType.MERGE, success = false, message = message))
+                Log.e(TAG, "Error merging collections: ${e.message}")
+                _event.emit(CollectionEvent(CollectionEventType.MERGE, success = false, message = "Error merging collections"))
             }finally {
+                _state.update { it.copy(loading = false) }
+            }
+        }
+    }
+
+    private suspend fun tagCluster(clusterId: Long, tagId: Long){
+        val clusterCrossRefs = mediaMetadataRepository.getByCluster(clusterId)
+        tagCrossRefRepository.insertTagCrossRefs(clusterCrossRefs.map{ TagCrossRef(it.id, tagId)})
+    }
+
+    private fun createNewTagAndTagClusters(newTag: String){
+        _state.update { it.copy(loading = true) }
+
+        viewModelScope.launch (Dispatchers.IO) {
+            try {
+                val selectedCollections = getSelectedCollections()
+                val tagId = tagRepository.insertTags(listOf(Tag(name = newTag))).firstOrNull()?: return@launch
+                selectedCollections.forEach { tagCluster(it.id, tagId) }
+                resetSelection()
+                _event.emit(CollectionEvent(CollectionEventType.COPY, success = true))
+            }catch (_: SQLiteConstraintException){
+                _event.emit(CollectionEvent(CollectionEventType.COPY, success = false, message = "Collection already exists"))
+            }catch (e: Exception){
+                Log.e(TAG, "Error copying collections: ${e.message}")
+                _event.emit(CollectionEvent(CollectionEventType.COPY, success = false, message = "Error copying collection(s)"))
+            }
+            finally {
                 _state.update { it.copy(loading = false) }
             }
         }

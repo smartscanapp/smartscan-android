@@ -13,7 +13,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -54,8 +53,7 @@ fun Main(
             UpdatePopUp(
                 isVisible = true,
                 updates = mainViewModel.getUpdates(),
-                onClose = { mainViewModel.closeUpdatePopUp() },
-                notes = stringResource(R.string.update_notes)
+                onClose = { mainViewModel.closeUpdatePopUp() }
             )
         } else {
             Scaffold(

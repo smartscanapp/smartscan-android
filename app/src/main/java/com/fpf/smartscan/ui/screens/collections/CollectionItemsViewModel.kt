@@ -195,12 +195,10 @@ class CollectionItemsViewModel(
                 val selectedItems = getSelectedItems()
                 tagManager.tagItems(tag, selectedItems)
                 resetSelection()
-                val message = if(selectedItems.size == 1 ) "Tagged ${selectedItems.size} item" else "Tagged ${selectedItems.size} items"
-                _event.emit(CollectionItemEvent(CollectionItemEventType.TAG, success = true, message = message))
+                _event.emit(CollectionItemEvent(CollectionItemEventType.TAG, success = true, message = "Tagged ${selectedItems.size} item(s)"))
             }catch (e: Exception){
-                val message = "Error tagging items"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionItemEvent(CollectionItemEventType.TAG, success = false, message = message))
+                Log.e(TAG, "Error tagging items: ${e.message}")
+                _event.emit(CollectionItemEvent(CollectionItemEventType.TAG, success = false, message = "Error tagging items"))
             }
         }
     }
@@ -215,15 +213,13 @@ class CollectionItemsViewModel(
 
         viewModelScope.launch (Dispatchers.IO){
             try {
-                val selectedItems = getSelectedItems().map{it.id}
-                tagManager.removeItems(currentCollection.name, selectedItems)
+                val mediaIds = getSelectedItems().map{it.id}
+                tagManager.removeItems(currentCollection.name, mediaIds)
                 resetSelection()
-                val message = if(selectedItems.size == 1 ) "Removed ${selectedItems.size} item" else "Removed ${selectedItems.size} items"
-                _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = true, message = message))
+                _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = true, message = "Removed ${mediaIds.size} item(s)"))
             }catch (e: Exception){
-                val message = "Error removing items"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = false, message = message))
+                Log.e(TAG, "Error removing items: ${e.message}")
+                _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = false, message = "Error removing items"))
             }
         }
     }
@@ -234,19 +230,17 @@ class CollectionItemsViewModel(
 
         viewModelScope.launch (Dispatchers.IO){
             try {
-                val selectedItems = getSelectedItems()
-                if (selectedItems.isEmpty()) return@launch
+                val items = getSelectedItems()
+                if (items.isEmpty()) return@launch
                 when(newCollection.type) {
-                    CollectionType.CLUSTER -> clusterManager.moveItems(selectedItems.map{it.id}, newCollection.id, currentCollection.id, imageEmbedStore = imageStore, videoEmbedStore = videoStore)
-                    CollectionType.TAG -> tagManager.moveItems(selectedItems, currentCollection.name, newCollection.name)
+                    CollectionType.CLUSTER -> clusterManager.moveItems(items.map{it.id}, newCollection.id, currentCollection.id, imageEmbedStore = imageStore, videoEmbedStore = videoStore)
+                    CollectionType.TAG -> tagManager.moveItems(items, currentCollection.name, newCollection.name)
                 }
                 resetSelection()
-                val message = if(selectedItems.size == 1 ) "Moved ${selectedItems.size} item" else "Moved ${selectedItems.size} items"
-                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = true, message = message))
+                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = true, message = "Moved ${items.size} item(s)"))
             }catch (e: Exception){
-                val message = "Error moving items"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = false, message = message))
+                Log.e(TAG, "Error moving items: ${e.message}")
+                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = false, message = "Error moving items"))
             }finally {
                 _state.update { it.copy(loading = false) }
             }
@@ -278,18 +272,16 @@ class CollectionItemsViewModel(
 
         viewModelScope.launch (Dispatchers.IO) {
             try {
-                val selectedItems = getSelectedItems()
-                if (selectedItems.isEmpty()) return@launch
-                tagManager.createNewTagAndMoveItems(selectedItems, currentCollection.name, newCollectionName)
+                val items = getSelectedItems()
+                if (items.isEmpty()) return@launch
+                tagManager.createNewTagAndMoveItems(items, currentCollection.name, newCollectionName)
                 resetSelection()
-                val message = if(selectedItems.size == 1 ) "Moved ${selectedItems.size} item" else "Moved ${selectedItems.size} items"
-                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = true, message = message))
+                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = true, message = "Moved ${items.size} item(s)"))
             }catch (_: SQLiteConstraintException){
                 _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = false, message = "Collection already exists"))
             }catch (e: Exception){
-                val message = "Error moving items"
-                Log.e(TAG, "$message: ${e.message}")
-                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = false, message = message))            }
+                Log.e(TAG, "Error moving items: ${e.message}")
+                _event.emit(CollectionItemEvent(CollectionItemEventType.MOVE, success = false, message = "Error moving items"))            }
         }
     }
 

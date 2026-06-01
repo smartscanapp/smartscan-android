@@ -6,6 +6,7 @@
     <string name="reddit_url">https://www.reddit.com/r/SmartScan/</string>
 
     <!--___Actions___-->
+    <!--Common Actions-->
     <string name="share_action">Share</string>
     <string name="move_action">Move</string>
     <string name="remove_action">Remove</string>
@@ -16,11 +17,16 @@
     <string name="copy_to_clipboard_action">Copy to clipboard</string>
     <string name="cancel_action">Cancel</string>
     <string name="confirm_action">Confirm</string>
+    <!--Search Actions-->
     <string name="scan_images_action">Scan images</string>
     <string name="scan_videos_action">Scan videos</string>
     <string name="search_action">Search</string>
+    <!--Collection Actions-->
     <string name="rename_action">Rename</string>
     <string name="merge_action">Merge</string>
+    <string name="group_by_tag_action">Group by tag</string>
+    <string name="group_by_similarity_action">Group by similarity</string>
+
 
     <!-- Screen titles-->
     <string name="title_search">Search</string>
@@ -34,17 +40,19 @@
     <string name="worker_channel_description">Notifications for background tasks</string>
     <string name="service_media_index_channel_id">Media Index</string>
     <string name="service_media_index_channel_name">Media Index Notifications</string>
-    <string name="notif_title_media_index_service">Scanning media</string>
-    <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
-    <string name="notif_title_index_error_service">%1$s scan error</string>
-    <string name="notif_content_index_error_service">An error occurred during scan. Try manually re-scanning.</string>
-    <string name="notif_title_index_complete">Scan complete</string>
+    <string name="notif_title_media_index_service">Indexing media</string>
+    <string name="notif_content_media_index_service">Indexing in progress, this can take a few minutes.</string>
+    <string name="notif_title_index_error_service">%1$s indexing error</string>
+    <string name="notif_content_index_error_service">An error occurred during indexing. You can manually index from the menu by clicking the Refresh %1$s index option.</string>
+    <string name="notif_title_index_complete">Indexing complete</string>
+    <string name="notif_title_auto_tag">New tags added to media</string>
 
     <!--Alerts-->
     <string name="alert_space_not_allowed">Spaces are not allowed</string>
+    <string name="alert_scan_index_title">Scan %1$s</string>
     <string name="alert_scan_index_description">Refresh updates the index with new media only. Rebuild deletes and recreates the entire index.</string>
     <!-- Search screen -->
-    <string name="first_indexing">Start the first %1$s scan to enable search. You can run it manually anytime from the menu and optionally select which folders are allowed to be scanned in settings.</string>
+    <string name="first_indexing">Start the first %1$s index to enable search. You can start it manually anytime in the menu, which is recommended if you want to first configure your searchable %1$ss (all %1$ss will be indexed by default).</string>
     <string name="storage_permissions">Storage permission required to search.</string>
     <string name="search_error_not_indexed">Index is empty.</string>
     <string name="search_error_no_results">No matching results found.</string>
@@ -52,8 +60,7 @@
     <string name="search_error_empty_query">Query cannot be empty.</string>
     <string name="search_error_unknown">An unknown error occurred.</string>
     <string name="search_error_index_loading">Error loading index.</string>
-    <string name="search_image_scan_progress_bar_label">Scanning images</string>
-    <string name="search_video_scan_progress_bar_label">Scanning videos</string>
+    <string name="search_start_indexing_alert">Start indexing %1$s</string>
 
     <!--Collections Screen-->
     <string name="collections_no_collections_title">No Collections</string>
@@ -65,6 +72,7 @@
         <item quantity="other">collections</item>
     </plurals>
     <string name="collections_primary_collection_label">Primary collection</string>
+
 
     <!-- Donate screen -->
     <string name="label_btc">Bitcoin</string>
@@ -88,17 +96,24 @@
     <string name="setting_backup_restore">Backup &amp; Restore</string>
     <string name="setting_backup">Backup</string>
     <string name="setting_restore">Restore</string>
-    <string name="setting_backup_restore_description">%1$s index files and database</string>
-    <string name="setting_grid_columns">Items per row</string>
+    <string name="setting_backup_restore_description">%1$s index files and databases</string>
 
     <!--Search Settings-->
     <string name="setting_auto_open_gallery">Auto-open in gallery</string>
+    <string name="setting_enable_cluster_search">Cluster-based search</string>
+    <string name="setting_enable_cluster_search_description">Faster, more relevant results, but may occasionally miss some matching items</string>
+    <string name="setting_search_result_columns">Results per row</string>
     <string name="setting_similarity_threshold">Similarity threshold</string>
     <string name="setting_similarity_threshold_label">Similarity threshold (%1$s)</string>
     <string name="setting_similarity_threshold_description">Higher values filter out less similar matches.</string>
     <string name="setting_max_search_results">Max search results</string>
     <string name="setting_hide_duplicates">Hide duplicates</string>
     <string name="setting_hide_duplicates_description">Hide near identical search results.</string>
+
+
+    <string name="setting_refresh_index_description_full">Manually refresh index. This can take up to a few minutes.</string>
+    <string name="setting_refresh_index_description_partial">Manually refresh index. This can take up to a few minutes, but only the selected images will be indexed.</string>
+    <string name="setting_refresh_index_description_denied">Missing storage permissions. Please grant storage permissions.</string>
     <string name="setting_allowed_folders">Allowed folders</string>
     <string name="setting_searchable_folders_description">Manually select folders which can be scanned. All images and videos are scanned by default.</string>
 
@@ -119,13 +134,10 @@
     <string name="download_model_alert_description">Press `OK` to download model. This will open your browser.</string>
 
     <!--Updates-->
-    <string name="update_hide_duplicates">Added "Hide duplicates" setting to hide near-identical search results</string>
-    <string name="update_merge_auto_collections">Added ability to merge Auto Collections</string>
-    <string name="update_move_media_auto_collections">Added ability to move media in Auto Collections</string>
-    <string name="update_mixed_media_collections">Added support for mixed-media collections</string>
-    <string name="update_select_all_search_collections">Added Select All for search results and collections</string>
-    <string name="update_ui_improvements_bug_fixes">UI improvements and bug fixes</string>
-    <string name="update_notes">Use merge and move carefully, as they can affect Auto Collection accuracy. They should mainly be used to fix grouping mistakes, since adding visually unrelated items can distort a collection.</string>
+    <string name="update_copy_multiple_collections_to_tag">Added ability to copy multiple Auto Collections to a Tag Collection</string>
+    <string name="update_rebuild_index">Added ability to rebuild the index from scratch via the search screen menu</string>
+    <string name="update_date_filters_search">Added date filters for search</string>
+    <string name="update_tag_query_search_fix">Fixed tag-filtered queries missing results</string>
 
     <!--Placeholders-->
     <string name ="placeholders_add_tag">Enter tag name</string>
@@ -134,4 +146,5 @@
     <string name="placeholders_search_videos">Search videos</string>
     <string name="placeholders_search_by_tag">Search by tag: #tag</string>
     <string name="placeholders_search_by_tag_query">Search by tag: #tag query</string>
+
 </resources>

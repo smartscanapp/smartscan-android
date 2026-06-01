@@ -24,6 +24,7 @@ import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.filterAccessibleMediaStoreIds
+import com.fpf.smartscan.search.QueryType
 import com.fpf.smartscan.utils.canOpenUri
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.openImageInGallery
@@ -224,10 +225,19 @@ class SearchViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val state = _state.value
-                val queryResults = if (state.queryImage != null) {
-                   imageSearch(store, threshold, startDate = state.startDateFilter, endDate = state.endDateFilter)
-                } else {
-                    textSearch(store, threshold, startDate = state.startDateFilter, endDate = state.endDateFilter)
+                val queryResults = when (_state.value.queryType) {
+                    QueryType.IMAGE -> {
+                        val result = imageSearch(store, threshold, startDate = state.startDateFilter, endDate = state.endDateFilter)
+                        _state.update{it.copy(imageEmbedderLastUsage = System.currentTimeMillis())}
+                        result
+
+                    }
+
+                    QueryType.TEXT -> {
+                        val result = textSearch(store, threshold, startDate = state.startDateFilter, endDate = state.endDateFilter)
+                        _state.update{it.copy(textEmbedderLastUsage = System.currentTimeMillis())}
+                        result
+                    }
                 }
                 handleSearchResult(queryResults, store, dedupeEnabled)
             }catch (e: Exception) {
@@ -268,8 +278,6 @@ class SearchViewModel(
         val queryResults = store.query(embedding, Int.MAX_VALUE, threshold, filterIds,  startDate = startDate, endDate = endDate)
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.imageEmbedderLastUsage)) imageEmbedder.closeSession()
-        _state.update{it.copy(textEmbedderLastUsage = System.currentTimeMillis())}
-
         return queryResults
     }
 
@@ -284,8 +292,6 @@ class SearchViewModel(
 
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.textEmbedderLastUsage)) textEmbedder.closeSession()
-        _state.update { it.copy(imageEmbedderLastUsage = System.currentTimeMillis()) }
-
         return queryResults
     }
 
@@ -396,7 +402,10 @@ class SearchViewModel(
         }
     }
 
-    private fun setQueryImage(uri: Uri?) = _state.update{it.copy(queryImage = uri)}
+    private fun setQueryImage(uri: Uri?){
+        val queryType = if(uri == null) QueryType.TEXT else QueryType.IMAGE
+        _state.value = _state.value.copy(queryImage = uri, queryType = queryType)
+    }
 
     private fun setStartDateFilter(date: Long?) = _state.update {it.copy(startDateFilter = date)}
 
@@ -440,12 +449,10 @@ class SearchViewModel(
                 val selected = getSelectedResults()
                 tagManager.tagItems(tag, selected)
                 resetSelection()
-                val message = if(selected.size == 1 ) "Tagged ${selected.size} item" else "Tagged ${selected.size} items"
-                _event.emit(SearchEvent(SearchEventType.TAG, success = true, message = message))
+                _event.emit(SearchEvent(SearchEventType.TAG, success = true, message = "Tagged ${selected.size} item(s)"))
             }catch (e: Exception){
-                val message = "Error tagging results"
-                Log.e(TAG, "$message: $e")
-                _event.emit(SearchEvent(SearchEventType.TAG, success = false, message = message))
+                Log.e(TAG, "Error tagging results: $e")
+                _event.emit(SearchEvent(SearchEventType.TAG, success = false, message = "Error tagging results"))
             }
         }
     }
