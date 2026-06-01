@@ -38,7 +38,7 @@ fun SettingSection(
         )
 
         for (setting in settingActionConfigs) {
-            SettingOption(setting, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            SettingOption(setting, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         }
     }
 }

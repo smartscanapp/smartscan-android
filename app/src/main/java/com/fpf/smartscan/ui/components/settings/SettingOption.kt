@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -20,7 +19,7 @@ import com.fpf.smartscan.ui.action.SettingActionConfig
 
 @Composable
 fun SettingOption(config: SettingActionConfig, modifier: Modifier = Modifier) {
-    val minHeight = 70
+    val minHeight = 48
     when(config){
         is SettingActionConfig.Button -> {
             val textColor = if (config.enabled) MaterialTheme.colorScheme.onSurface
@@ -49,7 +48,7 @@ fun SettingOption(config: SettingActionConfig, modifier: Modifier = Modifier) {
                             text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             color = textColor,
-                            modifier = Modifier.fillMaxWidth().alpha(0.8f).padding(bottom = 4.dp)
+                            modifier = Modifier.fillMaxWidth().alpha(0.8f)
                         )
                     }
                 }

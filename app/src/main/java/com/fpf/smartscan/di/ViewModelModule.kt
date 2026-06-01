@@ -16,6 +16,7 @@ val viewModelModule = module {
             imageStore = get(IMAGE_STORE),
             videoStore = get(VIDEO_STORE),
             clusterStore = get(CLUSTER_STORE),
+            mediaMetadataRepository = get(),
             )
     }
     viewModel {

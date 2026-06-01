@@ -3,7 +3,6 @@ package com.fpf.smartscan.ui.state
 import android.net.Uri
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.search.QueryType
 import com.fpf.smartscan.ui.state.common.Selectable
 import com.fpf.smartscan.ui.state.common.SelectionState
 
@@ -11,7 +10,6 @@ data class SearchState(
     val searchResults: List<MediaItem> = emptyList(),
     val totalResults: Int = 0,
     val mediaType: MediaType = MediaType.IMAGE,
-    val queryType: QueryType = QueryType.TEXT,
     val queryImage: Uri? = null,
     val hasIndexedImages: Boolean? = null,
     val hasIndexedVideos: Boolean? = null,

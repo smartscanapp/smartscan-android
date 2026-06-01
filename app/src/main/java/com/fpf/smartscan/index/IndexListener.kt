@@ -5,7 +5,6 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.fpf.smartscan.R
-import com.fpf.smartscan.search.IndexingStatus
 import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.processors.Metrics

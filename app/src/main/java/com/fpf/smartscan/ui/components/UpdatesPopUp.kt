@@ -19,7 +19,8 @@ import androidx.compose.ui.window.PopupProperties
 fun UpdatePopUp(
     isVisible: Boolean,
     onClose: () -> Unit,
-    updates: List<String>
+    updates: List<String>,
+    notes: String? = null
 ) {
     if (!isVisible) return
 
@@ -64,12 +65,24 @@ fun UpdatePopUp(
                         )
                     }
                 }
+
+                notes?.takeIf { it.isNotBlank() }?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Button(
                 onClick = onClose,
                 shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(vertical = 16.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(vertical = 16.dp)
             ) {
                 Text("Continue")
             }

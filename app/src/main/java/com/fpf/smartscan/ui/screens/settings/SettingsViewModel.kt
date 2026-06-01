@@ -186,7 +186,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch(Dispatchers.IO){
             try {
-
+                listOf(
+                    EmbeddingStoresFiles.IMAGE,
+                    EmbeddingStoresFiles.VIDEO,
+                    EmbeddingStoresFiles.MEDIA_CLUSTER,
+                    EmbeddingStoresFiles.IMAGE_CLUSTER,
+                    EmbeddingStoresFiles.VIDEO_CLUSTER,
+                    EmbeddingStoresFiles.TAGS
+                ).forEach {
+                    File(getApplication<Application>().filesDir, it).delete()
+                }
                 copyFromUri(getApplication(), uri, indexZipFile)
                 val extractedFiles = unzipFiles(indexZipFile, getApplication<Application>().filesDir)
 //                val expectedFileNames = setOf(EmbeddingStoresFiles.IMAGE,EmbeddingStoresFiles.VIDEO, EmbeddingStoresFiles.IMAGE_CLUSTER, EmbeddingStoresFiles.VIDEO_CLUSTER, MediaDatabase.DB_NAME )

@@ -87,7 +87,6 @@ fun CollectionsScreen(
     // actions
     var isRenamingCollection by remember { mutableStateOf(false) }
     var isMergingCollections by remember { mutableStateOf(false) }
-    var isCreatingNewTagAndTaggingClusters by remember { mutableStateOf(false) }
     var isDeletingCollection by remember { mutableStateOf(false) }
     val isActionBarVisible = state.selection.isSelecting && state.selection.selectedCount > 0
 
@@ -329,26 +328,6 @@ fun CollectionsScreen(
         onConfirm = {
                 newName -> viewModel.onAction(CollectionAction.RenameCollection(newName))
             isRenamingCollection = false
-        },
-        leadingIcon = { Icon(Icons.Filled.Tag, contentDescription = "Tag", tint = MaterialTheme.colorScheme.primary) },
-        onValueChange = {
-            if (!it.text.contains(" ")) {
-                true
-            } else {
-                Toast.makeText(context, spaceNotAllowedMessage, Toast.LENGTH_SHORT).show()
-                false
-            }
-        }
-    )
-
-    TextInputModal(
-        isVisible = isCreatingNewTagAndTaggingClusters,
-        title=stringResource(R.string.add_tag_action),
-        placeholder = stringResource(R.string.placeholders_add_tag),
-        onClose = { isCreatingNewTagAndTaggingClusters = false },
-        onConfirm =  {
-            viewModel.onAction(CollectionAction.CreateNewTagAndTagClusters(it))
-            isCreatingNewTagAndTaggingClusters = false
         },
         leadingIcon = { Icon(Icons.Filled.Tag, contentDescription = "Tag", tint = MaterialTheme.colorScheme.primary) },
         onValueChange = {

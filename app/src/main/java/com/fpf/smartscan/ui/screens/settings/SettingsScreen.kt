@@ -83,7 +83,7 @@ fun SettingsScreen(
     // Actions
     var isSelectingTheme by remember { mutableStateOf(false) }
     var isSelectingColor by remember { mutableStateOf(false) }
-    var isSelectingRowsPerRow by remember { mutableStateOf(false) }
+    var isSelectingGridColumns by remember { mutableStateOf(false) }
 
     val generalSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
@@ -95,6 +95,11 @@ fun SettingsScreen(
             label = stringResource(id = R.string.setting_color),
             onClick = { isSelectingColor = true},
             description = colorSchemeDisplayNames[appSettings.color]!!
+        ),
+        SettingActionConfig.Button(
+            label = stringResource(id = R.string.setting_grid_columns),
+            onClick = { isSelectingGridColumns = true},
+            description = appSettings.resultsPerRow.toString()
         ),
     )
 
@@ -108,11 +113,6 @@ fun SettingsScreen(
             label = stringResource(id = R.string.setting_allowed_folders),
             onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
             description = stringResource(R.string.setting_searchable_folders_description)
-        ),
-        SettingActionConfig.Button(
-            label = stringResource(id = R.string.setting_search_result_columns),
-            onClick = { isSelectingRowsPerRow = true},
-            description = appSettings.resultsPerRow.toString()
         ),
         SettingActionConfig.Switch(
             label=stringResource(R.string.setting_auto_open_gallery),
@@ -289,14 +289,14 @@ fun SettingsScreen(
     )
 
     OptionPicker(
-        isVisible = isSelectingRowsPerRow,
-        title = stringResource(id = R.string.setting_search_result_columns),
+        isVisible = isSelectingGridColumns,
+        title = stringResource(id = R.string.setting_grid_columns),
         selectedOption = appSettings.resultsPerRow.toString(),
         options = (3 until 6).map { it.toString() },
-        onClose = { isSelectingRowsPerRow = false },
+        onClose = { isSelectingGridColumns = false },
         onSelect = { selected ->
             viewModel.updateResultsPerRow(selected.toInt())
-            isSelectingRowsPerRow = false
+            isSelectingGridColumns = false
         }
     )
 }

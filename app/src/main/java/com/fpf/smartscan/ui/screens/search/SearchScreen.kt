@@ -45,8 +45,7 @@ import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.search.IndexingStatus
-import com.fpf.smartscan.search.QueryType
+import com.fpf.smartscan.index.IndexingStatus
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.SearchAction
@@ -152,7 +151,7 @@ fun SearchScreen(
     var offset by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val actionBarHeight = with(density) { 70.dp.toPx() }
-    val searchBarHeight = with(density) { (if(state.queryType == QueryType.IMAGE) 200 else 120).dp.toPx() }
+    val searchBarHeight = with(density) { (if(state.queryImage != null) 200 else 120).dp.toPx() }
     val maxCollapsePx = max(actionBarHeight, searchBarHeight).toInt()
 
     // Filters
@@ -174,7 +173,7 @@ fun SearchScreen(
 
     val screenTitle = stringResource(R.string.title_search)
 
-    LaunchedEffect(state.hasIndexedImages, state.hasIndexedVideos, isIndexing, state.mediaType, hasStoragePermission) {
+    LaunchedEffect(state.hasIndexedImages, state.hasIndexedVideos, state.mediaType, hasStoragePermission) {
         val isFirstImageScanNeeded = hasStoragePermission && state.hasIndexedImages == false && (state.mediaType == MediaType.IMAGE)
         val isFirstVideoScanNeeded = hasStoragePermission && state.hasIndexedVideos == false && (state.mediaType == MediaType.VIDEO)
         if( !isIndexing && (isFirstImageScanNeeded || isFirstVideoScanNeeded)){
@@ -266,17 +265,17 @@ fun SearchScreen(
         ) {
 
             ProgressBar(
-                label = "Indexing images ${"%.0f".format(imageIndexProgress * 100)}%",
+                label = "${stringResource(R.string.search_image_scan_progress_bar_label)} ${"%.0f".format(imageIndexProgress * 100)}%",
                 isVisible = imageIndexStatus == IndexingStatus.ACTIVE,
                 progress = imageIndexProgress
             )
 
             ProgressBar(
-                label = "Indexing videos ${"%.0f".format(videoIndexProgress * 100)}%",
+                label = "${stringResource(R.string.search_video_scan_progress_bar_label)} ${"%.0f".format(videoIndexProgress * 100)}%",
                 isVisible = videoIndexStatus == IndexingStatus.ACTIVE,
                 progress = videoIndexProgress
             )
-            if (state.queryType == QueryType.IMAGE) {
+            if (state.queryImage != null) {
                 SlideRevealBox(
                     reverse = true,
                     offsetPx = offset,
@@ -555,8 +554,8 @@ fun SearchScreen(
 
     if ( showIndexAlert) {
         val title = when(state.mediaType){
-            MediaType.IMAGE -> stringResource(R.string.search_start_indexing_alert, "images")
-            MediaType.VIDEO -> stringResource(R.string.search_start_indexing_alert, "videos")
+            MediaType.IMAGE -> stringResource(R.string.scan_images_action)
+            MediaType.VIDEO -> stringResource(R.string.scan_videos_action)
         }
         val description = when(state.mediaType){
             MediaType.IMAGE -> stringResource(R.string.first_indexing, "image")
@@ -585,14 +584,17 @@ fun SearchScreen(
     }
 
     if (showScanImagesDialog || showScanVideosDialog) {
-        val media = if (showScanImagesDialog) "images" else "videos"
+        val title = when(state.mediaType){
+            MediaType.IMAGE -> stringResource(R.string.scan_images_action)
+            MediaType.VIDEO -> stringResource(R.string.scan_videos_action)
+        }
 
         AlertDialog(
             onDismissRequest = {
                 if (showScanImagesDialog) showScanImagesDialog = false else showScanVideosDialog = false
             },
             title = {
-                Text(stringResource(R.string.alert_scan_index_title, media))
+                Text(title)
             },
             text = {
                 Column {

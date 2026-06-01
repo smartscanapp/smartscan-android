@@ -169,7 +169,7 @@ fun MediaCollectionsList(
                         text = item.name.replaceFirstChar { char -> char.uppercase() },
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding( start = 2.dp),
-                        color= MaterialTheme.colorScheme.primary,
+                        color= MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -177,7 +177,7 @@ fun MediaCollectionsList(
                         text = item.size.toString(),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 4.dp, start = 2.dp),
-                        color= MaterialTheme.colorScheme.primary
+                        color= MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
             }
