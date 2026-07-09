@@ -19,12 +19,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,13 +95,13 @@ fun ConceptsScreen(
 
     // actions
     var showMenu by remember { mutableStateOf(false) }
-    var isRenamingCollection by remember { mutableStateOf(false) }
+    var isEditingConcept by remember { mutableStateOf(false) }
     var isMergingCollections by remember { mutableStateOf(false) }
     var isDeletingConcept by remember { mutableStateOf(false) }
     val isActionBarVisible = state.selection.isSelecting && state.selection.selectedCount > 0
     val actionBarActions: List<ActionConfig> = listOf(
         ActionConfig(label = stringResource(R.string.merge_action), { isMergingCollections = true }, enabled = !state.loading, icon = Icons.Filled.Merge),
-        ActionConfig( label = stringResource(R.string.rename_action), { isRenamingCollection = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
+        ActionConfig( label = stringResource(R.string.rename_action), { isEditingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
         ActionConfig(label = stringResource(R.string.delete_action), { isDeletingConcept = true }, icon = Icons.Filled.Delete)
     )
     val menuActions: List<MenuActionConfig> = listOf(
@@ -218,6 +221,18 @@ fun ConceptsScreen(
         }
 
 
+        FloatingActionButton(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding( 32.dp),
+            onClick = {
+                isEditingConcept = true
+            }
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add concept button")
+        }
+
+
         SlideRevealBox(
             isVisible = isActionBarVisible,
             offsetPx = offset,
@@ -266,23 +281,15 @@ fun ConceptsScreen(
     }
 
     TextInputModal(
-        isVisible = isRenamingCollection,
-        title=stringResource(R.string.rename_action),
-        placeholder = stringResource(R.string.placeholders_collection_name),
-        onClose = { isRenamingCollection = false },
+        isVisible = isEditingConcept,
+        title=stringResource(R.string.add_concept_action),
+        placeholder = stringResource(R.string.placeholders_add_concept),
+        onClose = { isEditingConcept = false },
         onConfirm = {
-                newName -> viewModel.onAction(ConceptAction.EditConcept(newName))
-            isRenamingCollection = false
+            viewModel.onAction(ConceptAction.EditConcept(it))
+            isEditingConcept = false
         },
-        leadingIcon = { Icon(Icons.Filled.Tag, contentDescription = "Tag", tint = MaterialTheme.colorScheme.primary) },
-        onValueChange = {
-            if (!it.text.contains(" ")) {
-                true
-            } else {
-                Toast.makeText(context, spaceNotAllowedMessage, Toast.LENGTH_SHORT).show()
-                false
-            }
-        }
+        leadingIcon = { Icon(Icons.Filled.Lightbulb, contentDescription = "Lightbulb", tint = MaterialTheme.colorScheme.primary) },
     )
 
     if ( isDeletingConcept) {
