@@ -28,7 +28,6 @@ fun EmptyConceptsScreen(
     if (!isVisible) return
 
     Box(
-        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
