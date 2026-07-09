@@ -1,6 +1,5 @@
 package com.fpf.smartscan.ui.screens.concepts
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -65,6 +64,7 @@ import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.concepts.ConceptsList
 import org.koin.compose.viewmodel.koinViewModel
 
 
@@ -90,7 +90,7 @@ fun ConceptsScreen(
         CollectionType.TAG -> tagCollections
         else -> emptyList()
     }
-    val isConceptsVisible = false
+    val isConceptsVisible = viewModel.concepts.isNotEmpty()
     val context = LocalContext.current
 
     // actions
@@ -178,7 +178,7 @@ fun ConceptsScreen(
         ) {
             if(!hasStoragePermission && !state.loading){
                 Text(
-                    text = stringResource(R.string.collections_storage_permissions),
+                    text = stringResource(R.string.concepts_storage_permissions),
                     color = Color.Red,
                     modifier = Modifier.padding(vertical=8.dp).align(Alignment.CenterHorizontally),
                 )
@@ -200,23 +200,23 @@ fun ConceptsScreen(
                 )
             }
 
-            if(state.totalConcepts > TOP_N) {
-                TextButton(
-                    modifier = Modifier.align(Alignment.End),
-                    onClick = {viewModel.onAction(ConceptAction.ToggleViewAllConcepts)}
-                ) {
-                    Text(
-                        text = if (state.showAllConcepts) "Show less" else "Show all",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }else{
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Add concepts list here
-
+            ConceptsList(
+                isVisible = isConceptsVisible,
+                numGridColumns = 2,
+                items = viewModel.concepts,
+                isSelecting = state.selection.isSelecting,
+                selectAll = state.selection.selectAll,
+                selectedItems = state.selection.selectedItems,
+                excludedItems = state.selection.excludedItems,
+                onItemClick = { viewModel.onAction(ConceptAction.SetConceptToView(it)) },
+                onToggleSelected = { viewModel.onAction(ConceptAction.ToggleSelectedConcept(it)) },
+                onToggleSelectionMode = {
+                    viewModel.onAction(ConceptAction.ToggleSelectionMode)
+                    offset = 0
+                },
+                onOffsetChange = {  offset = it },
+                maxCollapsePx = maxCollapsablePx,
+            )
             EmptyConceptsScreen(isVisible = !isConceptsVisible)
         }
 

@@ -48,6 +48,20 @@ class ConceptsViewModel(
         private const val TAG = "ConceptsViewModel"
     }
 
+    // TODO: add real concepts from db
+    val concepts = listOf<Concept>(
+        Concept(
+            id=0,
+            description = "Turn years of interviews into an actionable knowledge base.",
+            size = 2
+        ),
+        Concept(
+            id=1,
+            description = "Infrastructure, scale, or domain expertise that is hard to replicate",
+            size = 9
+        )
+    )
+
     val tagManager = TagManager(
         tagRepository = tagRepository,
         tagCrossRefRepository = tagCrossRefRepository,
