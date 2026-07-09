@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
+import kotlinx.coroutines.flow.onEach
 class ConceptsViewModel(
     application: Application,
     private val tagRepository: TagRepository,
@@ -71,14 +71,14 @@ class ConceptsViewModel(
     private val _state = MutableStateFlow(ConceptsState())
     val state: StateFlow<ConceptsState> = _state
 
-    val concepts: StateFlow<List<Concept>> = conceptRepository.getConceptsFLow()
+    val concepts: StateFlow<List<Concept>> = conceptRepository.getConceptsFlow()
+            .onEach { concepts -> _state.update { it.copy(totalConcepts = concepts.size) } }
             .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.Lazily,
                 initialValue = emptyList()
             )
-
 
     val clusterCollections: StateFlow<List<MediaCollection>> = combine(
         clusterCrossRefRepository.getClustersWithCount(),
