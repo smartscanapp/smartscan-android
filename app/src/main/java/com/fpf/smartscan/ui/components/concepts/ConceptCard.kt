@@ -79,26 +79,6 @@ fun ConceptCard(
                     .offset(x = 8.dp, y = 8.dp)
                     .align(Alignment.TopStart),
             )
-            Box(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        onItemClick(item)
-                    }
-                    .offset((-8).dp, (-8).dp)
-                    .align(Alignment.BottomEnd)
-            ) {
-                Icon(Icons.Filled.OpenInFull, contentDescription = "Expand item", modifier = Modifier
-                    .size(20.dp)
-                    .padding(2.dp)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceDim.copy(alpha = 0.5f),
-                        RoundedCornerShape(2.dp)
-                    )
-                )
-            }
         }
     }
 }
