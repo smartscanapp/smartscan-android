@@ -15,9 +15,8 @@ class ConceptRepository(private val dao: ConceptDao) {
     suspend fun insertConcept(concept: Concept) = dao.insert(listOf(concept.toEntity()))
     suspend fun updateConcepts(concepts: List<Concept>) = dao.update(concepts.map{it.toEntity()})
     suspend fun updateConcept(concept: Concept) = dao.update(listOf(concept.toEntity()))
-    suspend fun deleteConcepts(ids: List<Long>) = dao.delete(ids)
+    suspend fun deleteConceptsByIds(ids: List<Long>) = dao.deleteByIds(ids)
     suspend fun deleteConcepts(concepts: List<Concept>) = dao.delete(concepts.map { it.toEntity() })
-    suspend fun deleteConcept(id: Long) = dao.delete(listOf(id))
     suspend fun count(): Int = dao.count()
     suspend fun clear() = dao.clear()
 }

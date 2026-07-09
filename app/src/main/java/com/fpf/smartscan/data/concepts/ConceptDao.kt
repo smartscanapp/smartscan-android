@@ -49,7 +49,7 @@ interface ConceptDao {
 
     @Transaction
     @Query("DELETE FROM concept WHERE id IN (:ids)")
-    suspend fun delete(ids: List<Long>)
+    suspend fun deleteByIds(ids: List<Long>)
 
     @Query("SELECT COUNT(*) FROM concept")
     suspend fun count(): Int
