@@ -36,6 +36,7 @@ import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
 import com.fpf.smartscan.ui.screens.collections.CollectionItemsScreen
 import com.fpf.smartscan.ui.screens.collections.CollectionsScreen
+import com.fpf.smartscan.ui.screens.concepts.ConceptsScreen
 import com.fpf.smartscan.ui.screens.donate.DonateScreen
 import com.fpf.smartscan.ui.screens.search.SearchScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsDetailScreen
@@ -180,6 +181,23 @@ fun Main(
                                 collection = collection,
                                 appSettings = settingsViewModel.appSettings,
                                 onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Routes.CONCEPTS) {
+                            ConceptsScreen(
+                                isIndexing = isIndexing,
+                                hasIndexedImages = hasIndexedImages,
+                                hasIndexedVideos = hasIndexedVideos,
+                                hasStoragePermission = hasStoragePermission,
+                                onIndex = { showFirstScanModal = true },
+                                onTopBarChange = { topBarState.value = it },
+                                onViewConcept = { collection ->
+//                                    navController.currentBackStackEntry
+//                                        ?.savedStateHandle
+//                                        ?.set(NavDataKeys.COLLECTION, collection)
+//
+//                                    navController.navigate(Routes.COLLECTION_ITEMS)
+                                },
                             )
                         }
                         composable(Routes.SETTINGS) {
