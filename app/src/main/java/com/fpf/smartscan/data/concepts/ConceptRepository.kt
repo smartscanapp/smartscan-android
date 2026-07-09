@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class ConceptRepository(private val dao: ConceptDao) {
-    fun getConceptsFLow(): Flow<List<Concept>> = dao.getFlow().map{ conceptWithCount -> conceptWithCount.map{it.toDomain()}}
+    fun getConceptsFlow(): Flow<List<Concept>> = dao.getFlow().map{ conceptWithCount -> conceptWithCount.map{it.toDomain()}}
     suspend fun getConcepts(): List<Concept> = dao.get().map{it.toDomain()}
     suspend fun getConcepts(ids: List<Long>): List<Concept> = dao.get(ids).map{it.toDomain()}
     suspend fun getConcept(id: Long): Concept? = dao.get(listOf(id)).firstOrNull()?.toDomain()
