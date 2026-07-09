@@ -3,6 +3,8 @@ package com.fpf.smartscan.di
 import com.fpf.smartscan.data.MediaDatabase
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
+import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
@@ -20,10 +22,15 @@ val dbModule = module {
     single { get<MediaDatabase>().tagCrossRefDao() }
     single { get<MediaDatabase>().clusterCrossRefDao() }
     single { get<MediaDatabase>().clusterMetadataDao() }
+    single { get<MediaDatabase>().conceptDao() }
+    single { get<MediaDatabase>().conceptCrossRefDao() }
 
     single { MediaMetadataRepository(get()) }
     single { TagRepository(get()) }
     single { TagCrossRefRepository(get()) }
     single { ClusterCrossRefRepository(get()) }
     single { ClusterMetadataRepository(get()) }
+    single { ConceptCrossRefRepository(get()) }
+    single { ConceptRepository(get()) }
+
 }
