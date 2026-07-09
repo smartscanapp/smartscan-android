@@ -75,6 +75,15 @@
     <string name="concepts_empty_screen_step_2">2. Tap + and enter a concept description.</string>
     <string name="concepts_empty_screen_step_3">3. Matching media will be added automatically.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
+    <string name="concepts_delete_alert_title">Delete concepts</string>
+    <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>
+    <plurals name="concept_count">
+        <item quantity="one">concept</item>
+        <item quantity="other">concepts</item>
+    </plurals>
+    <string name="add_concept_action">Add concept</string>
+    <string name="edit_concept_action">Edit concept</string>
+    <string name="placeholders_add_concept">Describe your new concept</string>
 
 
     <!--Collections Screen-->
