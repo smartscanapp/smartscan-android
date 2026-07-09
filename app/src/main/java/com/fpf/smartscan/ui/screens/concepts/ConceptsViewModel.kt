@@ -53,7 +53,8 @@ class ConceptsViewModel(
         Concept(
             id=0,
             description = "Turn years of interviews into an actionable knowledge base.",
-            size = 2
+            size = 2,
+
         ),
         Concept(
             id=1,
