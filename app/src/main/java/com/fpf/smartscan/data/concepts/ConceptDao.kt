@@ -2,6 +2,7 @@ package com.fpf.smartscan.data.concepts
 
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -42,6 +43,9 @@ interface ConceptDao {
 
     @Update
     suspend fun update(concepts: List<ConceptEntity>)
+
+    @Delete
+    suspend fun delete(concepts: List<ConceptEntity>)
 
     @Transaction
     @Query("DELETE FROM concept WHERE id IN (:ids)")
