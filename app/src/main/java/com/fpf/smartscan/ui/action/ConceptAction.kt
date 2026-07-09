@@ -6,13 +6,13 @@ import com.fpf.smartscan.media.MediaCollection
 
 sealed interface ConceptAction {
     data class SetCollectionType(val collectionType: CollectionType?): ConceptAction
-
-    data class EditConcept(val description: String): ConceptAction
     data class ToggleSelectedConcept(val concept: Concept): ConceptAction
     data class ToggleSelectedCollection(val collection: MediaCollection): ConceptAction
     data class SetConceptToView(val concept: Concept?): ConceptAction
     data class SetSelectAll(val selectAll: Boolean): ConceptAction
-    data object DeleteConcept : ConceptAction
+    data class AddConcept(val description: String) : ConceptAction
+    data class UpdateConcept(val concept: Concept, val newDescription: String): ConceptAction
+    data object DeleteConcepts : ConceptAction
     data object ToggleViewAllConcepts: ConceptAction
     data object ToggleSelectionMode: ConceptAction
     data object ClearSelection: ConceptAction

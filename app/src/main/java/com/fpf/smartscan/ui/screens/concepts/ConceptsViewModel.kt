@@ -10,6 +10,8 @@ import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
+import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.media.CollectionType
@@ -17,7 +19,6 @@ import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
-import com.fpf.smartscan.ui.state.common.SelectionState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class ConceptsViewModel(
     application: Application,
@@ -40,6 +42,8 @@ class ConceptsViewModel(
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
+    private val conceptRepository: ConceptRepository,
+    private val conceptCrossRefRepository: ConceptCrossRefRepository,
     imageStore: FileEmbeddingStore,
     videoStore: FileEmbeddingStore,
     clusterStore: FileEmbeddingStore,
@@ -48,20 +52,7 @@ class ConceptsViewModel(
         private const val TAG = "ConceptsViewModel"
     }
 
-    // TODO: add real concepts from db
-    val concepts = listOf<Concept>(
-        Concept(
-            id=0,
-            description = "Turn years of interviews into an actionable knowledge base.",
-            size = 2,
-
-        ),
-        Concept(
-            id=1,
-            description = "Infrastructure, scale, or domain expertise that is hard to replicate",
-            size = 9
-        )
-    )
+    private var idCount: Long = 0L
 
     val tagManager = TagManager(
         tagRepository = tagRepository,
@@ -80,6 +71,13 @@ class ConceptsViewModel(
     private val _state = MutableStateFlow(ConceptsState())
     val state: StateFlow<ConceptsState> = _state
 
+    val concepts: StateFlow<List<Concept>> = conceptRepository.getConceptsFLow()
+            .flowOn(Dispatchers.IO)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Lazily,
+                initialValue = emptyList()
+            )
 
 
     val clusterCollections: StateFlow<List<MediaCollection>> = combine(
@@ -121,8 +119,9 @@ class ConceptsViewModel(
             is ConceptAction.ClearSelection -> clearSelection()
             is ConceptAction.ResetSelection -> resetSelection()
             is ConceptAction.SetSelectAll -> setSelectAll(action.selectAll)
-            is ConceptAction.DeleteConcept -> TODO()
-            is ConceptAction.EditConcept -> TODO()
+            is ConceptAction.DeleteConcepts -> deleteConcepts()
+            is ConceptAction.UpdateConcept -> updateConcept(action.concept, action.newDescription)
+            is ConceptAction.AddConcept -> addConcept(action.description)
             is ConceptAction.SetConceptToView -> setConceptToView(action.concept)
             is ConceptAction.ToggleSelectedConcept -> toggleSelectedConcept(action.concept)
             is ConceptAction.ToggleViewAllConcepts -> toggleViewAllConcepts()
@@ -152,6 +151,34 @@ class ConceptsViewModel(
             )
         }
     }
+
+    private fun addConcept(description: String){
+        viewModelScope.launch(Dispatchers.IO) {
+            conceptRepository.insertConcept(Concept(
+                id = generateId(),
+                description = description,
+                size = 0,
+            ))
+            ++idCount
+        }
+    }
+
+    private fun updateConcept(concept: Concept, newDescription: String){
+        val updatedConcept = concept.copy(description = newDescription, updatedAt = System.currentTimeMillis())
+        viewModelScope.launch(Dispatchers.IO) {
+            conceptRepository.updateConcept(updatedConcept)
+        }
+    }
+
+    private fun deleteConcepts(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val collections = _state.value.selection.selectedItems
+            conceptRepository.deleteConcepts(collections.toList())
+            resetSelection()
+        }
+    }
+
+    private fun generateId(): Long = System.currentTimeMillis() + idCount
 
     private fun toggleSelectedCollection(item: MediaCollection) { _state.update {
         it.copy(
