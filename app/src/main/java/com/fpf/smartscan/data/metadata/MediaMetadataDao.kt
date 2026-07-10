@@ -110,108 +110,12 @@ interface MediaMetadataDao {
             ON c.mediaId = m.id
             AND c.mediaType = m.type
         WHERE c.tagId = :tagId
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-        ORDER BY m.dateAdded DESC, m.id DESC
-        LIMIT :limit OFFSET :offset
-    """)
-    suspend fun getByTag(tagId: Long, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata>
-
-
-    @Query("""
-        SELECT m.*
-        FROM media_metadata m
-        INNER JOIN tag_crossref c 
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-          AND m.type = :type
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-        ORDER BY m.dateAdded DESC, m.id DESC
-        LIMIT :limit OFFSET :offset
-    """)
-    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata>
-
-
-    @Query("""
-        SELECT m.*
-        FROM media_metadata m
-        INNER JOIN tag_crossref c 
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-        ORDER BY m.dateAdded DESC, m.id DESC
-    """)
-    suspend fun getByTag(tagId: Long, startDate: Long?, endDate: Long?): List<MediaMetadata>
-
-
-    @Query("""
-        SELECT m.*
-        FROM media_metadata m
-        INNER JOIN tag_crossref c 
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
           AND m.type = :type
           AND (:startDate IS NULL OR m.dateAdded >= :startDate)
           AND (:endDate IS NULL OR m.dateAdded <= :endDate)
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
     suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadata>
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN tag_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-    """)
-    suspend fun countByTag(tagId: Long): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN tag_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-          AND m.type = :type
-    """)
-    suspend fun countByTag(tagId: Long, type: MediaType): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN tag_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-    """)
-    suspend fun countByTag(tagId: Long, startDate: Long?, endDate: Long?): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN tag_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.tagId = :tagId
-          AND m.type = :type
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-    """)
-    suspend fun countByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): Int
-
 
     // CLUSTER QUERIES
 
@@ -253,111 +157,6 @@ interface MediaMetadataDao {
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
-
-
-    @Query("""
-        SELECT m.*
-        FROM media_metadata m
-        INNER JOIN media_cluster_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.clusterId = :clusterId
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-        ORDER BY m.dateAdded DESC, m.id DESC
-        LIMIT :limit OFFSET :offset
-    """)
-    suspend fun getByCluster(clusterId: Long, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata>
-
-    @Query("""
-    SELECT m.*
-    FROM media_metadata m
-    INNER JOIN media_cluster_crossref c
-        ON c.mediaId = m.id
-        AND c.mediaType = m.type
-    WHERE c.clusterId = :clusterId
-      AND m.type = :type
-      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-    ORDER BY m.dateAdded DESC, m.id DESC
-    LIMIT :limit OFFSET :offset
-""")
-    suspend fun getByCluster(clusterId: Long, type: MediaType, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata>
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN media_cluster_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.clusterId = :clusterId
-    """)
-    suspend fun countByCluster(clusterId: Long): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN media_cluster_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.clusterId = :clusterId
-          AND m.type = :type
-    """)
-    suspend fun countByCluster(clusterId: Long, type: MediaType): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN media_cluster_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.clusterId = :clusterId
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-    """)
-    suspend fun countByCluster(clusterId: Long, startDate: Long?, endDate: Long?): Int
-
-
-    @Query("""
-        SELECT COUNT(*)
-        FROM media_metadata m
-        INNER JOIN media_cluster_crossref c
-            ON c.mediaId = m.id
-            AND c.mediaType = m.type
-        WHERE c.clusterId = :clusterId
-          AND m.type = :type
-          AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-          AND (:endDate IS NULL OR m.dateAdded <= :endDate)
-    """)
-    suspend fun countByCluster(clusterId: Long, type: MediaType, startDate: Long?, endDate: Long?): Int
-
-
-    // DELETE
-
-    @Query("""
-        DELETE FROM media_metadata
-        WHERE (id, type) IN (
-            SELECT mediaId, mediaType
-            FROM tag_crossref
-            WHERE tagId = :tagId
-        )
-    """)
-    suspend fun deleteByTag(tagId: Long)
-
-
-    @Query("""
-        DELETE FROM media_metadata
-        WHERE (id, type) IN (
-            SELECT mediaId, mediaType
-            FROM media_cluster_crossref
-            WHERE clusterId = :clusterId
-        )
-    """)
-    suspend fun deleteByCluster(clusterId: Long)
-
-
     @Transaction
     @Query("""
         DELETE FROM media_metadata
@@ -365,7 +164,6 @@ interface MediaMetadataDao {
           AND type = :type
     """)
     suspend fun deleteByIds(mediaIds: List<Long>, type: MediaType)
-
 
     @Query("DELETE FROM media_metadata")
     suspend fun clear()
