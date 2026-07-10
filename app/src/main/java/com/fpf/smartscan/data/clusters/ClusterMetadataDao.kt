@@ -15,8 +15,8 @@ interface ClusterMetadataDao {
         c.clusterId,
         c.label,
         COUNT(ref.mediaId) AS prototypeSize,
-        m.id AS mediaId,
-        m.type AS mediaType
+        m.id AS thumbNailId,
+        m.type AS thumbNailType
     FROM cluster_metadata c
     JOIN media_cluster_crossref ref
         ON ref.clusterId = c.clusterId
