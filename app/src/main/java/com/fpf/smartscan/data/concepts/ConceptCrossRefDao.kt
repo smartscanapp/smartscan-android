@@ -2,6 +2,7 @@ package com.fpf.smartscan.data.concepts
 
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -15,8 +16,8 @@ interface ConceptCrossRefDao {
     @Query("SELECT * FROM concept_crossref WHERE conceptId in (:ids)")
     suspend fun getByConceptIds(ids: List<Long>): List<ConceptCrossRefEntity>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(crossRefs: List<ConceptCrossRefEntity>)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(crossRefs: List<ConceptCrossRefEntity>)
 
     @Query("DELETE FROM concept_crossref")
     suspend fun clear()
@@ -26,4 +27,7 @@ interface ConceptCrossRefDao {
 
     @Query("SELECT COUNT(*) FROM concept_crossref WHERE conceptId = :conceptId")
     suspend fun countByConceptId(conceptId: Long): Int
+
+    @Delete
+    suspend fun delete(crossrefs: List<ConceptCrossRefEntity>)
 }
