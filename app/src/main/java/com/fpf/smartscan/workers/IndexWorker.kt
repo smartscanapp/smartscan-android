@@ -10,9 +10,9 @@ import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.di.CLUSTER_STORE
-import com.fpf.smartscan.di.IMAGE_STORE
-import com.fpf.smartscan.di.VIDEO_STORE
+import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
+import com.fpf.smartscan.di.IMAGE_EMBED_STORE
+import com.fpf.smartscan.di.VIDEO_EMBED_STORE
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,10 +68,10 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
 
-    private val imageStore: FileEmbeddingStore by inject(IMAGE_STORE)
-    private val videoStore: FileEmbeddingStore by inject(VIDEO_STORE)
+    private val imageStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
+    private val videoStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
 
-    private val clusterStore: FileEmbeddingStore by inject(CLUSTER_STORE)
+    private val clusterStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
 
 
 

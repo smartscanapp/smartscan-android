@@ -44,9 +44,9 @@ class ConceptsViewModel(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
-    imageStore: FileEmbeddingStore,
-    videoStore: FileEmbeddingStore,
-    clusterStore: FileEmbeddingStore,
+    imageEmbedStore: FileEmbeddingStore,
+    videoEmbedStore: FileEmbeddingStore,
+    clusterEmbedStore: FileEmbeddingStore,
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptsViewModel"
@@ -60,9 +60,9 @@ class ConceptsViewModel(
         mediaMetadataRepository = mediaMetadataRepository,
     )
     val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterStore,
-        imageEmbedStore = imageStore,
-        videoEmbedStore = videoStore,
+        clusterEmbedStore = clusterEmbedStore,
+        imageEmbedStore = imageEmbedStore,
+        videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
         mediaMetadataRepository = mediaMetadataRepository,

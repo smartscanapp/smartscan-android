@@ -63,9 +63,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SearchViewModel(
     application: Application,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
@@ -95,8 +95,8 @@ class SearchViewModel(
     val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
-        imageStore.exists && !videoStore.exists -> MediaType.IMAGE
-        videoStore.exists && !imageStore.exists -> MediaType.VIDEO
+        imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE
+        videoEmbedStore.exists && !imageEmbedStore.exists -> MediaType.VIDEO
         else -> MediaType.IMAGE
     }
     private val _state = MutableStateFlow(SearchState(mediaType = defaultMediaType))
@@ -214,7 +214,7 @@ class SearchViewModel(
         val queryEmbed = embedding.toQInt8Embed()
         val filterIds = idsMatchingTag.toSet()
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, filterIds,  startDate = startDate, endDate = endDate, includeSims = true)
-        val clusterResult = clusterStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
+        val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
         val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
@@ -235,7 +235,7 @@ class SearchViewModel(
         val embedding = imageEmbedder.embed(bitmap)
         val queryEmbed= embedding.toQInt8Embed()
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, startDate = startDate, endDate = endDate, includeSims = true)
-        val clusterResult = clusterStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
+        val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
         val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
@@ -385,8 +385,8 @@ class SearchViewModel(
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){
             onMediaLoadingError(error,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
+                imageEmbedStore = imageEmbedStore,
+                videoEmbedStore = videoEmbedStore,
                 mediaMetadataRepository =mediaMetadataRepository
             )
         }
@@ -399,7 +399,7 @@ class SearchViewModel(
     fun onSelectAutoCompleteResult(tag: String){
         searchFieldState.edit { replace(0, searchFieldState.text.length, "#$tag ") }
     }
-    private fun getStore() = if(_state.value.mediaType == MediaType.VIDEO) videoStore else imageStore
+    private fun getStore() = if(_state.value.mediaType == MediaType.VIDEO) videoEmbedStore else imageEmbedStore
 
     private fun toggleSelectedResult(item: MediaItem){
         _state.update { it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, it.totalResults)) }

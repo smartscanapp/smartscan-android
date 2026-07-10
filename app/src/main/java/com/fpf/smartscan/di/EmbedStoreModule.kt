@@ -9,21 +9,21 @@ import java.io.File
 
 private const val EMBEDDING_DIM = 512
 
-val IMAGE_STORE = named("image_store")
-val VIDEO_STORE = named("video_store")
-val CLUSTER_STORE = named("cluster_store")
+val IMAGE_EMBED_STORE = named("image_embed_store")
+val VIDEO_EMBED_STORE = named("video_embed_store")
+val CLUSTER_EMBED_STORE = named("cluster_embed_store")
 
 val embedStoreModule = module {
-    single(IMAGE_STORE) {
+    single(IMAGE_EMBED_STORE) {
         val app = get<Application>()
         FileEmbeddingStore(File(app.filesDir, EmbeddingStoresFilesQuant.IMAGE), EMBEDDING_DIM, quantize = true)
     }
 
-    single(VIDEO_STORE) {
+    single(VIDEO_EMBED_STORE) {
         val app = get<Application>()
         FileEmbeddingStore(File(app.filesDir, EmbeddingStoresFilesQuant.VIDEO), EMBEDDING_DIM, quantize = true)
     }
-    single(CLUSTER_STORE) {
+    single(CLUSTER_EMBED_STORE) {
         val app = get<Application>()
         FileEmbeddingStore(File(app.filesDir, EmbeddingStoresFilesQuant.CLUSTER), EMBEDDING_DIM, quantize = true)
     }

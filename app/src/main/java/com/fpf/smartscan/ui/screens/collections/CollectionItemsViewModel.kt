@@ -56,9 +56,9 @@ import kotlin.collections.map
 
 class CollectionItemsViewModel(
     application: Application,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
@@ -76,9 +76,9 @@ class CollectionItemsViewModel(
     )
 
     val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterStore,
-        imageEmbedStore = imageStore,
-        videoEmbedStore = videoStore,
+        clusterEmbedStore = clusterEmbedStore,
+        imageEmbedStore = imageEmbedStore,
+        videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
         mediaMetadataRepository = mediaMetadataRepository,
@@ -358,8 +358,8 @@ class CollectionItemsViewModel(
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){
             onMediaLoadingError(error,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
+                imageEmbedStore = imageEmbedStore,
+                videoEmbedStore = videoEmbedStore,
                 mediaMetadataRepository =mediaMetadataRepository
                 )
         }

@@ -15,9 +15,9 @@ import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.di.IMAGE_STORE
-import com.fpf.smartscan.di.VIDEO_STORE
-import com.fpf.smartscan.di.CLUSTER_STORE
+import com.fpf.smartscan.di.IMAGE_EMBED_STORE
+import com.fpf.smartscan.di.VIDEO_EMBED_STORE
+import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.index.ImageIndexListener
@@ -26,7 +26,6 @@ import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.index.indexMedia
 import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
-import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.indexers.ImageIndexer
 import com.fpf.smartscansdk.core.indexers.VideoIndexer
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
@@ -58,9 +57,9 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
 
-    private val imageStore: FileEmbeddingStore by inject(IMAGE_STORE)
-    private val videoStore: FileEmbeddingStore by inject(VIDEO_STORE)
-    private val clusterStore: FileEmbeddingStore by inject(CLUSTER_STORE)
+    private val imageStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
+    private val videoStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
+    private val clusterStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
 
 
     override fun onCreate() {
