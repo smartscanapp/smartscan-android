@@ -13,24 +13,24 @@ import com.fpf.smartscan.media.MediaType
 interface MediaMetadataDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(items: List<MediaMetadata>)
+    suspend fun insert(items: List<MediaMetadataEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(item: MediaMetadata)
+    suspend fun insert(item: MediaMetadataEntity)
 
     @Update
-    suspend fun update(items: List<MediaMetadata>)
+    suspend fun update(items: List<MediaMetadataEntity>)
 
     @Update
-    suspend fun update(item: MediaMetadata)
+    suspend fun update(item: MediaMetadataEntity)
 
 
     @Query("SELECT * FROM media_metadata WHERE id IN (:mediaIds) AND type = :type")
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadata>
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadataEntity>
 
 
     @Query("SELECT * FROM media_metadata WHERE type = :type")
-    suspend fun getByType(type: MediaType): List<MediaMetadata>
+    suspend fun getByType(type: MediaType): List<MediaMetadataEntity>
 
     @Query("SELECT id FROM media_metadata WHERE type = :type")
     suspend fun getIdsByType(type: MediaType): List<Long>
@@ -61,7 +61,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -73,7 +73,7 @@ interface MediaMetadataDao {
         WHERE c.tagId = :tagId
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
-    suspend fun getByTag(tagId: Long): List<MediaMetadata>
+    suspend fun getByTag(tagId: Long): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -87,7 +87,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -100,7 +100,7 @@ interface MediaMetadataDao {
           AND m.type = :type
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
-    suspend fun getByTag(tagId: Long, type: MediaType): List<MediaMetadata>
+    suspend fun getByTag(tagId: Long, type: MediaType): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -115,7 +115,7 @@ interface MediaMetadataDao {
           AND (:endDate IS NULL OR m.dateAdded <= :endDate)
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
-    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadata>
+    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadataEntity>
 
     // CLUSTER QUERIES
 
@@ -129,7 +129,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -141,7 +141,7 @@ interface MediaMetadataDao {
         WHERE c.clusterId = :clusterId
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
-    suspend fun getByCluster(clusterId: Long): List<MediaMetadata>
+    suspend fun getByCluster(clusterId: Long): List<MediaMetadataEntity>
 
 
 
@@ -156,7 +156,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
     // Concept queries
@@ -171,7 +171,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -183,7 +183,7 @@ interface MediaMetadataDao {
         WHERE crossref.conceptId = :conceptId
         ORDER BY m.dateAdded DESC, m.id DESC
     """)
-    suspend fun getByConcept(conceptId: Long): List<MediaMetadata>
+    suspend fun getByConcept(conceptId: Long): List<MediaMetadataEntity>
 
 
     @Query("""
@@ -197,7 +197,7 @@ interface MediaMetadataDao {
         ORDER BY m.dateAdded DESC, m.id DESC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
+    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadataEntity>
 
 
 

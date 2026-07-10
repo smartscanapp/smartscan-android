@@ -72,7 +72,6 @@ fun mediaIdToUri(id: Long, mediaType: MediaType): Uri {
 fun toMediaItem(id: Long, type: MediaType): MediaItem{
     return MediaItem(
         id = id,
-        uri = mediaIdToUri(id, type),
         type = type
     )
 }

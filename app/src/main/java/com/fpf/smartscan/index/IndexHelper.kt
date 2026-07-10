@@ -6,8 +6,9 @@ import android.net.Uri
 import com.fpf.smartscan.constants.EmbeddingStoresFiles
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.metadata.MediaMetadata
+import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.services.MediaIndexForegroundService

@@ -3,7 +3,7 @@ package com.fpf.smartscan.data.concepts
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.fpf.smartscan.data.metadata.MediaMetadata
+import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.media.MediaType
 
 @Entity(
@@ -17,7 +17,7 @@ import com.fpf.smartscan.media.MediaType
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = MediaMetadata::class,
+            entity = MediaMetadataEntity::class,
             parentColumns = ["id", "type"],
             childColumns =  ["mediaId", "mediaType"],
             onDelete = ForeignKey.CASCADE

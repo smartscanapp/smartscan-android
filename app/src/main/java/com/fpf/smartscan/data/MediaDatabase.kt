@@ -13,7 +13,7 @@ import com.fpf.smartscan.data.concepts.ConceptCrossRefDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefEntity
 import com.fpf.smartscan.data.concepts.ConceptDao
 import com.fpf.smartscan.data.concepts.ConceptEntity
-import com.fpf.smartscan.data.metadata.MediaMetadata
+import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.data.metadata.MediaMetadataDao
 import com.fpf.smartscan.data.migrations.MIGRATION_1_2
 import com.fpf.smartscan.data.migrations.MIGRATION_2_3
@@ -27,7 +27,7 @@ import com.fpf.smartscan.data.tags.TagDao
 
 @Database(
     entities = [
-        MediaMetadata::class,
+        MediaMetadataEntity::class,
         ClusterMetadataEntity::class,
         ClusterCrossRefEntity::class,
         TagEntity::class,
