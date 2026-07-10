@@ -157,12 +157,65 @@ interface MediaMetadataDao {
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
+
+
+    // Concept queries
+
+    @Query("""
+        SELECT m.*
+        FROM media_metadata m
+        INNER JOIN concept_crossref crossref
+            ON crossref.mediaId = m.id
+            AND crossref.mediaType = m.type
+        WHERE crossref.conceptId = :conceptId
+        ORDER BY m.dateAdded DESC, m.id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata>
+
+
+    @Query("""
+        SELECT m.*
+        FROM media_metadata m
+        INNER JOIN concept_crossref crossref
+            ON crossref.mediaId = m.id
+            AND crossref.mediaType = m.type
+        WHERE crossref.conceptId = :conceptId
+        ORDER BY m.dateAdded DESC, m.id DESC
+    """)
+    suspend fun getByConcept(conceptId: Long): List<MediaMetadata>
+
+
+    @Query("""
+        SELECT m.*
+        FROM media_metadata m
+        INNER JOIN concept_crossref crossref
+            ON crossref.mediaId = m.id
+            AND crossref.mediaType = m.type
+        WHERE crossref.conceptId = :conceptId
+          AND m.type = :type
+        ORDER BY m.dateAdded DESC, m.id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata>
+
+
+
+
+
+
+
+
+
+
+
     @Transaction
     @Query("""
         DELETE FROM media_metadata
         WHERE id IN (:mediaIds)
           AND type = :type
     """)
+
     suspend fun deleteByIds(mediaIds: List<Long>, type: MediaType)
 
     @Query("DELETE FROM media_metadata")

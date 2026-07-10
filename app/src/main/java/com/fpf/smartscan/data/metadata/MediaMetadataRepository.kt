@@ -24,6 +24,11 @@ class MediaMetadataRepository(
     suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, limit, offset)
     suspend fun getByCluster(clusterId: Long): List<MediaMetadata> = dao.getByCluster(clusterId)
     suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type, limit, offset)
+
+    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, limit, offset)
+    suspend fun getByConcept(conceptId: Long): List<MediaMetadata> = dao.getByConcept(conceptId)
+    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, type, limit, offset)
+
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 
     suspend fun clear() = dao.clear()
