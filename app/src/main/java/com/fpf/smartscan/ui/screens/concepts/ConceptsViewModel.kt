@@ -8,6 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.concepts.ConceptManager
+import com.fpf.smartscan.concepts.getAllowedClusters
+import com.fpf.smartscan.concepts.getAllowedTags
+import com.fpf.smartscan.concepts.setAllowedClusters
+import com.fpf.smartscan.concepts.setAllowedTags
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
@@ -51,7 +55,6 @@ class ConceptsViewModel(
     companion object {
         private const val TAG = "ConceptsViewModel"
         private const val SIMILARITY_THRESHOLD = 0.3f
-        private const val INVALID_COLLECTION_ID = -1L
     }
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
@@ -107,6 +110,10 @@ class ConceptsViewModel(
 
     private val _event = MutableSharedFlow<CollectionEvent>()
     val event = _event.asSharedFlow()
+
+    init {
+        load()
+    }
 
     fun onAction(action: ConceptAction) {
         when (action) {
@@ -168,21 +175,25 @@ class ConceptsViewModel(
         }
     }
 
-    // TODO: return actual media collections
-    private fun getAllowedTagCollections(): Set<Long>{
-        val tagIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_TAG_COLLECTIONS, emptySet())
-            .orEmpty()
-            .map { it.toLong() }
-            .toSet()
-        return tagIds
+    private fun load(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val allowedCollections = mutableListOf<MediaCollection>()
+            allowedCollections.addAll(getAllowedClusterCollections())
+            allowedCollections.addAll(getAllowedTagCollections())
+            val updatedCollectionState = _state.value.collectionsSelection.copy(selectedItems = allowedCollections.toSet())
+            _state.update { it.copy( collectionsSelection = updatedCollectionState)}
+        }
     }
 
-    private fun getAllowedAutoCollections(): Set<Long>{
-        val clusterIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_AUTO_COLLECTIONS, emptySet())
-            .orEmpty()
-            .map { it.toLong() }
-            .toSet()
-        return clusterIds
+    // TODO: move to concept manager
+    private suspend fun getAllowedTagCollections(): List<MediaCollection>{
+        val tagIds = getAllowedTags(sharedPrefs)
+        return tagRepository.getCollections(tagIds.toList())
+    }
+
+    private suspend fun getAllowedClusterCollections(): List<MediaCollection>{
+        val clusterIds = getAllowedClusters(sharedPrefs)
+        return clusterMetadataRepository.getCollections(clusterIds.toList())
     }
 
     private fun toggleSelectedCollection(item: MediaCollection) { _state.update {
@@ -210,17 +221,19 @@ class ConceptsViewModel(
     }
 
     private fun setAllowedCollections(){
-        val selectedCollections = _state.value.collectionsSelection.selectedItems
-        Log.d(TAG, "Allowed collections: \n${selectedCollections.toString()}")
+        val currentState = _state.value
+        val selectedCollections = currentState.collectionsSelection.selectedItems
+        when(currentState.selectedCollectionType){
+            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            else -> {}
+        }
         setCollectionType(null)
     }
 
-
     private suspend fun getSelectedConcepts(): Set<Concept> = SelectionUtils.getSelectedItems(_state.value.selection) { getAllConcepts() }
 
-    //TODO: get from db
     private suspend fun getAllConcepts(): MutableSet<Concept> {
-        val currentState = state.value
-        return mutableSetOf()
+        return conceptRepository.getConcepts().toMutableSet()
     }
 }
