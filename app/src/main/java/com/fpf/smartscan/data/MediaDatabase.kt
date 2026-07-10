@@ -5,9 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.fpf.smartscan.data.clusters.ClusterCrossRef
+import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterCrossRefDao
-import com.fpf.smartscan.data.clusters.MediaClusterMetadata
+import com.fpf.smartscan.data.clusters.ClusterMetadataEntity
 import com.fpf.smartscan.data.clusters.ClusterMetadataDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefEntity
@@ -19,8 +19,8 @@ import com.fpf.smartscan.data.migrations.MIGRATION_1_2
 import com.fpf.smartscan.data.migrations.MIGRATION_2_3
 import com.fpf.smartscan.data.migrations.MIGRATION_3_4
 import com.fpf.smartscan.data.migrations.MIGRATION_4_5
-import com.fpf.smartscan.data.tags.Tag
-import com.fpf.smartscan.data.tags.TagCrossRef
+import com.fpf.smartscan.data.tags.TagEntity
+import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefDao
 import com.fpf.smartscan.data.tags.TagDao
 
@@ -28,10 +28,10 @@ import com.fpf.smartscan.data.tags.TagDao
 @Database(
     entities = [
         MediaMetadata::class,
-        MediaClusterMetadata::class,
-        ClusterCrossRef::class,
-        Tag::class,
-        TagCrossRef::class,
+        ClusterMetadataEntity::class,
+        ClusterCrossRefEntity::class,
+        TagEntity::class,
+        TagCrossRefEntity::class,
         ConceptEntity::class,
         ConceptCrossRefEntity::class
     ],

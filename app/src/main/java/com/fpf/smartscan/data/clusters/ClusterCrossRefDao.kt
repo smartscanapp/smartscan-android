@@ -5,22 +5,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.fpf.smartscan.media.MediaType
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ClusterCrossRefDao {
 
     @Query("SELECT * FROM media_cluster_crossref")
-    suspend fun getAll(): List<ClusterCrossRef>
-
-    @Query("""
-        SELECT metadata.*, COUNT(crossRef.mediaId) AS count
-        FROM media_cluster_crossref crossRef
-        JOIN cluster_metadata metadata ON metadata.clusterId = crossRef.clusterId
-        GROUP BY crossRef.clusterId
-        ORDER BY count DESC
-    """)
-    fun getClustersWithCount(): Flow<List<ClusterMetadataWithCount>>
+    suspend fun getAll(): List<ClusterCrossRefEntity>
 
     @Query("""
     SELECT crossRef.*
@@ -28,13 +18,13 @@ interface ClusterCrossRefDao {
     JOIN media_metadata metadata ON metadata.id = crossRef.mediaId
     WHERE metadata.type = :type
     """)
-    suspend fun getByType(type: MediaType): List<ClusterCrossRef>
+    suspend fun getByType(type: MediaType): List<ClusterCrossRefEntity>
 
     @Query("SELECT * FROM media_cluster_crossref WHERE clusterId in (:ids)")
-    suspend fun getByClusterIds(ids: List<Long>): List<ClusterCrossRef>
+    suspend fun getByClusterIds(ids: List<Long>): List<ClusterCrossRefEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(crossRefs: List<ClusterCrossRef>)
+    suspend fun upsert(crossRefs: List<ClusterCrossRefEntity>)
 
     @Query("DELETE FROM media_cluster_crossref")
     suspend fun clear()

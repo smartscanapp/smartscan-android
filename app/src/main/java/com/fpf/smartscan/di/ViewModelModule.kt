@@ -64,16 +64,10 @@ val viewModelModule = module {
     viewModel {
         ConceptsViewModel(
             application = get(),
-            mediaMetadataRepository = get(),
             tagRepository = get(),
-            tagCrossRefRepository = get(),
-            clusterCrossRefRepository = get(),
             clusterMetadataRepository = get(),
             conceptRepository = get(),
             conceptCrossRefRepository = get(),
-            imageEmbedStore = get(IMAGE_EMBED_STORE),
-            videoEmbedStore = get(VIDEO_EMBED_STORE),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE),
             conceptEmbedStore = get(CONCEPT_EMBED_STORE),
             imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE)
         )

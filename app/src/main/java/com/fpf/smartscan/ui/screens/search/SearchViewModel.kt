@@ -18,7 +18,7 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.Tag
+import com.fpf.smartscan.data.tags.TagEntity
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
@@ -38,6 +38,7 @@ import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
 import com.fpf.smartscan.search.rerankItems
+import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
 import com.fpf.smartscan.ui.state.common.SelectionState

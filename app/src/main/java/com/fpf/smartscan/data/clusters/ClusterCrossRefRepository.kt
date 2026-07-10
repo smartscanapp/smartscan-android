@@ -1,18 +1,19 @@
 package com.fpf.smartscan.data.clusters
 
+import com.fpf.smartscan.cluster.ClusterCrossRef
+import com.fpf.smartscan.data.mappers.toDomain
+import com.fpf.smartscan.data.mappers.toEntity
 import com.fpf.smartscan.media.MediaType
-import kotlinx.coroutines.flow.Flow
 
 class ClusterCrossRefRepository(private val dao: ClusterCrossRefDao) {
     private var clusterToMediaIdsMap: MutableMap<Long, MutableSet<Long>> = mutableMapOf()
     private var refreshCache: Boolean = false
 
-    suspend fun getAllCrossRefs(): List<ClusterCrossRef> = dao.getAll()
-    suspend fun getByType(mediaType: MediaType): List<ClusterCrossRef> = dao.getByType(mediaType)
-    suspend fun getByClusterIds(ids: List<Long>):  List<ClusterCrossRef> = dao.getByClusterIds(ids)
-    fun getClustersWithCount(): Flow<List<ClusterMetadataWithCount>> = dao.getClustersWithCount()
+    suspend fun getAllCrossRefs(): List<ClusterCrossRef> = dao.getAll().map{it.toDomain()}
+    suspend fun getByType(mediaType: MediaType): List<ClusterCrossRef> = dao.getByType(mediaType).map{it.toDomain()}
+    suspend fun getByClusterIds(ids: List<Long>):  List<ClusterCrossRef> = dao.getByClusterIds(ids).map { it.toDomain() }
     suspend fun upsertClusterCrossRefs(crossRefs: List<ClusterCrossRef>) {
-        dao.upsert(crossRefs)
+        dao.upsert(crossRefs.map { it.toEntity() })
         refreshCache = true
     }
 

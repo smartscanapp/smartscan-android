@@ -42,17 +42,11 @@ import kotlinx.coroutines.flow.onEach
 class ConceptsViewModel(
     application: Application,
     private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
-    imageEmbedStore: FileEmbeddingStore,
-    videoEmbedStore: FileEmbeddingStore,
-    clusterEmbedStore: FileEmbeddingStore,
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptsViewModel"
@@ -61,21 +55,6 @@ class ConceptsViewModel(
     }
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
-
-
-    val tagManager = TagManager(
-        tagRepository = tagRepository,
-        tagCrossRefRepository = tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
-    val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterEmbedStore,
-        imageEmbedStore = imageEmbedStore,
-        videoEmbedStore = videoEmbedStore,
-        clusterCrossRefRepository = clusterCrossRefRepository,
-        clusterMetadataRepository = clusterMetadataRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
 
     val conceptManager = ConceptManager(
         conceptRepository=conceptRepository,
@@ -97,13 +76,13 @@ class ConceptsViewModel(
             )
 
     val clusterCollections: StateFlow<List<MediaCollection>> = combine(
-        clusterCrossRefRepository.getClustersWithCount(),
+        clusterMetadataRepository.getCollections(),
         _state.map {  it.selectedCollectionType }.distinctUntilChanged()
-    ) { clusters, collectionType ->
+    ) { collections, collectionType ->
         if(collectionType == CollectionType.CLUSTER){
-            _state.update { it.copy(totalCollections = clusters.size) }
+            _state.update { it.copy(totalCollections = collections.size) }
         }
-        clusterManager.toCollections(clusters)
+        collections
     }.flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
@@ -112,13 +91,13 @@ class ConceptsViewModel(
         )
 
     val tagCollections: StateFlow<List<MediaCollection>> = combine(
-        tagCrossRefRepository.getTagsWithCounts(),
+        tagRepository.getCollections(),
         _state.map {  it.selectedCollectionType }.distinctUntilChanged()
-    ) { tagsWithCount, collectionType ->
+    ) { collections, collectionType ->
         if(collectionType == CollectionType.TAG){
-            _state.update { it.copy(totalCollections = tagsWithCount.size) }
+            _state.update { it.copy(totalCollections = collections.size) }
         }
-        tagManager.toCollections(tagsWithCount)
+        collections
     }.flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
