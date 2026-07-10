@@ -2,14 +2,11 @@ package com.fpf.smartscan.tag
 
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.Tag
-import com.fpf.smartscan.data.tags.TagCrossRef
+import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
 
 class TagManager(
     private val tagRepository: TagRepository,
@@ -22,7 +19,7 @@ class TagManager(
         if(id == null){
             id = tagRepository.insertTags(listOf(Tag(name = tagName.trim()))).first()
         }
-        val tagEntries = items.map { TagCrossRef(mediaId = it.id, tagId = id, mediaType = it.type) }
+        val tagEntries = items.map { TagCrossRefEntity(mediaId = it.id, tagId = id, mediaType = it.type) }
         tagCrossRefRepository.insertTagCrossRefs(tagEntries)
     }
 
@@ -74,7 +71,7 @@ class TagManager(
         val tagsToMerge = tagRepository.getTagsByName(otherTags)
         val mediaToUpdate = tagsToMerge.flatMap { mediaMetadataRepository.getByTag(it.id) }
         if(primaryTag != null && mediaToUpdate.isNotEmpty()){
-            val updated = mediaToUpdate.map{ TagCrossRef(mediaId = it.id, tagId = primaryTag.id, mediaType = it.type) }
+            val updated = mediaToUpdate.map{ TagCrossRefEntity(mediaId = it.id, tagId = primaryTag.id, mediaType = it.type) }
             tagCrossRefRepository.insertTagCrossRefs(updated)
             tagRepository.deleteTags(tagsToMerge)
         }
@@ -91,7 +88,7 @@ class TagManager(
     }
 
     private suspend fun moveItems(items: Set<MediaItem>, currentTagName: String, destinationTagId: Long){
-        val updatedCrossRef = items.map{ TagCrossRef(mediaId = it.id, tagId = destinationTagId, mediaType = it.type) }
+        val updatedCrossRef = items.map{ TagCrossRefEntity(mediaId = it.id, tagId = destinationTagId, mediaType = it.type) }
         tagCrossRefRepository.insertTagCrossRefs(updatedCrossRef)
 
         val currentTag = tagRepository.getTagsByName(listOf(currentTagName)).firstOrNull()?: return

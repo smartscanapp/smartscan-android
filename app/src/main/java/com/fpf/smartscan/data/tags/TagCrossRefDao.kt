@@ -13,10 +13,10 @@ interface TagCrossRefDao {
     suspend fun getTagsForMedia(mediaId: Long): List<Long>
 
     @Query("SELECT * FROM tag_crossref")
-    suspend fun getAllCrossRefs(): List<TagCrossRef>
+    suspend fun getAllCrossRefs(): List<TagCrossRefEntity>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(tags: List<TagCrossRef>)
+    suspend fun insert(tags: List<TagCrossRefEntity>)
 
     @Query(""" DELETE FROM tag_crossref WHERE mediaId IN (:mediaIds) AND mediaType = :mediaType AND tagId = :tagId """)
     suspend fun deleteMediaMatchingTag(mediaIds: List<Long>, mediaType: MediaType, tagId: Long)

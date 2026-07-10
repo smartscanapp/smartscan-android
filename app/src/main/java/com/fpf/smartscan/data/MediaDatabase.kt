@@ -20,7 +20,7 @@ import com.fpf.smartscan.data.migrations.MIGRATION_2_3
 import com.fpf.smartscan.data.migrations.MIGRATION_3_4
 import com.fpf.smartscan.data.migrations.MIGRATION_4_5
 import com.fpf.smartscan.data.tags.Tag
-import com.fpf.smartscan.data.tags.TagCrossRef
+import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefDao
 import com.fpf.smartscan.data.tags.TagDao
 
@@ -31,7 +31,7 @@ import com.fpf.smartscan.data.tags.TagDao
         MediaClusterMetadata::class,
         ClusterCrossRef::class,
         Tag::class,
-        TagCrossRef::class,
+        TagCrossRefEntity::class,
         ConceptEntity::class,
         ConceptCrossRefEntity::class
     ],

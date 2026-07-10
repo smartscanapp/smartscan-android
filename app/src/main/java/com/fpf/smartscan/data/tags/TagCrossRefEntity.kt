@@ -27,7 +27,7 @@ import com.fpf.smartscan.media.MediaType
         Index(value = ["tagId"]),
     ]
 )
-data class TagCrossRef(
+data class TagCrossRefEntity(
     val mediaId: Long,
     val mediaType: MediaType,
     val tagId: Long
