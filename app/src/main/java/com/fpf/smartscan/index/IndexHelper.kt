@@ -3,10 +3,9 @@ package com.fpf.smartscan.index
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.fpf.smartscan.constants.EmbeddingStoresFiles
+import com.fpf.smartscan.constants.EmbeddingStoresFilesQuant
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaStoreHelper
@@ -20,21 +19,22 @@ import java.io.File
 import kotlin.collections.map
 
 
-fun startIndexing(context: Context, mediaTypes: List<MediaType>) {
+fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJob = IndexJob.MAIN) {
     Intent(context.applicationContext, MediaIndexForegroundService::class.java)
         .putStringArrayListExtra(
             MediaIndexForegroundService.EXTRA_MEDIA_TYPES,
             ArrayList(mediaTypes.map { it.name })
         )
+        .putExtra(MediaIndexForegroundService.EXTRA_INDEX_JOB, indexJob)
         .also { intent -> context.applicationContext.startForegroundService(intent) }
 }
 
-fun refreshIndex(context: Context, mediaTypes: List<MediaType>) {
+fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJob = IndexJob.MAIN) {
     val running = isServiceRunning(context.applicationContext, MediaIndexForegroundService::class.java)
     if(running){
         context.applicationContext.stopService(Intent(context.applicationContext, MediaIndexForegroundService::class.java))
     }
-    startIndexing(context.applicationContext, mediaTypes)
+    startIndexing(context.applicationContext, mediaTypes, indexJob)
 }
 
 suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<MediaType, FileEmbeddingStore>>, clusterCrossRefRepository: ClusterCrossRefRepository, clusterMetadataRepository: ClusterMetadataRepository) {
@@ -42,15 +42,15 @@ suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<Media
         when(typeToStore.first){
             MediaType.IMAGE -> {
                 typeToStore.second.clear()
-                File(context.filesDir, EmbeddingStoresFiles.IMAGE).delete()
+                File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE).delete()
             }
             MediaType.VIDEO -> {
                 typeToStore.second.clear()
-                File(context.filesDir, EmbeddingStoresFiles.VIDEO).delete()
+                File(context.filesDir, EmbeddingStoresFilesQuant.VIDEO).delete()
             }
         }
     }
-    File(context.filesDir, EmbeddingStoresFiles.MEDIA_CLUSTER).delete()
+    File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER).delete()
     clusterCrossRefRepository.clear()
     clusterMetadataRepository.clear()
     refreshIndex(context.applicationContext, mediaEmbeddingStores.map{it.first})
@@ -69,4 +69,26 @@ suspend fun indexMedia(context: Context,  mediaType: MediaType, store: FileEmbed
     }
     metadataRepo.insert(newMedia)
     indexer.run(newMediaIds)
+}
+
+suspend fun indexMediaForConcepts(
+    mediaType: MediaType,
+    indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>,
+    metadataRepo: MediaMetadataRepository,
+    allowedTags: List<Long>,
+    allowedClusters: List<Long>,
+){
+    val mediaProcess = mutableSetOf<MediaMetadata>()
+    when{
+        allowedTags.isNotEmpty() -> {
+            val existingMediaMatchingTags = metadataRepo.getByTagsWithoutDescription(allowedTags, mediaType)
+            mediaProcess.addAll(existingMediaMatchingTags)
+        }
+        allowedClusters.isNotEmpty() -> {
+            val existingMediaMatchingClusters = metadataRepo.getByClustersWithoutDescription(allowedClusters, mediaType)
+            mediaProcess.addAll(existingMediaMatchingClusters)
+        }
+    }
+    if(mediaProcess.isEmpty()) return
+    indexer.run(mediaProcess.toList())
 }
