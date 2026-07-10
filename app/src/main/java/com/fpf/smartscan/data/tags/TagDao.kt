@@ -24,30 +24,38 @@ interface TagDao {
     suspend fun getByIds(ids: List<Long>): List<TagEntity>
 
     @Query("""
-    SELECT 
+    SELECT
         t.id AS tagId,
         t.name,
-        COUNT(c.mediaId) AS size,
-        m.id AS thumbNailId,
-        m.type AS thumbNailType
+        counts.size,
+        latest.thumbNailId,
+        latest.thumbNailType
     FROM media_tag t
-    JOIN tag_crossref c
-        ON c.tagId = t.id
-    JOIN media_metadata m
-        ON m.id = c.mediaId
-        AND m.type = c.mediaType
-    WHERE m.id = (
-        SELECT m2.id
-        FROM media_metadata m2
-        INNER JOIN tag_crossref c2
-            ON c2.mediaId = m2.id
-            AND c2.mediaType = m2.type
-        WHERE c2.tagId = t.id
-        ORDER BY m2.dateAdded DESC, m2.id DESC
-        LIMIT 1
-    )
-    GROUP BY t.id
-    ORDER BY size DESC
+    JOIN (
+        SELECT
+            tagId,
+            COUNT(*) AS size
+        FROM tag_crossref
+        GROUP BY tagId
+    ) counts
+        ON counts.tagId = t.id
+    JOIN (
+        SELECT
+            c.tagId,
+            m.id AS thumbNailId,
+            m.type AS thumbNailType,
+            ROW_NUMBER() OVER (
+                PARTITION BY c.tagId
+                ORDER BY m.dateAdded DESC, m.id DESC
+            ) AS rn
+        FROM tag_crossref c
+        JOIN media_metadata m
+            ON m.id = c.mediaId
+            AND m.type = c.mediaType
+    ) latest
+        ON latest.tagId = t.id
+        AND latest.rn = 1
+    ORDER BY counts.size DESC
 """)
     fun getCollections(): Flow<List<TagCollectionData>>
 
