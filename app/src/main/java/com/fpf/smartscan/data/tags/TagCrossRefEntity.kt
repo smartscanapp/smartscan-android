@@ -11,7 +11,7 @@ import com.fpf.smartscan.media.MediaType
     primaryKeys = ["mediaId", "mediaType", "tagId"],
     foreignKeys = [
         ForeignKey(
-            entity = Tag::class,
+            entity = TagEntity::class,
             parentColumns = ["id"],
             childColumns = ["tagId"],
             onDelete = ForeignKey.CASCADE

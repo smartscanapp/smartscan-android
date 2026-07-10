@@ -5,7 +5,6 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.fpf.smartscan.data.MediaTypeConverter
-import com.fpf.smartscansdk.core.cluster.ClusterMetadata
 
 @Entity(
     tableName = "cluster_metadata",
@@ -21,11 +20,3 @@ data class ClusterMetadataEntity (
     val stdSimilarity: Float = 0f,
     val label: String? = null,
     )
-
-
-fun ClusterMetadataEntity.toMetadata() = ClusterMetadata(
-    prototypeSize = prototypeSize,
-    meanSimilarity = meanSimilarity,
-    stdSimilarity = stdSimilarity,
-    label = label
-)

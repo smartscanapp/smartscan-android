@@ -80,7 +80,7 @@ fun TagAdder(
                         .onFocusChanged{isFocused = it.isFocused},
                     shape = MaterialTheme.shapes.small,
                     colors = TextFieldDefaults.colors(focusedIndicatorColor = MaterialTheme.colorScheme.primary, unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor = Color.Transparent),
-                    leadingIcon = { Icon(Icons.Filled.Tag, contentDescription = "Tag", tint = MaterialTheme.colorScheme.primary) }
+                    leadingIcon = { Icon(Icons.Filled.Tag, contentDescription = "TagEntity", tint = MaterialTheme.colorScheme.primary) }
                 )
                 AutoCompleter(
                     isVisible = autoCompleteTagResults.isNotEmpty() && isFocused,
