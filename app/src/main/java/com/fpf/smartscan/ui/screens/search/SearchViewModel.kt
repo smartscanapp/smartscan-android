@@ -18,7 +18,6 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.TagEntity
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
@@ -29,10 +28,8 @@ import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.removeStaleMedia
-import com.fpf.smartscan.media.toMediaItem
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
-import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.search.dedupe
@@ -255,7 +252,7 @@ class SearchViewModel(
         val totalCount = finalResults.size
         val initialBatch = finalResults.take(RESULTS_BATCH_SIZE) // initial results the rest loaded dynamically
         val (validIds, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), initialBatch, _state.value.mediaType)
-        val filteredSearchResults = validIds.map { toMediaItem(it, _state.value.mediaType) }
+        val filteredSearchResults = validIds.map { MediaItem(it, _state.value.mediaType) }
 
         _state.emit( _state.value.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults))
 
@@ -301,7 +298,7 @@ class SearchViewModel(
                 val (filteredResults, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), batch, _state.value.mediaType)
 
                 if (filteredResults.isNotEmpty()) {
-                    val filteredSearchResults = _state.value.searchResults + filteredResults.map { toMediaItem(it, _state.value.mediaType) }
+                    val filteredSearchResults = _state.value.searchResults + filteredResults.map { MediaItem(it, _state.value.mediaType) }
                     _state.emit(_state.value.copy(searchResults = filteredSearchResults))
                 }
 

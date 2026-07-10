@@ -68,10 +68,3 @@ fun mediaIdToUri(id: Long, mediaType: MediaType): Uri {
         MediaType.VIDEO -> getVideoUriFromId(id)
     }
 }
-
-fun toMediaItem(id: Long, type: MediaType): MediaItem{
-    return MediaItem(
-        id = id,
-        type = type
-    )
-}
