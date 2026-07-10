@@ -1,11 +1,15 @@
 package com.fpf.smartscan.ui.screens.concepts
 
 import android.app.Application
+import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.concepts.ConceptManager
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
@@ -52,9 +56,12 @@ class ConceptsViewModel(
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptsViewModel"
+        private const val SIMILARITY_THRESHOLD = 0.3f
+        private const val INVALID_COLLECTION_ID = -1L
     }
 
-    private var idCount: Long = 0L
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
+
 
     val tagManager = TagManager(
         tagRepository = tagRepository,
@@ -68,6 +75,13 @@ class ConceptsViewModel(
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
         mediaMetadataRepository = mediaMetadataRepository,
+    )
+
+    val conceptManager = ConceptManager(
+        conceptRepository=conceptRepository,
+        conceptCrossRefRepository=conceptCrossRefRepository,
+        conceptEmbedStore=conceptEmbedStore,
+        imageConceptEmbedStore=imageConceptEmbedStore
     )
 
     private val _state = MutableStateFlow(ConceptsState())
@@ -156,31 +170,41 @@ class ConceptsViewModel(
 
     private fun addConcept(description: String){
         viewModelScope.launch(Dispatchers.IO) {
-            conceptRepository.insertConcept(Concept(
-                id = generateId(),
-                description = description,
-                size = 0,
-            ))
-            ++idCount
+            val concept = conceptManager.createConcept(description)
+            conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
         }
     }
 
     private fun updateConcept(concept: Concept, newDescription: String){
-        val updatedConcept = concept.copy(description = newDescription, updatedAt = System.currentTimeMillis())
         viewModelScope.launch(Dispatchers.IO) {
-            conceptRepository.updateConcept(updatedConcept)
+            conceptManager.updateConcept(concept, newDescription)
         }
     }
 
     private fun deleteConcepts(){
         viewModelScope.launch(Dispatchers.IO) {
-            val collections = _state.value.selection.selectedItems
-            conceptRepository.deleteConcepts(collections.toList())
+            val concepts = _state.value.selection.selectedItems
+            conceptManager.deleteConcepts(concepts.toList())
             resetSelection()
         }
     }
 
-    private fun generateId(): Long = System.currentTimeMillis() + idCount
+    // TODO: return actual media collections
+    private fun getAllowedTagCollections(): Set<Long>{
+        val tagIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_TAG_COLLECTIONS, emptySet())
+            .orEmpty()
+            .map { it.toLong() }
+            .toSet()
+        return tagIds
+    }
+
+    private fun getAllowedAutoCollections(): Set<Long>{
+        val clusterIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_AUTO_COLLECTIONS, emptySet())
+            .orEmpty()
+            .map { it.toLong() }
+            .toSet()
+        return clusterIds
+    }
 
     private fun toggleSelectedCollection(item: MediaCollection) { _state.update {
         it.copy(
@@ -189,8 +213,7 @@ class ConceptsViewModel(
                 item,
                 it.totalCollections
             )
-        )
-    }
+        ) }
     }
 
     private fun setCollectionType(type: CollectionType?) = _state.update { it.copy(selectedCollectionType = type) }
@@ -216,6 +239,7 @@ class ConceptsViewModel(
 
     private suspend fun getSelectedConcepts(): Set<Concept> = SelectionUtils.getSelectedItems(_state.value.selection) { getAllConcepts() }
 
+    //TODO: get from db
     private suspend fun getAllConcepts(): MutableSet<Concept> {
         val currentState = state.value
         return mutableSetOf()
