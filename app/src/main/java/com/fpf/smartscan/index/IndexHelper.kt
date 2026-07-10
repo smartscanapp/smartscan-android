@@ -25,7 +25,7 @@ fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: Index
             MediaIndexForegroundService.EXTRA_MEDIA_TYPES,
             ArrayList(mediaTypes.map { it.name })
         )
-        .putExtra(MediaIndexForegroundService.EXTRA_INDEX_JOB, indexJob)
+        .putExtra(MediaIndexForegroundService.EXTRA_INDEX_JOB, indexJob.name)
         .also { intent -> context.applicationContext.startForegroundService(intent) }
 }
 
