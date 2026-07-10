@@ -1,12 +1,5 @@
 package com.fpf.smartscan.constants
 
-import com.fpf.smartscan.media.MediaType
-
-val mediaTypeOptions = mapOf(
-    MediaType.IMAGE to "Images",
-    MediaType.VIDEO to "Videos",
-)
-
 object EmbeddingStoresFiles{
     const val IMAGE: String = "image_index.bin"
     const val VIDEO: String = "video_index.bin"
@@ -20,4 +13,5 @@ object EmbeddingStoresFilesQuant{
     const val IMAGE: String = "image_index_quant.bin"
     const val VIDEO: String = "video_index_quant.bin"
     const val CLUSTER: String = "cluster_index_quant.bin"
+    const val IMAGE_CONCEPT: String = "image_concept_index_quant.bin"
 }
