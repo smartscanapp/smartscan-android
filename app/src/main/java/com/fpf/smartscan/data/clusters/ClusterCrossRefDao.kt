@@ -14,15 +14,6 @@ interface ClusterCrossRefDao {
     suspend fun getAll(): List<ClusterCrossRef>
 
     @Query("""
-        SELECT metadata.*, COUNT(crossRef.mediaId) AS count
-        FROM media_cluster_crossref crossRef
-        JOIN cluster_metadata metadata ON metadata.clusterId = crossRef.clusterId
-        GROUP BY crossRef.clusterId
-        ORDER BY count DESC
-    """)
-    fun getClustersWithCount(): Flow<List<ClusterMetadataWithCount>>
-
-    @Query("""
     SELECT crossRef.*
     FROM media_cluster_crossref crossRef
     JOIN media_metadata metadata ON metadata.id = crossRef.mediaId

@@ -1,13 +1,15 @@
 package com.fpf.smartscan.data.clusters
 
 import com.fpf.smartscansdk.core.cluster.ClusterMetadata
+import kotlinx.coroutines.flow.Flow
 import kotlin.collections.associate
 
 class ClusterMetadataRepository(private val dao: ClusterMetadataDao) {
-    suspend fun getAllMetadataAsMap(): Map<Long, ClusterMetadata> = dao.getAll().associate {
+    suspend fun getAllMetadataAsMap(): Map<Long, ClusterMetadata> = dao.get().associate {
             it.clusterId to it.toMetadata()
         }
 
+    fun getCollections(): Flow<List<AutoCollectionData>> = dao.getCollections()
     suspend fun getMetadata(ids: List<Long>): List<MediaClusterMetadata> = dao.get(ids)
     suspend fun getMetadata(id: Long): MediaClusterMetadata? = dao.get(listOf(id)).firstOrNull()
 
