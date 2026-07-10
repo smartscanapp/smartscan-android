@@ -2,6 +2,7 @@ package com.fpf.smartscan.data.mappers
 
 import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagEntity
+import com.fpf.smartscan.tag.NewTag
 import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.tag.TagCrossRef
 
@@ -27,4 +28,8 @@ fun TagEntity.toDomain(): Tag = Tag(
     id = id,
     name=name,
     lastUsedAt=lastUsedAt
+)
+
+fun NewTag.toEntity(): TagEntity = TagEntity(
+    name=name,
 )

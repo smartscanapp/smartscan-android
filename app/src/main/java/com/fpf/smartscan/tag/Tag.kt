@@ -5,3 +5,8 @@ data class Tag(
     val name: String,
     val lastUsedAt: Long? = null,
 )
+
+
+data class NewTag(
+    val name: String
+)

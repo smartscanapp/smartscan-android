@@ -38,6 +38,7 @@ import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
 import com.fpf.smartscan.search.rerankItems
+import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
 import com.fpf.smartscan.ui.state.common.SelectionState
@@ -92,7 +93,7 @@ class SearchViewModel(
         mediaMetadataRepository = mediaMetadataRepository,
         )
 
-    val allTags: StateFlow<List<TagEntity>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
         imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE

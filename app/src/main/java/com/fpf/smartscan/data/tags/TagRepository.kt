@@ -3,6 +3,7 @@ package com.fpf.smartscan.data.tags
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
 import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.tag.NewTag
 import com.fpf.smartscan.tag.Tag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,7 @@ class TagRepository(private val dao: TagDao) {
 
      suspend fun getTagsById(ids: List<Long>): List<Tag> = dao.getByIds(ids).map{it.toDomain()}
 
-     suspend fun insertTags(mediaTags: List<Tag>): List<Long> = dao.insert(mediaTags.map{it.toEntity()})
+     suspend fun insertTags(mediaTags: List<NewTag>): List<Long> = dao.insert(mediaTags.map{it.toEntity()})
 
      suspend fun updateTags(mediaTags: List<Tag>) = dao.update(mediaTags.map{it.toEntity()})
 

@@ -143,8 +143,7 @@ class CollectionItemsViewModel(
         }
         .cachedIn(viewModelScope)
 
-    val tagCollections: StateFlow<List<MediaCollection>> = tagCrossRefRepository.getTagsWithCounts()
-        .map (tagManager::toCollections)
+    val tagCollections: StateFlow<List<MediaCollection>> = tagRepository.getCollections()
         .flowOn(Dispatchers.IO)
         .stateIn(
         scope = viewModelScope,
@@ -152,8 +151,7 @@ class CollectionItemsViewModel(
         initialValue = emptyList()
     )
 
-    val clusterCollections: StateFlow<List<MediaCollection>> = clusterCrossRefRepository.getClustersWithCount()
-            .map(clusterManager::toCollections)
+    val clusterCollections: StateFlow<List<MediaCollection>> = clusterMetadataRepository.getCollections()
             .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,
