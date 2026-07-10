@@ -5,7 +5,6 @@ import com.fpf.smartscan.data.tags.Tag
 import com.fpf.smartscan.data.tags.TagCrossRef
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.TagWithCount
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
@@ -98,22 +97,6 @@ class TagManager(
         val currentTag = tagRepository.getTagsByName(listOf(currentTagName)).firstOrNull()?: return
         items.groupBy { it.type }.forEach { (type, items) ->
             tagCrossRefRepository.deleteMediaMatchTag(  items.map{it.id}, currentTag.id, type)
-        }
-    }
-
-    suspend fun toCollections(tags: List<TagWithCount>): List<MediaCollection> {
-        return tags.mapNotNull {
-            val mediaMeta = mediaMetadataRepository.getByTag(it.id, limit = 1, offset = 0).firstOrNull()
-            val uri = mediaMeta?.let { mediaMeta -> mediaIdToUri(mediaMeta.id, mediaMeta.type) }
-            uri?.let { uri ->
-                MediaCollection(
-                    id = it.id,
-                    name = it.name,
-                    thumbNail = uri,
-                    size = it.count,
-                    type = CollectionType.TAG
-                )
-            }
         }
     }
 }
