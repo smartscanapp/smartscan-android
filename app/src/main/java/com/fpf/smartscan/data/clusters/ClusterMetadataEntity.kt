@@ -5,7 +5,6 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.fpf.smartscan.data.MediaTypeConverter
-import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscansdk.core.cluster.ClusterMetadata
 
 @Entity(
@@ -14,7 +13,7 @@ import com.fpf.smartscansdk.core.cluster.ClusterMetadata
         Index(value = ["label"], unique = true),
     ])
 @TypeConverters(MediaTypeConverter::class)
-data class MediaClusterMetadata (
+data class ClusterMetadataEntity (
     @PrimaryKey
     val clusterId: Long,
     val prototypeSize: Int,
@@ -24,7 +23,7 @@ data class MediaClusterMetadata (
     )
 
 
-fun MediaClusterMetadata.toMetadata() = ClusterMetadata(
+fun ClusterMetadataEntity.toMetadata() = ClusterMetadata(
     prototypeSize = prototypeSize,
     meanSimilarity = meanSimilarity,
     stdSimilarity = stdSimilarity,

@@ -11,7 +11,7 @@ import com.fpf.smartscan.media.MediaType
     primaryKeys = ["mediaId", "mediaType"],
     foreignKeys = [
         ForeignKey(
-            entity = MediaClusterMetadata::class,
+            entity = ClusterMetadataEntity::class,
             parentColumns = ["clusterId"],
             childColumns = ["clusterId"],
             onDelete = ForeignKey.CASCADE

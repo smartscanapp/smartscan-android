@@ -3,7 +3,7 @@ package com.fpf.smartscan.cluster
 import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.clusters.MediaClusterMetadata
+import com.fpf.smartscan.data.clusters.ClusterMetadataEntity
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
@@ -103,7 +103,7 @@ class ClusterManager(
         val (existingClusters, newClusters) = clusterResult.clusters.values.partition { it.clusterId in existingClusterIds }
 
         val existingMetadata = existingClusters.map {
-            MediaClusterMetadata(
+            ClusterMetadataEntity(
                 clusterId = it.clusterId,
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
@@ -113,7 +113,7 @@ class ClusterManager(
         }
 
         val newMetadata = newClusters.map {
-            MediaClusterMetadata(
+            ClusterMetadataEntity(
                 clusterId = it.clusterId,
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
@@ -154,7 +154,7 @@ class ClusterManager(
     private suspend fun createNewCluster(itemEmbeds: List<StoredEmbedding>, clusterLabel: String, itemsMediaTypeMap: Map<Long, MediaType>): Long{
         val (metadata, prototype ) = if(itemEmbeds.size == 1) {
             val defaultThreshold = getDefaultThreshold(getAllClusters())
-            val meta = MediaClusterMetadata(
+            val meta = ClusterMetadataEntity(
                 clusterId = System.currentTimeMillis(),
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = defaultThreshold,
@@ -165,7 +165,7 @@ class ClusterManager(
             Pair(meta, prototypeEmbedding)
         }else{
             val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(itemEmbeds.map { it.embedding })
-            val meta = MediaClusterMetadata(
+            val meta = ClusterMetadataEntity(
                 clusterId = System.currentTimeMillis(),
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = meanSim,

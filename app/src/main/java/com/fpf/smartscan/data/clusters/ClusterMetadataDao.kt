@@ -6,7 +6,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.fpf.smartscan.media.MediaType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -45,7 +44,7 @@ interface ClusterMetadataDao {
     JOIN media_cluster_crossref crossRef ON metadata.clusterId = crossRef.clusterId
     GROUP BY metadata.clusterId
 """)
-    suspend fun get(): List<MediaClusterMetadata>
+    suspend fun get(): List<ClusterMetadataEntity>
 
     @Query("""
     SELECT metadata.*, COUNT(crossRef.mediaId) AS prototypeSize
@@ -54,13 +53,13 @@ interface ClusterMetadataDao {
     WHERE metadata.clusterId IN (:ids)
     GROUP BY metadata.clusterId
 """)
-    suspend fun get(ids: List<Long>): List<MediaClusterMetadata>
+    suspend fun get(ids: List<Long>): List<ClusterMetadataEntity>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(clusters: List<MediaClusterMetadata>): List<Long>
+    suspend fun insert(clusters: List<ClusterMetadataEntity>): List<Long>
 
     @Update
-    suspend fun update(clusters: List<MediaClusterMetadata>)
+    suspend fun update(clusters: List<ClusterMetadataEntity>)
 
     @Transaction
     @Query("DELETE FROM cluster_metadata WHERE clusterId IN (:ids)")

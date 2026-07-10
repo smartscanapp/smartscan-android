@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterCrossRefDao
-import com.fpf.smartscan.data.clusters.MediaClusterMetadata
+import com.fpf.smartscan.data.clusters.ClusterMetadataEntity
 import com.fpf.smartscan.data.clusters.ClusterMetadataDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefEntity
@@ -28,7 +28,7 @@ import com.fpf.smartscan.data.tags.TagDao
 @Database(
     entities = [
         MediaMetadata::class,
-        MediaClusterMetadata::class,
+        ClusterMetadataEntity::class,
         ClusterCrossRefEntity::class,
         Tag::class,
         TagCrossRefEntity::class,
