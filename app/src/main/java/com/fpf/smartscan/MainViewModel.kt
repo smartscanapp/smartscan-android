@@ -15,6 +15,7 @@ import com.fpf.smartscan.data.MediaDatabase
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.index.ConceptImageIndexListener
 import com.fpf.smartscan.index.ImageIndexListener
 import com.fpf.smartscan.index.VideoIndexListener
 import com.fpf.smartscan.index.rebuildIndex
@@ -55,6 +56,9 @@ class MainViewModel(
     val imageIndexStatus = ImageIndexListener.indexingStatus
     val videoIndexProgress = VideoIndexListener.progress
     val videoIndexStatus = VideoIndexListener.indexingStatus
+
+    val conceptImageIndexProgress = ConceptImageIndexListener.progress
+    val conceptImageIndexStatus = ConceptImageIndexListener.indexingStatus
 
     private val _hasIndexedImages = MutableStateFlow<Boolean?>(null)
     private val _hasIndexedVideos = MutableStateFlow<Boolean?>(null)

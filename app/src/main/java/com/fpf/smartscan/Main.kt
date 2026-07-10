@@ -63,10 +63,17 @@ fun Main(
     val videoIndexProgress by mainViewModel.videoIndexProgress.collectAsState()
     val imageIndexStatus by mainViewModel.imageIndexStatus.collectAsState()
     val videoIndexStatus by mainViewModel.videoIndexStatus.collectAsState()
+
+    val conceptImageIndexProgress by mainViewModel.conceptImageIndexProgress.collectAsState()
+    val conceptImageIndexStatus by mainViewModel.conceptImageIndexStatus.collectAsState()
+
     val hasIndexedImages by mainViewModel.hasIndexedImages.collectAsState()
     val hasIndexedVideos by mainViewModel.hasIndexedVideos.collectAsState()
     val runningMediaTypes by mainViewModel.runningMediaTypes.collectAsState()
-    val isIndexing = imageIndexStatus == IndexingStatus.ACTIVE || videoIndexStatus == IndexingStatus.ACTIVE || runningMediaTypes.isNotEmpty()
+    val isIndexing = imageIndexStatus == IndexingStatus.ACTIVE ||
+            videoIndexStatus == IndexingStatus.ACTIVE ||
+            runningMediaTypes.isNotEmpty() ||
+            conceptImageIndexStatus == IndexingStatus.ACTIVE
 
     var hasStoragePermission by remember { mutableStateOf(false) }
     var showFirstScanModal by remember { mutableStateOf(false) }
@@ -124,10 +131,10 @@ fun Main(
                 if(isIndexing) {
                     ScanLoadingView(
                         isIndexing = true,
-                        imageIndexStatus = imageIndexStatus,
+                        imageIndexStatus = if(conceptImageIndexStatus == IndexingStatus.ACTIVE)  conceptImageIndexStatus else imageIndexStatus,
                         videoIndexStatus = videoIndexStatus,
                         videoIndexProgress = videoIndexProgress,
-                        imageIndexProgress = imageIndexProgress,
+                        imageIndexProgress = if(conceptImageIndexStatus == IndexingStatus.ACTIVE)  conceptImageIndexProgress else imageIndexProgress,
                         title = stringResource(R.string.scan_in_progress_title),
                         message = stringResource(R.string.scan_in_progress_content)
                     )
