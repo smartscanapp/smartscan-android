@@ -18,6 +18,7 @@ class ConceptManager(
     private var idCount: Long = 0L
 
     suspend fun createConcept(description: String): Concept{
+        if(!textEmbedder.isInitialized()) textEmbedder.initialize()
         val rawEmbedding = textEmbedder.embed(description)
         val concept = Concept(id = generateId(), description = description, size = 0)
         conceptRepository.insertConcept(concept)
