@@ -44,6 +44,8 @@ class ConceptsViewModel(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
+    private val conceptEmbedStore: FileEmbeddingStore,
+    private val imageConceptEmbedStore: FileEmbeddingStore,
     imageEmbedStore: FileEmbeddingStore,
     videoEmbedStore: FileEmbeddingStore,
     clusterEmbedStore: FileEmbeddingStore,

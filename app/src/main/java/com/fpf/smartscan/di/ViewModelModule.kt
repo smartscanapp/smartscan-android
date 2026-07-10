@@ -19,7 +19,7 @@ val viewModelModule = module {
             clusterStore = get(CLUSTER_EMBED_STORE),
             clusterCrossRefRepository = get(),
             clusterMetadataRepository = get()
-            )
+        )
     }
     viewModel {
         SearchViewModel(
@@ -44,8 +44,8 @@ val viewModelModule = module {
             tagCrossRefRepository = get(),
             clusterCrossRefRepository = get(),
             clusterMetadataRepository = get(),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE),
-            )
+            clusterEmbedStore = get(CLUSTER_EMBED_STORE)
+        )
     }
 
     viewModel {
@@ -58,8 +58,8 @@ val viewModelModule = module {
             clusterMetadataRepository = get(),
             imageEmbedStore = get(IMAGE_EMBED_STORE),
             videoEmbedStore = get(VIDEO_EMBED_STORE),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE),
-            )
+            clusterEmbedStore = get(CLUSTER_EMBED_STORE)
+        )
     }
     viewModel {
         ConceptsViewModel(
@@ -74,6 +74,8 @@ val viewModelModule = module {
             imageEmbedStore = get(IMAGE_EMBED_STORE),
             videoEmbedStore = get(VIDEO_EMBED_STORE),
             clusterEmbedStore = get(CLUSTER_EMBED_STORE),
+            conceptEmbedStore = get(CONCEPT_EMBED_STORE),
+            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE)
         )
     }
 }

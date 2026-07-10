@@ -13,5 +13,6 @@ object EmbeddingStoresFilesQuant{
     const val IMAGE: String = "image_index_quant.bin"
     const val VIDEO: String = "video_index_quant.bin"
     const val CLUSTER: String = "cluster_index_quant.bin"
+    const val CONCEPT: String = "concept_index_quant.bin"
     const val IMAGE_CONCEPT: String = "image_concept_index_quant.bin"
 }
