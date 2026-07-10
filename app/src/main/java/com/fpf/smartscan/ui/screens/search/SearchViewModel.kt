@@ -18,7 +18,7 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.Tag
+import com.fpf.smartscan.data.tags.TagEntity
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
@@ -92,7 +92,7 @@ class SearchViewModel(
         mediaMetadataRepository = mediaMetadataRepository,
         )
 
-    val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val allTags: StateFlow<List<TagEntity>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
         imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE

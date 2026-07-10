@@ -1,7 +1,7 @@
 package com.fpf.smartscan.tag
 
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.data.tags.Tag
+import com.fpf.smartscan.data.tags.TagEntity
 import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
@@ -17,7 +17,7 @@ class TagManager(
         val existing = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
         var id = existing?.id
         if(id == null){
-            id = tagRepository.insertTags(listOf(Tag(name = tagName.trim()))).first()
+            id = tagRepository.insertTags(listOf(TagEntity(name = tagName.trim()))).first()
         }
         val tagEntries = items.map { TagCrossRefEntity(mediaId = it.id, tagId = id, mediaType = it.type) }
         tagCrossRefRepository.insertTagCrossRefs(tagEntries)
@@ -51,7 +51,7 @@ class TagManager(
 
     suspend fun updateLastUsage(tagName: String){
         val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()?: return
-        tagRepository.updateTags(listOf(Tag(tag.id, tag.name, System.currentTimeMillis())))
+        tagRepository.updateTags(listOf(TagEntity(tag.id, tag.name, System.currentTimeMillis())))
     }
 
     suspend fun renameTag(tagName: String, newName: String){
@@ -83,7 +83,7 @@ class TagManager(
     }
 
     suspend fun createNewTagAndMoveItems(items: Set<MediaItem>, currentTagName: String, newTagName: String){
-        val newTagId = tagRepository.insertTags(listOf(Tag(name = newTagName))).firstOrNull()?: return
+        val newTagId = tagRepository.insertTags(listOf(TagEntity(name = newTagName))).firstOrNull()?: return
         moveItems(items, currentTagName, newTagId)
     }
 

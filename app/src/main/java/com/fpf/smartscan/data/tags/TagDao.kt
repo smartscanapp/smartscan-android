@@ -12,16 +12,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TagDao {
     @Query("SELECT * FROM media_tag")
-    fun getAllFlow(): Flow<List<Tag>>
+    fun getAllFlow(): Flow<List<TagEntity>>
 
     @Query("SELECT * FROM media_tag")
-    suspend fun getAll(): List<Tag>
+    suspend fun getAll(): List<TagEntity>
 
     @Query("SELECT * FROM media_tag WHERE name in (:names)")
-    suspend fun getByNames(names: List<String>): List<Tag>
+    suspend fun getByNames(names: List<String>): List<TagEntity>
 
     @Query("SELECT * FROM media_tag WHERE id in (:ids)")
-    suspend fun getByIds(ids: List<Long>): List<Tag>
+    suspend fun getByIds(ids: List<Long>): List<TagEntity>
 
     @Query("""
     SELECT 
@@ -54,13 +54,13 @@ interface TagDao {
     // MUST use ignore. Using replace will cause cascading deletes of cross refs
     @Transaction
     @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
-    suspend fun insert(imageTags: List<Tag>): List<Long>
+    suspend fun insert(imageTags: List<TagEntity>): List<Long>
 
     @Update
-    suspend fun update(imageTags: List<Tag>)
+    suspend fun update(imageTags: List<TagEntity>)
 
     @Delete
-    suspend fun delete(imageTags: List<Tag>)
+    suspend fun delete(imageTags: List<TagEntity>)
 
     @Query("DELETE FROM media_tag WHERE name in (:names)")
     suspend fun deleteByNames(names: List<String>)
