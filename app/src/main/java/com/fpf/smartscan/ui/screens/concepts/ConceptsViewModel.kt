@@ -5,6 +5,7 @@ import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.fpf.smartscan.R
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.concepts.ConceptManager
@@ -22,13 +23,18 @@ import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionEvent
+import com.fpf.smartscan.index.IndexJob
+import com.fpf.smartscan.index.startIndexing
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
+import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,7 +65,15 @@ class ConceptsViewModel(
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
+    private val textEmbedder by lazy {
+        MiniLMTextEmbedder(application,
+            ModelAssetSource.Resource(R.raw.minilm_sentence_transformer_quant),
+            vocabSource = ModelAssetSource.Resource(R.raw.minilm_vocab),
+            configSource = ModelAssetSource.Resource(R.raw.minilm_config))
+    }
+
     val conceptManager = ConceptManager(
+        textEmbedder=textEmbedder,
         conceptRepository=conceptRepository,
         conceptCrossRefRepository=conceptCrossRefRepository,
         conceptEmbedStore=conceptEmbedStore,
@@ -156,8 +170,14 @@ class ConceptsViewModel(
 
     private fun addConcept(description: String){
         viewModelScope.launch(Dispatchers.IO) {
-            val concept = conceptManager.createConcept(description)
-            conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
+            // TODO: add more robust check and handle this sitaution
+            if(_state.value.collectionsSelection.selectedItems.isEmpty()) return@launch
+            if(!imageConceptEmbedStore.exists) {
+                startIndexing(getApplication(), listOf(MediaType.IMAGE), IndexJob.CONCEPTS)
+            }else{
+                val concept = conceptManager.createConcept(description)
+                conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
+            }
         }
     }
 
@@ -169,7 +189,7 @@ class ConceptsViewModel(
 
     private fun deleteConcepts(){
         viewModelScope.launch(Dispatchers.IO) {
-            val concepts = _state.value.selection.selectedItems
+            val concepts = getSelectedConcepts()
             conceptManager.deleteConcepts(concepts.toList())
             resetSelection()
         }
@@ -185,7 +205,6 @@ class ConceptsViewModel(
         }
     }
 
-    // TODO: move to concept manager
     private suspend fun getAllowedTagCollections(): List<MediaCollection>{
         val tagIds = getAllowedTags(sharedPrefs)
         return tagRepository.getCollections(tagIds.toList())
