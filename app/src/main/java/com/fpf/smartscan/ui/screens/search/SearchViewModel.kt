@@ -34,6 +34,7 @@ import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
@@ -415,13 +416,7 @@ class SearchViewModel(
     private suspend fun getAllResults(): MutableSet<MediaItem> {
         return withContext(Dispatchers.IO) {
             val mediaMetadataList = mediaMetadataRepository.getByIds(cachedIds, _state.value.mediaType)
-            mediaMetadataList.map {
-                MediaItem(
-                    id = it.id,
-                    uri = mediaIdToUri(it.id, it.type),
-                    type = it.type
-                )
-            }.toMutableSet()
+            mediaMetadataList.map { it.toItem() }.toMutableSet()
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.paging.PagingState
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.media.toItem
 
 class TagPagingSource(
     private val mediaType: MediaType? = null,
@@ -28,14 +29,7 @@ class TagPagingSource(
             }
             val hasMore = mediaMetadataList.size > pageSize
             val pageItems = if (hasMore) mediaMetadataList.dropLast(1) else mediaMetadataList
-
-            val mediaItems = pageItems.map {
-                MediaItem(
-                    id=it.id,
-                    uri=mediaIdToUri(it.id, it.type),
-                    type = it.type
-                )
-            }
+            val mediaItems = pageItems.map {it.toItem()}
 
             LoadResult.Page(
                 data = mediaItems,

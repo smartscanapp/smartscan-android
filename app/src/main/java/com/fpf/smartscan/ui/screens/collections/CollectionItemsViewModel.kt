@@ -32,6 +32,7 @@ import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
@@ -315,24 +316,12 @@ class CollectionItemsViewModel(
         return when (currentCollection.type) {
             CollectionType.CLUSTER -> {
                 val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id)
-                itemsMatchingCluster.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                itemsMatchingCluster.map { it.toItem() }.toMutableSet()
             }
 
             CollectionType.TAG -> {
                 val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id)
-                itemsMatchingTag.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                itemsMatchingTag.map { it.toItem() }.toMutableSet()
             }
         }
     }
