@@ -15,4 +15,5 @@ data class AppSettings(
     val enableDirectGalleryOpen: Boolean = false,
     val resultsPerRow: Int = 4,
     val enableDedupe: Boolean = false,
-    )
+    val openaiApiKey: String? = null
+)

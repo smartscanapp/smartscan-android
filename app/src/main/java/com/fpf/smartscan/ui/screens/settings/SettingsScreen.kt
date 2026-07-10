@@ -203,6 +203,13 @@ fun SettingsScreen(
         ),
     )
 
+    val cloudProcessingSettingActions: List<SettingActionConfig> = listOf(
+        SettingActionConfig.Button(
+            label = "LLM provider API keys",
+            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.API)) },
+        ),
+    )
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -227,6 +234,11 @@ fun SettingsScreen(
                 SettingSection(
                     stringResource(id = R.string.scan_action),
                     settingActionConfigs = scanSettingActions
+                )
+
+                SettingSection(
+                    "Cloud processing",
+                    settingActionConfigs = cloudProcessingSettingActions
                 )
 
                 SettingSection(

@@ -37,6 +37,7 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.ui.components.common.CustomSlider
 import com.fpf.smartscan.navigation.SettingsRoutes
 import com.fpf.smartscan.navigation.TopBarState
+import com.fpf.smartscan.ui.components.common.TextInput
 import com.fpf.smartscan.ui.components.models.ModelsList
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
@@ -211,6 +212,13 @@ fun SettingsDetailScreen(
                         )
                     }
 
+                }
+                SettingsRoutes.API-> {
+                    TextInput(
+                        label = "OpenAI API Key",
+                        value = appSettings.openaiApiKey?:"",
+                        onValueChange = viewModel::updateOpenaiApiKey
+                    )
                 }
                 else -> {}
             }

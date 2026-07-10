@@ -181,4 +181,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _appSettings.update{currentSettings -> currentSettings.copy(enableDedupe = enable)}
         saveSettings(sharedPrefs, _appSettings.value)
     }
+
+    fun updateOpenaiApiKey(apiKey: String){
+        val currentSettings = _appSettings.value
+        _appSettings.value = currentSettings.copy(openaiApiKey = apiKey)
+        saveSettings(sharedPrefs, _appSettings.value)
+    }
 }
