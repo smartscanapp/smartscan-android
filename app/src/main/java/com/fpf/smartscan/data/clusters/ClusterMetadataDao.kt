@@ -36,7 +36,7 @@ interface ClusterMetadataDao {
     GROUP BY c.clusterId
     ORDER BY prototypeSize DESC
 """)
-    suspend fun getCollections(): Flow<List<AutoCollectionData>>
+    fun getCollections(): Flow<List<AutoCollectionData>>
 
     @Query("""
     SELECT metadata.*, COUNT(crossRef.mediaId) AS prototypeSize
