@@ -1,6 +1,6 @@
 package com.fpf.smartscan.cluster
 
-import com.fpf.smartscan.data.clusters.ClusterCrossRef
+import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.clusters.MediaClusterMetadata
@@ -67,7 +67,7 @@ class ClusterManager(
     }
 
     suspend fun moveItems(items: Set<MediaItem>, newClusterId: Long, oldClusterId: Long){
-        val crossRefs = items.map { ClusterCrossRef(clusterId = newClusterId, mediaId = it.id, mediaType = it.type) }
+        val crossRefs = items.map { ClusterCrossRefEntity(clusterId = newClusterId, mediaId = it.id, mediaType = it.type) }
         clusterCrossRefRepository.upsertClusterCrossRefs(crossRefs)
         listOf(oldClusterId, newClusterId).forEach { sync(it) }
     }
@@ -146,7 +146,7 @@ class ClusterManager(
 
         val crossRefs = clusterResult.assignments.mapNotNull {
             val mediaType =  mediaTypeMap[it.key]?: return@mapNotNull null
-            ClusterCrossRef(clusterId = it.value, mediaId = it.key, mediaType = mediaType)
+            ClusterCrossRefEntity(clusterId = it.value, mediaId = it.key, mediaType = mediaType)
         }
         clusterCrossRefRepository.upsertClusterCrossRefs(crossRefs)
     }
@@ -185,7 +185,7 @@ class ClusterManager(
 
         val crossRefs = itemEmbeds.mapNotNull {
             val mediaType = itemsMediaTypeMap[it.id]?: return@mapNotNull null
-            ClusterCrossRef(mediaId = it.id, clusterId = clusterEmbed.id, mediaType = mediaType)
+            ClusterCrossRefEntity(mediaId = it.id, clusterId = clusterEmbed.id, mediaType = mediaType)
         }
         clusterCrossRefRepository.upsertClusterCrossRefs(crossRefs)
         return clusterEmbed.id

@@ -27,7 +27,7 @@ import com.fpf.smartscan.media.MediaType
         Index(value = ["clusterId"])
     ]
 )
-data class ClusterCrossRef(
+data class ClusterCrossRefEntity(
     val mediaId: Long,
     val mediaType: MediaType,
     val clusterId: Long
