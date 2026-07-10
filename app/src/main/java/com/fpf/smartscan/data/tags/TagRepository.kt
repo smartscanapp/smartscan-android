@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 class TagRepository(private val dao: TagDao) {
      val allTags: Flow<List<Tag>> = dao.getAllFlow()
 
+     fun getCollections(): Flow<List<TagCollectionData>> = dao.getCollections()
+
      suspend fun getAllTags(): List<Tag> = dao.getAll()
 
      suspend fun getTagsByName(names: List<String>): List<Tag> = dao.getByNames(names)
