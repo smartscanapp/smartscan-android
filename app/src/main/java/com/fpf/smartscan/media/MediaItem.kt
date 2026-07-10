@@ -4,6 +4,7 @@ import android.net.Uri
 
 data class MediaItem(
     val id: Long,
-    val uri: Uri,
-    val type: MediaType
+    val type: MediaType,
+    val uri: Uri = mediaIdToUri(id, type),
+    val description: String? = null
 )

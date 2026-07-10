@@ -12,7 +12,7 @@ import com.fpf.smartscan.media.MediaType
         Index(value = ["dateAdded"]),
         Index(value = ["type", "dateAdded"])
     ])
-data class MediaMetadata(
+data class MediaMetadataEntity(
     val id: Long,
     val type: MediaType,
     val dateAdded: Long,
