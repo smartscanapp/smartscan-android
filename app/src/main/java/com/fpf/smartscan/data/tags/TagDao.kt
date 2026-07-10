@@ -59,9 +59,47 @@ interface TagDao {
 """)
     fun getCollections(): Flow<List<TagCollectionData>>
 
+    @Query("""
+    SELECT
+        t.id AS tagId,
+        t.name,
+        counts.size,
+        latest.thumbNailId,
+        latest.thumbNailType
+    FROM media_tag t
+    JOIN (
+        SELECT
+            tagId,
+            COUNT(*) AS size
+        FROM tag_crossref
+        GROUP BY tagId
+    ) counts
+        ON counts.tagId = t.id
+    JOIN (
+        SELECT
+            c.tagId,
+            m.id AS thumbNailId,
+            m.type AS thumbNailType,
+            ROW_NUMBER() OVER (
+                PARTITION BY c.tagId
+                ORDER BY m.dateAdded DESC, m.id DESC
+            ) AS rn
+        FROM tag_crossref c
+        JOIN media_metadata m
+            ON m.id = c.mediaId
+            AND m.type = c.mediaType
+    ) latest
+        ON latest.tagId = t.id
+        AND latest.rn = 1
+    WHERE t.id IN (:tagIds)
+    ORDER BY counts.size DESC
+""")
+    fun getCollections(tagIds: List<Long>): List<TagCollectionData>
+
+
     // MUST use ignore. Using replace will cause cascading deletes of cross refs
     @Transaction
-    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(imageTags: List<TagEntity>): List<Long>
 
     @Update
