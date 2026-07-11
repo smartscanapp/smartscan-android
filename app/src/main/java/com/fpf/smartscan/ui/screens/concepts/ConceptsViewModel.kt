@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.onEach
+
 class ConceptsViewModel(
     application: Application,
     private val tagRepository: TagRepository,
@@ -51,7 +52,7 @@ class ConceptsViewModel(
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptsViewModel"
-        private const val SIMILARITY_THRESHOLD = 0.3f
+        private const val SIMILARITY_THRESHOLD = 0.25f
     }
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
