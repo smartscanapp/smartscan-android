@@ -108,7 +108,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -136,7 +135,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow

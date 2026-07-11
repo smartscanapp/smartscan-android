@@ -1,6 +1,5 @@
 package com.fpf.smartscan.data.clusters
 
-import android.net.Uri
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
@@ -12,7 +11,6 @@ class ClusterPagingSource(
     private val mediaType: MediaType? = null,
     private val clusterId: Long,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val mediaIdToUri: (Long, MediaType) -> Uri
 ) : PagingSource<Int, MediaItem>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItem> {
