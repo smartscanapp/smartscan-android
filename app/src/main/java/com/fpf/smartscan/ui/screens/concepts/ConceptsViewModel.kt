@@ -6,29 +6,20 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.R
-import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.concepts.ConceptManager
 import com.fpf.smartscan.concepts.getAllowedClusters
 import com.fpf.smartscan.concepts.getAllowedTags
 import com.fpf.smartscan.concepts.setAllowedClusters
 import com.fpf.smartscan.concepts.setAllowedTags
-import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionEvent
-import com.fpf.smartscan.index.IndexJob
-import com.fpf.smartscan.index.startIndexing
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
@@ -125,6 +116,12 @@ class ConceptsViewModel(
     private val _event = MutableSharedFlow<CollectionEvent>()
     val event = _event.asSharedFlow()
 
+    val hasGeneratedHighlights: Boolean
+        get() = imageConceptEmbedStore.exists
+
+    val hasSelectCollection: Boolean
+        get() = _state.value.collectionsSelection.selectedItems.isNotEmpty()
+
     init {
         load()
     }
@@ -170,14 +167,8 @@ class ConceptsViewModel(
 
     private fun addConcept(description: String){
         viewModelScope.launch(Dispatchers.IO) {
-            // TODO: add more robust check and handle this sitaution
-            if(_state.value.collectionsSelection.selectedItems.isEmpty()) return@launch
-            if(!imageConceptEmbedStore.exists) {
-                startIndexing(getApplication(), listOf(MediaType.IMAGE), IndexJob.CONCEPTS)
-            }else{
-                val concept = conceptManager.createConcept(description)
-                conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
-            }
+            val concept = conceptManager.createConcept(description)
+            conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
         }
     }
 

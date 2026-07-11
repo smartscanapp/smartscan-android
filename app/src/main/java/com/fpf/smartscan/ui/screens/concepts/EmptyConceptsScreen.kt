@@ -26,6 +26,8 @@ import com.fpf.smartscan.R
 fun EmptyConceptsScreen(
     isVisible: Boolean,
     isMainScanRequired: Boolean,
+    hasSelectedCollections: Boolean,
+    hasGeneratedHighlights: Boolean,
     onGenerateHighlights: () -> Unit
 ) {
     if (!isVisible) return
@@ -78,11 +80,14 @@ fun EmptyConceptsScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
-                Button(
-                    onClick = onGenerateHighlights,
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text("Generate highlights")
+                if(!hasGeneratedHighlights) {
+                    Button(
+                        enabled = hasSelectedCollections,
+                        onClick = onGenerateHighlights,
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Generate highlights")
+                    }
                 }
             }
         }

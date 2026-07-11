@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
@@ -59,6 +57,7 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.buttons.CustomFloatingActionButton
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
@@ -206,12 +205,15 @@ fun ConceptsScreen(
             EmptyConceptsScreen(
                 isVisible = !isConceptsVisible,
                 isMainScanRequired=isMainScanRequired,
+                hasSelectedCollections = viewModel.hasSelectCollection,
+                hasGeneratedHighlights = viewModel.hasGeneratedHighlights,
                 onGenerateHighlights=onGenerateHighlights
             )
         }
 
 
-        FloatingActionButton(
+        CustomFloatingActionButton (
+            enabled = viewModel.hasSelectCollection && viewModel.hasGeneratedHighlights,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),
