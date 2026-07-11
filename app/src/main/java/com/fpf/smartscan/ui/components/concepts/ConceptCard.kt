@@ -32,10 +32,9 @@ fun ConceptCard(
     item: Concept,
     isSelecting: Boolean,
     isChecked: () -> Boolean,
-    onToggleSelected: (Concept) -> Unit,
     onItemClick: (Concept) -> Unit,
+    onItemLongClick: (Concept) -> Unit,
     modifier: Modifier = Modifier,
-    onToggleSelectionMode: () -> Unit,
 ) {
     val shape = RoundedCornerShape(12.dp)
 
@@ -52,19 +51,8 @@ fun ConceptCard(
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = {
-                    if (isSelecting) {
-                        onToggleSelected(item)
-                    } else {
-                        onItemClick(item)
-                    }
-                },
-                onLongClick = {
-                    if (!isSelecting) {
-                        onToggleSelectionMode()
-                        onToggleSelected(item)
-                    }
-                }
+                onClick = { onItemClick(item) },
+                onLongClick = { onItemLongClick(item) }
             )
     ) {
         Column(
@@ -93,7 +81,7 @@ fun ConceptCard(
         if (isSelecting) {
             CircularCheckbox(
                 checked = isChecked(),
-                onCheckedChange = { onToggleSelected(item) },
+                onCheckedChange = { onItemClick(item) },
                 modifier = Modifier
                     .offset(x = 8.dp, y = 8.dp)
                     .align(Alignment.TopStart)

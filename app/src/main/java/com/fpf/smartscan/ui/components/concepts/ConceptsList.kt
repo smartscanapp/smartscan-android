@@ -45,10 +45,9 @@ fun ConceptsList(
     isVisible: Boolean,
     items: List<Concept>,
     onItemClick: (Concept) -> Unit,
+    onItemLongClick: (Concept) -> Unit,
     selectedItems: Set<Concept> = emptySet(),
     excludedItems: Set<Concept> = emptySet(),
-    onToggleSelected: (Concept) -> Unit,
-    onToggleSelectionMode: () -> Unit,
     onOffsetChange: ((Int) -> Unit)? = null,
     numGridColumns: Int = 3,
     maxCollapsePx: Int = 0,
@@ -114,8 +113,7 @@ fun ConceptsList(
                 ConceptCard(
                     item=item,
                     onItemClick=onItemClick,
-                    onToggleSelected = onToggleSelected,
-                    onToggleSelectionMode = onToggleSelectionMode,
+                    onItemLongClick = onItemLongClick,
                     isSelecting = isSelecting,
                     isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
                 )

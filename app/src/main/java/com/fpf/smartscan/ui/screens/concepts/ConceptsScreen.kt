@@ -193,9 +193,15 @@ fun ConceptsScreen(
                 selectAll = state.selection.selectAll,
                 selectedItems = state.selection.selectedItems,
                 excludedItems = state.selection.excludedItems,
-                onItemClick = { viewModel.onAction(ConceptAction.SetConceptToView(it)) },
-                onToggleSelected = { viewModel.onAction(ConceptAction.ToggleSelectedConcept(it)) },
-                onToggleSelectionMode = {
+                onItemClick = {
+                    if(state.selection.isSelecting){
+                        viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
+                    }
+                    else{
+                        viewModel.onAction(ConceptAction.SetConceptToView(it)) }
+                    },
+                onItemLongClick = {
+                    viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
                     viewModel.onAction(ConceptAction.ToggleSelectionMode)
                     offset = 0
                 },
