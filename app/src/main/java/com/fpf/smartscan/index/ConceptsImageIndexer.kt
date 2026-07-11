@@ -31,16 +31,17 @@ class ConceptsImageIndexer(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean,
     private val maxImageSize: Int = 720,
-    listener: ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>>? = null,
+    listener: ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>?>? = null,
     memoryOptions: MemoryOptions = MemoryOptions(),
     batchSize: Int = 10,
-): BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>(context, listener, memoryOptions, batchSize){
+): BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>?>(context, listener, memoryOptions, batchSize){
 
 
-    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, Embedding>>) {
-        val metadataList = batch.map{it.first}
+    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, Embedding>?>) {
+        val filteredBatch = batch.filterNotNull()
+        val metadataList = filteredBatch.map{it.first}
         val imageIdToDateMap = getImageToDateMap(context, metadataList.map { it.id })
-        val embedsToStore = batch.map{
+        val embedsToStore = filteredBatch.map{
             val date = imageIdToDateMap[it.first.id]?: System.currentTimeMillis()
             StoredEmbedding(it.first.id, date, it.second)
         }
@@ -49,12 +50,12 @@ class ConceptsImageIndexer(
         listener?.onBatchComplete(context, batch)
     }
 
-    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding> {
+    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding>?? {
         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, item.id)
         val base64 = uriToBase64(context, contentUri, maxImageSize)
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
         Log.d(TAG, "LLM Output: ${result.toString()}")
-        if(!result.isTextBasedImage) error("Image is not a text-based image: Id=$item")
+        if(!result.isTextBasedImage) return null
         val highlightsAsString = result.highlights.joinToString("| ")
         val rawEmbedding = withContext(NonCancellable) { embedder.embed(highlightsAsString) }
         val embed = if(quantize) rawEmbedding.toQInt8Embed() else rawEmbedding.toF32Embed()

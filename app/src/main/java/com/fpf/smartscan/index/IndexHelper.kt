@@ -73,7 +73,7 @@ suspend fun indexMedia(context: Context,  mediaType: MediaType, store: FileEmbed
 
 suspend fun indexMediaForConcepts(
     mediaType: MediaType,
-    indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>,
+    indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>?>,
     metadataRepo: MediaMetadataRepository,
     allowedTags: List<Long>,
     allowedClusters: List<Long>,

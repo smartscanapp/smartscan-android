@@ -12,7 +12,7 @@ import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.processors.Metrics
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 
-abstract class BaseConceptIndexListener(private val notificationId: Int, private val tag: String) : ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>> {
+abstract class BaseConceptIndexListener(private val notificationId: Int, private val tag: String) : ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>?> {
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress
 
