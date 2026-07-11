@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -47,11 +48,13 @@ fun MediaHighlightsCard(
             ?.filter { it.isNotBlank() }
             ?: emptyList()
     }
+    val shape = RoundedCornerShape(12.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, Color.Gray.copy(alpha = 0.2f))
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), shape)
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
