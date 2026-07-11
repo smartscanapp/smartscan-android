@@ -117,6 +117,18 @@ interface MediaMetadataDao {
     """)
     suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadataEntity>
 
+    @Query("""
+    SELECT DISTINCT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId IN (:tagIds)
+      AND m.description IS NULL
+      AND m.type = :mediaType
+""")
+    suspend fun getByTagsWithoutDescription(tagIds: List<Long>, mediaType: MediaType): List<MediaMetadataEntity>
+
     // CLUSTER QUERIES
 
     @Query("""
@@ -157,6 +169,18 @@ interface MediaMetadataDao {
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId IN (:clusterIds)
+      AND m.description IS NULL
+      AND m.type = :mediaType
+""")
+    suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType): List<MediaMetadataEntity>
 
 
     // Concept queries

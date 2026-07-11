@@ -5,26 +5,27 @@ import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.cluster.ClusterManager
+import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.concepts.ConceptManager
-import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.concepts.getAllowedClusters
+import com.fpf.smartscan.concepts.getAllowedTags
+import com.fpf.smartscan.concepts.setAllowedClusters
+import com.fpf.smartscan.concepts.setAllowedTags
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
+import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,12 +52,19 @@ class ConceptsViewModel(
     companion object {
         private const val TAG = "ConceptsViewModel"
         private const val SIMILARITY_THRESHOLD = 0.3f
-        private const val INVALID_COLLECTION_ID = -1L
     }
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
+    private val textEmbedder by lazy {
+        MiniLMTextEmbedder(application,
+            ModelAssetSource.Resource(R.raw.minilm_sentence_transformer_quant),
+            vocabSource = ModelAssetSource.Resource(R.raw.minilm_vocab),
+            configSource = ModelAssetSource.Resource(R.raw.minilm_config))
+    }
+
     val conceptManager = ConceptManager(
+        textEmbedder=textEmbedder,
         conceptRepository=conceptRepository,
         conceptCrossRefRepository=conceptCrossRefRepository,
         conceptEmbedStore=conceptEmbedStore,
@@ -107,6 +115,16 @@ class ConceptsViewModel(
 
     private val _event = MutableSharedFlow<CollectionEvent>()
     val event = _event.asSharedFlow()
+
+    val hasGeneratedHighlights: Boolean
+        get() = imageConceptEmbedStore.exists
+
+    val hasSelectCollection: Boolean
+        get() = _state.value.collectionsSelection.selectedItems.isNotEmpty()
+
+    init {
+        load()
+    }
 
     fun onAction(action: ConceptAction) {
         when (action) {
@@ -162,27 +180,30 @@ class ConceptsViewModel(
 
     private fun deleteConcepts(){
         viewModelScope.launch(Dispatchers.IO) {
-            val concepts = _state.value.selection.selectedItems
+            val concepts = getSelectedConcepts()
             conceptManager.deleteConcepts(concepts.toList())
             resetSelection()
         }
     }
 
-    // TODO: return actual media collections
-    private fun getAllowedTagCollections(): Set<Long>{
-        val tagIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_TAG_COLLECTIONS, emptySet())
-            .orEmpty()
-            .map { it.toLong() }
-            .toSet()
-        return tagIds
+    private fun load(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val allowedCollections = mutableListOf<MediaCollection>()
+            allowedCollections.addAll(getAllowedClusterCollections())
+            allowedCollections.addAll(getAllowedTagCollections())
+            val updatedCollectionState = _state.value.collectionsSelection.copy(selectedItems = allowedCollections.toSet())
+            _state.update { it.copy( collectionsSelection = updatedCollectionState)}
+        }
     }
 
-    private fun getAllowedAutoCollections(): Set<Long>{
-        val clusterIds = sharedPrefs.getStringSet(PrefsKeys.ALLOWED_AUTO_COLLECTIONS, emptySet())
-            .orEmpty()
-            .map { it.toLong() }
-            .toSet()
-        return clusterIds
+    private suspend fun getAllowedTagCollections(): List<MediaCollection>{
+        val tagIds = getAllowedTags(sharedPrefs)
+        return tagRepository.getCollections(tagIds.toList())
+    }
+
+    private suspend fun getAllowedClusterCollections(): List<MediaCollection>{
+        val clusterIds = getAllowedClusters(sharedPrefs)
+        return clusterMetadataRepository.getCollections(clusterIds.toList())
     }
 
     private fun toggleSelectedCollection(item: MediaCollection) { _state.update {
@@ -210,17 +231,19 @@ class ConceptsViewModel(
     }
 
     private fun setAllowedCollections(){
-        val selectedCollections = _state.value.collectionsSelection.selectedItems
-        Log.d(TAG, "Allowed collections: \n${selectedCollections.toString()}")
+        val currentState = _state.value
+        val selectedCollections = currentState.collectionsSelection.selectedItems
+        when(currentState.selectedCollectionType){
+            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            else -> {}
+        }
         setCollectionType(null)
     }
 
-
     private suspend fun getSelectedConcepts(): Set<Concept> = SelectionUtils.getSelectedItems(_state.value.selection) { getAllConcepts() }
 
-    //TODO: get from db
     private suspend fun getAllConcepts(): MutableSet<Concept> {
-        val currentState = state.value
-        return mutableSetOf()
+        return conceptRepository.getConcepts().toMutableSet()
     }
 }

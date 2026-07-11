@@ -9,13 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,8 +25,17 @@ import com.fpf.smartscan.R
 @Composable
 fun EmptyConceptsScreen(
     isVisible: Boolean,
+    isMainScanRequired: Boolean,
+    hasSelectedCollections: Boolean,
+    hasGeneratedHighlights: Boolean,
+    onGenerateHighlights: () -> Unit
 ) {
     if (!isVisible) return
+
+    val steps = listOf(
+        stringResource(R.string.concepts_step_select_collections),
+        stringResource(R.string.concepts_step_generate_highlights)
+    )
 
     Box(
         modifier = Modifier
@@ -49,6 +59,9 @@ fun EmptyConceptsScreen(
                         modifier = Modifier
                     .padding(bottom = 32.dp)
             )
+            if( isMainScanRequired){
+                Text(text = stringResource(R.string.alert_initial_scan_required), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+            }
 
             Column(
                 horizontalAlignment = Alignment.Start,
@@ -60,24 +73,22 @@ fun EmptyConceptsScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_1),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_2),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_3),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                steps.forEachIndexed { index, step ->
+                    Text(
+                        text = "${index+1}. $step",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+                if(!hasGeneratedHighlights) {
+                    Button(
+                        enabled = hasSelectedCollections,
+                        onClick = onGenerateHighlights,
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Generate highlights")
+                    }
+                }
             }
         }
     }

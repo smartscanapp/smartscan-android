@@ -56,6 +56,7 @@
     <string name="scan_in_progress_title">Scan In Progress</string>
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>
     <string name="media_type_title">Media type</string>
+    <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your library first.</string>
 
     <!-- Search screen -->
     <string name="search_storage_permissions">Storage permission required to search.</string>
@@ -70,10 +71,9 @@
 
     <!--Concepts Screen-->
     <string name="concepts_empty_screen_title">No Concepts</string>
-    <string name="concepts_empty_screen_intro">Concepts group media by meaning, not visual similarity. To get started follow the steps below:</string>
-    <string name="concepts_empty_screen_step_1">1. Select the tag and auto collections to analyse from the menu. Choose collections containing text-based images e.g. Reddit screenshots, book pages, article screenshots.</string>
-    <string name="concepts_empty_screen_step_2">2. Tap + and enter a concept description.</string>
-    <string name="concepts_empty_screen_step_3">3. Matching media will be added automatically.</string>
+    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning, helping you rediscover information you\'ve saved but forgotten about. To get started follow the steps below:</string>
+    <string name="concepts_step_select_collections">Select collections from the menu that contain text-based images (e.g. Reddit posts, articles, and book pages).</string>
+    <string name="concepts_step_generate_highlights">Generate highlights for images in your selected collections.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>

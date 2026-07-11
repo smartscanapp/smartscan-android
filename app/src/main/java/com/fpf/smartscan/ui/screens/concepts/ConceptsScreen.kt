@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
@@ -59,6 +57,7 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.buttons.CustomFloatingActionButton
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
@@ -70,15 +69,11 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
-    isIndexing: Boolean,
-    hasIndexedImages: Boolean?,
-    hasIndexedVideos: Boolean?,
+    isMainScanRequired: Boolean,
+    onGenerateHighlights: ()-> Unit,
     hasStoragePermission: Boolean,
-    onIndex: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
-
-    val context = LocalContext.current
 
     val actionBarHeight = 70
     val state by viewModel.state.collectAsState()
@@ -116,8 +111,6 @@ fun ConceptsScreen(
         ),
     )
 
-    val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
-
     var offset by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val maxCollapsablePx = with(density) { 70.dp.toPx() }.toInt()
@@ -153,13 +146,6 @@ fun ConceptsScreen(
                 }
             )
         )
-    }
-
-    LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
-        val firstIndexRequired = !isIndexing && hasIndexedImages == false && hasIndexedVideos == false
-        if( firstIndexRequired && hasStoragePermission){
-            onIndex()
-        }
     }
 
     BackHandler(enabled = state.selection.isSelecting) {
@@ -216,11 +202,18 @@ fun ConceptsScreen(
                 onOffsetChange = {  offset = it },
                 maxCollapsePx = maxCollapsablePx,
             )
-            EmptyConceptsScreen(isVisible = !isConceptsVisible)
+            EmptyConceptsScreen(
+                isVisible = !isConceptsVisible,
+                isMainScanRequired=isMainScanRequired,
+                hasSelectedCollections = viewModel.hasSelectCollection,
+                hasGeneratedHighlights = viewModel.hasGeneratedHighlights,
+                onGenerateHighlights=onGenerateHighlights
+            )
         }
 
 
-        FloatingActionButton(
+        CustomFloatingActionButton (
+            enabled = viewModel.hasSelectCollection && viewModel.hasGeneratedHighlights,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),

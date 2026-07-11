@@ -13,6 +13,8 @@ class TagRepository(private val dao: TagDao) {
 
      fun getCollections(): Flow<List<MediaCollection>> = dao.getCollections().map{ collections -> collections.map{it.toDomain()}}
 
+     suspend fun getCollections(tagIds: List<Long>): List<MediaCollection> = dao.getCollections(tagIds).map{ it.toDomain()}
+
      suspend fun getAllTags(): List<Tag> = dao.getAll().map{it.toDomain()}
 
      suspend fun getTagsByName(names: List<String>): List<Tag> = dao.getByNames(names).map{it.toDomain()}

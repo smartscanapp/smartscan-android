@@ -4,8 +4,12 @@ import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
+import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
+import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 
 class ConceptManager(
+    private val textEmbedder: TextEmbeddingProvider,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
@@ -14,8 +18,11 @@ class ConceptManager(
     private var idCount: Long = 0L
 
     suspend fun createConcept(description: String): Concept{
+        if(!textEmbedder.isInitialized()) textEmbedder.initialize()
+        val rawEmbedding = textEmbedder.embed(description)
         val concept = Concept(id = generateId(), description = description, size = 0)
         conceptRepository.insertConcept(concept)
+        conceptEmbedStore.add(listOf(StoredEmbedding(id = concept.id, date = System.currentTimeMillis(), rawEmbedding.toQInt8Embed())))
         ++idCount
         return concept
     }
