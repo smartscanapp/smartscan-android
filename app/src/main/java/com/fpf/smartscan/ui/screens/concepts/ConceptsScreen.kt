@@ -292,11 +292,11 @@ fun ConceptsScreen(
 
     if ( isDeletingConcept) {
         val count = state.selection.selectedCount
-        val alertTitle = stringResource(R.string.collections_delete_collections_alert_title)
+        val alertTitle = stringResource(R.string.concepts_delete_alert_title)
         val alertDescription = stringResource(
-            R.string.collections_delete_collections_alert_description,
+            R.string.concepts_delete_alert_description,
             count,
-            pluralStringResource(R.plurals.collection_count, count)
+            pluralStringResource(R.plurals.concept_count, count)
         )
         AlertDialog(
             onDismissRequest = { },
