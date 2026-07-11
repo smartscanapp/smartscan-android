@@ -93,7 +93,7 @@ fun ConceptCard(
             Text(
                 text = "${item.size} items",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
