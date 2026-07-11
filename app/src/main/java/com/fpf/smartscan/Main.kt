@@ -192,11 +192,8 @@ fun Main(
                         }
                         composable(Routes.CONCEPTS) {
                             ConceptsScreen(
-                                isIndexing = isIndexing,
-                                hasIndexedImages = hasIndexedImages,
-                                hasIndexedVideos = hasIndexedVideos,
+                                isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
                                 hasStoragePermission = hasStoragePermission,
-                                onIndex = { showFirstScanModal = true },
                                 onTopBarChange = { topBarState.value = it },
                                 onViewConcept = { collection ->
 //                                    navController.currentBackStackEntry
