@@ -10,7 +10,7 @@ sealed interface ConceptItemsAction {
     data class CopyMedia(val clipboard: Clipboard, val context: Context): ConceptItemsAction
     data class ShareMedia(val context: Context): ConceptItemsAction
     data class ToggleSelectedMedia(val item: MediaItem): ConceptItemsAction
-    data class SetMediaToView(val context: Context, val item: MediaItem?, val autoOpenInGallery: Boolean? = null, val isSelecting: Boolean = false): ConceptItemsAction
+    data class SetMediaToView(val item: MediaItem?): ConceptItemsAction
     data class SetConceptToView(val concept: Concept): ConceptItemsAction
     data class SetSelectAll(val selectAll: Boolean): ConceptItemsAction
     data class SetMediaTypeFilter(val mediaType: MediaType?): ConceptItemsAction

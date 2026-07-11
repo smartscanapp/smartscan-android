@@ -77,7 +77,7 @@ class ConceptItemsViewModel(
     fun onAction(action: ConceptItemsAction){
         when(action){
             is ConceptItemsAction.CopyMedia -> copyItem(action.clipboard, action.context)
-            is ConceptItemsAction.SetMediaToView -> setMediaToView(action.context, action.item, autoOpenInGallery = action.autoOpenInGallery)
+            is ConceptItemsAction.SetMediaToView -> setMediaToView(action.item)
             is ConceptItemsAction.ShareMedia -> shareItems(action.context)
             is ConceptItemsAction.ToggleSelectedMedia -> toggleSelectedItem(action.item)
             is ConceptItemsAction.SetConceptToView -> setConcept(action.concept)
@@ -135,18 +135,7 @@ class ConceptItemsViewModel(
 
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }
 
-    private fun setMediaToView(context: Context, item: MediaItem?, autoOpenInGallery: Boolean? = null){
-        if(autoOpenInGallery == true) {
-            when(item?.type){
-                MediaType.IMAGE -> openImageInGallery(context, item.uri)
-                MediaType.VIDEO -> openVideoInGallery(context, item.uri)
-                else -> {}
-            }
-        }else{
-            _state.update { it.copy(mediaToView =item) }
-        }
-    }
-
+    private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
 
     // TODO: update this to be event based

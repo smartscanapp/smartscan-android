@@ -220,7 +220,6 @@ fun Main(
                             ConceptItemsScreen(
                                 onTopBarChange = { topBarState.value = it },
                                 concept = concept,
-                                appSettings = settingsViewModel.appSettings,
                                 onBack = { navController.popBackStack() }
                             )
                         }

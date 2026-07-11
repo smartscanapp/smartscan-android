@@ -32,17 +32,14 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
-import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ConceptItemsScreen(
-    appSettings: StateFlow<AppSettings>,
     concept: Concept?,
     onTopBarChange: (TopBarState) -> Unit,
     onBack: () -> Unit,
@@ -52,8 +49,6 @@ fun ConceptItemsScreen(
 
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
-    val appSettings by appSettings.collectAsState()
-
     val conceptItems = viewModel.conceptItems.collectAsLazyPagingItems()
 
     // For dynamic smooth hiding effect of action bars and other components
@@ -99,7 +94,7 @@ fun ConceptItemsScreen(
             ConceptItemsList(
                 isVisible = conceptItems.itemCount > 0,
                 items = conceptItems,
-                onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(context, it, appSettings.enableDirectGalleryOpen)) },
+                onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView( it)) },
                 onOffsetChange = {  offset = it },
                 maxCollapsePx = maxCollapsablePx,
 //                onError = viewModel::onErrorAsyncImage
@@ -130,7 +125,7 @@ fun ConceptItemsScreen(
                 MediaViewer(
                     items = mediaItems,
                     initialIndex = mediaItems.indexOf(item),
-                    onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView(context, null))},
+                    onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView( null))},
                     onUpdateSearchImage = null,
                     onLoadMore = { val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
                         conceptItems[lastIndex]}
