@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,6 +51,7 @@ fun ConceptCard(
 
     Box(
         modifier = modifier
+            .heightIn(max = 216.dp)
             .padding(4.dp)
             .clip(shape)
             .border(
@@ -76,15 +79,15 @@ fun ConceptCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
+                modifier=Modifier.weight(1f, fill = false),
                 text = item.description,
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = 5,
                 overflow = TextOverflow.Ellipsis
             )
 
