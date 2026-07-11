@@ -12,6 +12,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FloatingActionButton
@@ -55,7 +59,7 @@ fun ConceptsList(
     if (!isVisible) return
 
     val scope = rememberCoroutineScope()
-    val gridState = rememberLazyGridState()
+    val gridState = rememberLazyStaggeredGridState()
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
@@ -98,9 +102,9 @@ fun ConceptsList(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
+        LazyVerticalStaggeredGrid (
+            columns = StaggeredGridCells.Fixed(numGridColumns),
             state = gridState,
-            columns = GridCells.Fixed(numGridColumns),
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(connection),
