@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,8 +26,14 @@ import com.fpf.smartscan.R
 fun EmptyConceptsScreen(
     isVisible: Boolean,
     isMainScanRequired: Boolean,
+    onGenerateHighlights: () -> Unit
 ) {
     if (!isVisible) return
+
+    val steps = listOf(
+        stringResource(R.string.concepts_step_select_collections),
+        stringResource(R.string.concepts_step_generate_highlights)
+    )
 
     Box(
         modifier = Modifier
@@ -65,24 +71,19 @@ fun EmptyConceptsScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_1),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_2),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Text(
-                    text = stringResource(R.string.concepts_empty_screen_step_3),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                steps.forEachIndexed { index, step ->
+                    Text(
+                        text = "${index+1}. $step",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+                Button(
+                    onClick = onGenerateHighlights,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text("Generate highlights")
+                }
             }
         }
     }

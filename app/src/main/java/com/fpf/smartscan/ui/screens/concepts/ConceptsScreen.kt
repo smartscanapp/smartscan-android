@@ -71,11 +71,10 @@ fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     isMainScanRequired: Boolean,
+    onGenerateHighlights: ()-> Unit,
     hasStoragePermission: Boolean,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
-
-    val context = LocalContext.current
 
     val actionBarHeight = 70
     val state by viewModel.state.collectAsState()
@@ -204,7 +203,11 @@ fun ConceptsScreen(
                 onOffsetChange = {  offset = it },
                 maxCollapsePx = maxCollapsablePx,
             )
-            EmptyConceptsScreen(isVisible = !isConceptsVisible, isMainScanRequired=isMainScanRequired)
+            EmptyConceptsScreen(
+                isVisible = !isConceptsVisible,
+                isMainScanRequired=isMainScanRequired,
+                onGenerateHighlights=onGenerateHighlights
+            )
         }
 
 
