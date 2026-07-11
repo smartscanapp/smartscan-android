@@ -70,11 +70,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
-    isIndexing: Boolean,
-    hasIndexedImages: Boolean?,
-    hasIndexedVideos: Boolean?,
+    isMainScanRequired: Boolean,
     hasStoragePermission: Boolean,
-    onIndex: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
@@ -116,8 +113,6 @@ fun ConceptsScreen(
         ),
     )
 
-    val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
-
     var offset by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val maxCollapsablePx = with(density) { 70.dp.toPx() }.toInt()
@@ -153,13 +148,6 @@ fun ConceptsScreen(
                 }
             )
         )
-    }
-
-    LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
-        val firstIndexRequired = !isIndexing && hasIndexedImages == false && hasIndexedVideos == false
-        if( firstIndexRequired && hasStoragePermission){
-            onIndex()
-        }
     }
 
     BackHandler(enabled = state.selection.isSelecting) {
@@ -216,7 +204,7 @@ fun ConceptsScreen(
                 onOffsetChange = {  offset = it },
                 maxCollapsePx = maxCollapsablePx,
             )
-            EmptyConceptsScreen(isVisible = !isConceptsVisible)
+            EmptyConceptsScreen(isVisible = !isConceptsVisible, isMainScanRequired=isMainScanRequired)
         }
 
 

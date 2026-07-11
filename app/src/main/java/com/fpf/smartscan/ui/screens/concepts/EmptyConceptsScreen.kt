@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import com.fpf.smartscan.R
 @Composable
 fun EmptyConceptsScreen(
     isVisible: Boolean,
+    isMainScanRequired: Boolean,
 ) {
     if (!isVisible) return
 
@@ -49,6 +51,9 @@ fun EmptyConceptsScreen(
                         modifier = Modifier
                     .padding(bottom = 32.dp)
             )
+            if( isMainScanRequired){
+                Text(text = stringResource(R.string.alert_initial_scan_required), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+            }
 
             Column(
                 horizontalAlignment = Alignment.Start,

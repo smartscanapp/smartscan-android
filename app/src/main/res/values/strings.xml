@@ -56,6 +56,7 @@
     <string name="scan_in_progress_title">Scan In Progress</string>
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>
     <string name="media_type_title">Media type</string>
+    <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your library first.</string>
 
     <!-- Search screen -->
     <string name="search_storage_permissions">Storage permission required to search.</string>
