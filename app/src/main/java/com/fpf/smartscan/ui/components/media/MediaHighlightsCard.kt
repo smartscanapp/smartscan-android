@@ -23,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
@@ -33,12 +32,12 @@ import com.fpf.smartscan.ui.components.common.CircularCheckbox
 @Composable
 fun MediaHighlightsCard(
     item: MediaItem,
-    isSelecting: Boolean,
-    isChecked: () -> Boolean,
-    onToggleSelected: (MediaItem) -> Unit,
-    onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
-    onToggleSelectionMode: () -> Unit,
+    onItemClick: (MediaItem) -> Unit,
+    isSelecting: Boolean = false,
+    onItemLongClick: ((MediaItem) -> Unit)? = null,
+    isChecked: (() -> Boolean)? = null,
+    onToggleSelected:( (MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
 ) {
     val highlights = remember(item.description) {
@@ -59,13 +58,10 @@ fun MediaHighlightsCard(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = {
-                    if (isSelecting) onToggleSelected(item) else onItemClick(item)
+                    if (isSelecting) onToggleSelected?.invoke(item) else onItemClick(item)
                 },
-                onLongClick = {
-                    if (!isSelecting) {
-                        onToggleSelectionMode()
-                        onToggleSelected(item)
-                    }
+                onLongClick = if (isSelecting || onItemLongClick == null) null else {
+                    { onItemLongClick.invoke(item) }
                 }
             )
     ) {
@@ -83,8 +79,8 @@ fun MediaHighlightsCard(
 
                 if (isSelecting) {
                     CircularCheckbox(
-                        checked = isChecked(),
-                        onCheckedChange = { onToggleSelected(item) },
+                        checked = isChecked?.invoke()?: false,
+                        onCheckedChange = { onToggleSelected?.invoke(item) },
                         modifier = Modifier
                             .offset(x = 8.dp, y = 8.dp)
                             .align(Alignment.TopStart)

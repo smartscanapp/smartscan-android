@@ -42,15 +42,15 @@ import kotlin.math.roundToInt
 fun ConceptItemsList(
     isVisible: Boolean,
     items: LazyPagingItems<MediaItem>,
-    selectedItems: Set<MediaItem>,
-    excludedItems: Set<MediaItem>,
-    selectAll: Boolean,
-    onViewItem: (item: MediaItem?) -> Unit,
-    onToggleSelected: (MediaItem) -> Unit,
-    onToggleSelectionMode: () -> Unit,
+    onItemClick: (MediaItem?) -> Unit,
     onOffsetChange: (Int) -> Unit,
     maxCollapsePx: Int = 0,
     isSelecting: Boolean = false,
+    selectAll: Boolean = false,
+    selectedItems: Set<MediaItem> = emptySet(),
+    excludedItems: Set<MediaItem> = emptySet(),
+    onItemLongClick: ((MediaItem) -> Unit)? =null,
+    onToggleSelected: ((MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null
 ) {
     if (!isVisible) return
@@ -124,9 +124,9 @@ fun ConceptItemsList(
                 if (item != null) {
                     MediaHighlightsCard(
                         item=item,
-                        onItemClick=onViewItem,
+                        onItemClick=onItemClick,
+                        onItemLongClick = onItemLongClick,
                         onToggleSelected = onToggleSelected,
-                        onToggleSelectionMode = onToggleSelectionMode,
                         isSelecting = isSelecting,
                         isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
                         onError=onError
