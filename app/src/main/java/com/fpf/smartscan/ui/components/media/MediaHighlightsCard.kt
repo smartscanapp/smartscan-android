@@ -68,6 +68,7 @@ fun MediaHighlightsCard(
         Column {
             Box {
                 ImageDisplay(
+                    maxSize = 864,
                     uri = item.uri,
                     modifier = Modifier
                         .fillMaxWidth()
