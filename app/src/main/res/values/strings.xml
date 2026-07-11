@@ -71,10 +71,8 @@
 
     <!--Concepts Screen-->
     <string name="concepts_empty_screen_title">No Concepts</string>
-    <string name="concepts_empty_screen_intro">Concepts group media by meaning, not visual similarity. To get started follow the steps below:</string>
-    <string name="concepts_empty_screen_step_1">1. Select the tag and auto collections to analyse from the menu. Choose collections containing text-based images e.g. Reddit screenshots, book pages, article screenshots.</string>
-    <string name="concepts_empty_screen_step_2">2. Tap + and enter a concept description.</string>
-    <string name="concepts_empty_screen_step_3">3. Matching media will be added automatically.</string>
+    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning using generated highlights. To get started follow the steps below:</string>    <string name="concepts_step_select_collections">Select the tag and auto collections to analyse from the menu. Choose collections containing text-based images e.g. Reddit screenshots, book pages, article screenshots.</string>
+    <string name="concepts_step_generate_highlights">Generate highlights for your selected collections.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>
