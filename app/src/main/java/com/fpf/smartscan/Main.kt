@@ -100,6 +100,12 @@ fun Main(
         }
     }
 
+    LaunchedEffect(conceptImageIndexStatus) {
+        if (conceptImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
+            mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
+        }
+    }
+
     if (currentRoute in listOf(Routes.SEARCH, Routes.COLLECTIONS)) {
         RequestPermissions { _, storageGranted -> hasStoragePermission = storageGranted }
     }
