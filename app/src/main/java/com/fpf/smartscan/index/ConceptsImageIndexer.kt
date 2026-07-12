@@ -4,10 +4,8 @@ package com.fpf.smartscan.index
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
-import android.util.Log
 import com.fpf.smartscan.api.ImageSummary
 import com.fpf.smartscan.api.llm.OpenaiClient
-import com.fpf.smartscan.concepts.HighlightsCodec
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
@@ -51,17 +49,22 @@ class ConceptsImageIndexer(
         listener?.onBatchComplete(context, batch)
     }
 
-    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding>?? {
+    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding>? {
         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, item.id)
         val base64 = uriToBase64(context, contentUri, maxImageSize)
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
-        Log.d(TAG, "LLM Output: ${result.toString()}")
-        if(!result.isTextBasedImage || result.highlights.isEmpty()) return null
-        val highlightsAsString = HighlightsCodec.encode(result.highlights)
-        val rawEmbedding = withContext(NonCancellable) { embedder.embed(highlightsAsString) }
+        if( result.summary.isBlank()) return null
+        val formatted = formatOutput(result)
+        val rawEmbedding = withContext(NonCancellable) { embedder.embed(formatted) }
         val embed = if(quantize) rawEmbedding.toQInt8Embed() else rawEmbedding.toF32Embed()
-        val updatedMetadata = item.copy(description = highlightsAsString)
+        val updatedMetadata = item.copy(description = result.summary)
         return Pair(updatedMetadata, embed)
+    }
+
+    private fun formatOutput(output: ImageSummary): String {
+        val topicsStr = "[TOPICS]: ${output.topics.joinToString(", ")}."
+        val summary = "[SUMMARY]: ${output.summary}"
+        return topicsStr + "\n" + summary
     }
 
     private fun getImageToDateMap(context: Context, ids: List<Long>): Map<Long, Long> {

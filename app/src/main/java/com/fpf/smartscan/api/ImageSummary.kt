@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ImageSummary(
-    val highlights: List<String>,
-    val isTextBasedImage: Boolean
+    val summary: String,
+    val topics: List<String>
 )

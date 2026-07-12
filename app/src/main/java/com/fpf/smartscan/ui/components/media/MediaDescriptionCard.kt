@@ -24,41 +24,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
-import com.fpf.smartscan.concepts.HighlightsCodec
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 
 @Composable
-fun MediaHighlightsCard(
+fun MediaDescriptionCard(
     item: MediaItem,
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,
     isSelecting: Boolean = false,
     onItemLongClick: ((MediaItem) -> Unit)? = null,
     isChecked: (() -> Boolean)? = null,
-    onToggleSelected:( (MediaItem) -> Unit)? = null,
+    onToggleSelected: ((MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
 ) {
-    val highlights = remember(item.description) {
-        item.description?.let{ HighlightsCodec.decode(it) }?: emptyList()
+    val description = remember(item.description) {
+        item.description?.trim().orEmpty()
     }
+
     val shape = RoundedCornerShape(12.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), shape)
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                shape
+            )
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = {
-                    if (isSelecting) onToggleSelected?.invoke(item) else onItemClick(item)
+                    if (isSelecting) {
+                        onToggleSelected?.invoke(item)
+                    } else {
+                        onItemClick(item)
+                    }
                 },
-                onLongClick = if (isSelecting || onItemLongClick == null) null else {
-                    { onItemLongClick.invoke(item) }
+                onLongClick = if (isSelecting || onItemLongClick == null) {
+                    null
+                } else {
+                    { onItemLongClick(item) }
                 }
             )
     ) {
@@ -77,8 +88,10 @@ fun MediaHighlightsCard(
 
                 if (isSelecting) {
                     CircularCheckbox(
-                        checked = isChecked?.invoke()?: false,
-                        onCheckedChange = { onToggleSelected?.invoke(item) },
+                        checked = isChecked?.invoke() ?: false,
+                        onCheckedChange = {
+                            onToggleSelected?.invoke(item)
+                        },
                         modifier = Modifier
                             .offset(x = 8.dp, y = 8.dp)
                             .align(Alignment.TopStart)
@@ -89,12 +102,14 @@ fun MediaHighlightsCard(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
-                            ) { onItemClick(item) }
+                            ) {
+                                onItemClick(item)
+                            }
                             .offset((-8).dp, (-8).dp)
                             .align(Alignment.BottomEnd)
                     ) {
                         Icon(
-                            Icons.Default.OpenInFull,
+                            imageVector = Icons.Default.OpenInFull,
                             contentDescription = "Expand item",
                             modifier = Modifier
                                 .size(20.dp)
@@ -108,31 +123,23 @@ fun MediaHighlightsCard(
                 }
             }
 
-            if (highlights.isNotEmpty()) {
+            if (description.isNotBlank()) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "Highlights",
+                        text = "Description",
                         style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    highlights.take(3).forEach { highlight ->
-                        Text(
-                            text = "• $highlight",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                    }
-
-                    if (highlights.size > 3) {
-                        Text(
-                            text = "+${highlights.size - 3} more",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
