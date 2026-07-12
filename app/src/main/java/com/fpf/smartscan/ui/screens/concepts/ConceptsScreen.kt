@@ -21,8 +21,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -89,13 +89,16 @@ fun ConceptsScreen(
 
     // actions
     var showMenu by remember { mutableStateOf(false) }
-    var isAddingConcept by remember { mutableStateOf(false) }
-    var isMergingCollections by remember { mutableStateOf(false) }
+    var isCreatingConcept by remember { mutableStateOf(false) }
+    var isEditingConcept by remember { mutableStateOf(false) }
     var isDeletingConcept by remember { mutableStateOf(false) }
     val isActionBarVisible = state.selection.isSelecting && state.selection.selectedCount > 0
+
+    //TODO: update db to store isPinned on concepts
+
     val actionBarActions: List<ActionConfig> = listOf(
-        ActionConfig(label = stringResource(R.string.merge_action), { isMergingCollections = true }, enabled = !state.loading, icon = Icons.Filled.Merge),
-        ActionConfig( label = stringResource(R.string.rename_action), { isAddingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
+        ActionConfig( label = stringResource(R.string.edit_concept_action), onClick={ isEditingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
+        ActionConfig(label = stringResource(R.string.pin_unpin_concept_action), onClick = {viewModel.onAction(ConceptAction.PinUnpinConcept)}, enabled = !state.loading, icon = Icons.Filled.PushPin),
         ActionConfig(label = stringResource(R.string.delete_action), { isDeletingConcept = true }, icon = Icons.Filled.Delete)
     )
     val menuActions: List<MenuActionConfig> = listOf(
@@ -224,7 +227,7 @@ fun ConceptsScreen(
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),
             onClick = {
-                isAddingConcept = true
+                isCreatingConcept = true
             }
         ) {
             Icon(Icons.Default.Add, contentDescription = "Add concept button")
@@ -278,14 +281,24 @@ fun ConceptsScreen(
         )
     }
 
+    // Reset both for simplicity
     TextInputModal(
-        isVisible = isAddingConcept,
-        title=stringResource(R.string.add_concept_action),
+        isVisible = isCreatingConcept || isEditingConcept,
+        initialValue = if(isCreatingConcept) "" else state.selection.selectedItems.firstOrNull()?.description?: "",
+        title=if(isCreatingConcept)stringResource(R.string.create_concept_modal_title) else stringResource(R.string.edit_concept_modal_title),
         placeholder = stringResource(R.string.placeholders_add_concept),
-        onClose = { isAddingConcept = false },
+        onClose = {
+            isCreatingConcept = false
+            isEditingConcept = false
+                  },
         onConfirm = {
-            viewModel.onAction(ConceptAction.AddConcept(it))
-            isAddingConcept = false
+            if(isCreatingConcept){
+                 viewModel.onAction(ConceptAction.AddConcept(it))
+            }else{
+                viewModel.onAction(ConceptAction.EditConcept(it))
+            }
+            isCreatingConcept = false
+            isEditingConcept = false
         },
         leadingIcon = { Icon(Icons.Filled.Lightbulb, contentDescription = "Lightbulb", tint = MaterialTheme.colorScheme.primary) },
     )

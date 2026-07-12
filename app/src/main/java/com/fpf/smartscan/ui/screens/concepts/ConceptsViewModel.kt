@@ -17,7 +17,6 @@ import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
-import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.ui.action.ConceptAction
@@ -27,11 +26,9 @@ import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
@@ -65,6 +62,7 @@ class ConceptsViewModel(
     }
 
     val conceptManager = ConceptManager(
+        similarityThreshold = SIMILARITY_THRESHOLD,
         textEmbedder=textEmbedder,
         conceptRepository=conceptRepository,
         conceptCrossRefRepository=conceptCrossRefRepository,
@@ -131,7 +129,7 @@ class ConceptsViewModel(
             is ConceptAction.ResetSelection -> resetSelection()
             is ConceptAction.SetSelectAll -> setSelectAll(action.selectAll)
             is ConceptAction.DeleteConcepts -> deleteConcepts()
-            is ConceptAction.UpdateConcept -> updateConcept(action.concept, action.newDescription)
+            is ConceptAction.EditConcept -> editConcept(action.newDescription)
             is ConceptAction.AddConcept -> addConcept(action.description)
             is ConceptAction.SetConceptToView -> setConceptToView(action.concept)
             is ConceptAction.ToggleSelectedConcept -> toggleSelectedConcept(action.concept)
@@ -139,6 +137,7 @@ class ConceptsViewModel(
             is ConceptAction.SetAllowedCollections -> setAllowedCollections()
             is ConceptAction.SetCollectionType -> setCollectionType(action.collectionType)
             is ConceptAction.ToggleSelectedCollection -> toggleSelectedCollection(action.collection)
+            ConceptAction.PinUnpinConcept -> TODO()
         }
     }
 
@@ -165,14 +164,15 @@ class ConceptsViewModel(
 
     private fun addConcept(description: String){
         viewModelScope.launch(Dispatchers.IO) {
-            val concept = conceptManager.createConcept(description)
-            conceptManager.findAndUpdateMediaMatchingConcept(concept, SIMILARITY_THRESHOLD)
+           conceptManager.createConcept(description)
         }
     }
 
-    private fun updateConcept(concept: Concept, newDescription: String){
+    private fun editConcept(newDescription: String){
+        val concept = _state.value.selection.selectedItems.firstOrNull()?: return
         viewModelScope.launch(Dispatchers.IO) {
-            conceptManager.updateConcept(concept, newDescription)
+            resetSelection()
+            conceptManager.editConcept(concept, newDescription)
         }
     }
 
