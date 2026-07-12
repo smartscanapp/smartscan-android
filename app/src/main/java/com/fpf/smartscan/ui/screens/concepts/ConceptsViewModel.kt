@@ -164,15 +164,26 @@ class ConceptsViewModel(
 
     private fun addConcept(description: String){
         viewModelScope.launch(Dispatchers.IO) {
-           conceptManager.createConcept(description)
+            try {
+                _state.update { it.copy(loading = true) }
+                conceptManager.createConcept(description)
+            }finally {
+                _state.update { it.copy(loading = false) }
+            }
         }
     }
 
     private fun editConcept(newDescription: String){
         val concept = _state.value.selection.selectedItems.firstOrNull()?: return
         viewModelScope.launch(Dispatchers.IO) {
-            resetSelection()
-            conceptManager.editConcept(concept, newDescription)
+            try {
+                _state.update { it.copy(loading = true) }
+                resetSelection()
+                conceptManager.editConcept(concept, newDescription)
+            }finally {
+                _state.update { it.copy(loading = false) }
+            }
+
         }
     }
 

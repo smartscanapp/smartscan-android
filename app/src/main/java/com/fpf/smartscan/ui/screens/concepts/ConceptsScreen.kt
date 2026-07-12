@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -60,6 +61,7 @@ import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.buttons.CustomFloatingActionButton
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -164,12 +166,25 @@ fun ConceptsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            if(!hasStoragePermission && !state.loading){
+            if(!hasStoragePermission){
                 Text(
                     text = stringResource(R.string.concepts_storage_permissions),
                     color = Color.Red,
                     modifier = Modifier.padding(vertical=8.dp).align(Alignment.CenterHorizontally),
                 )
+            }
+
+            if(state.loading){
+                Row (
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    LoadingIndicator(true)
+                    Text(
+                        text = "Finding matching media...",
+                    )
+                }
             }
 
             SlideRevealBox(
