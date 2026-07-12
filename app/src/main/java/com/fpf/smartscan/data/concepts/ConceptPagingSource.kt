@@ -1,4 +1,4 @@
-package com.fpf.smartscan.data.tags
+package com.fpf.smartscan.data.concepts
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -7,9 +7,9 @@ import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.toItem
 
-class TagPagingSource(
+class ConceptPagingSource(
     private val mediaType: MediaType? = null,
-    private val tagId: Long,
+    private val conceptId: Long,
     private val mediaMetadataRepository: MediaMetadataRepository,
 ) : PagingSource<Int, MediaItem>() {
 
@@ -21,9 +21,9 @@ class TagPagingSource(
         // over-fetch by 1 item to detect end of data without using count()
         return try {
             val mediaMetadataList = if(mediaType != null){
-                mediaMetadataRepository.getByTag(tagId = tagId, mediaType, limit = pageSize + 1, offset = offset)
+                mediaMetadataRepository.getByConcept(conceptId = conceptId, mediaType, limit = pageSize + 1, offset = offset)
             }else{
-                mediaMetadataRepository.getByTag(tagId = tagId, limit = pageSize + 1, offset = offset)
+                mediaMetadataRepository.getByConcept(conceptId = conceptId, limit = pageSize + 1, offset = offset)
             }
             val hasMore = mediaMetadataList.size > pageSize
             val pageItems = if (hasMore) mediaMetadataList.dropLast(1) else mediaMetadataList

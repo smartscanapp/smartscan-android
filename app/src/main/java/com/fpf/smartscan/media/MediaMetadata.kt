@@ -10,6 +10,5 @@ data class MediaMetadata(
 fun MediaMetadata.toItem(): MediaItem = MediaItem(
     id=id,
     type=type,
-    uri = mediaIdToUri(id, type),
     description=description
 )

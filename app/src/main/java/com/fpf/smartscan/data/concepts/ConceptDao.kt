@@ -6,7 +6,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -41,19 +40,14 @@ interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(concepts: List<ConceptEntity>): List<Long>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(concepts: List<ConceptEntity>): List<Long>
     @Update
     suspend fun update(concepts: List<ConceptEntity>)
-
     @Delete
     suspend fun delete(concepts: List<ConceptEntity>)
-
-    @Transaction
-    @Query("DELETE FROM concept WHERE id IN (:ids)")
-    suspend fun deleteByIds(ids: List<Long>)
-
     @Query("SELECT COUNT(*) FROM concept")
     suspend fun count(): Int
-
     @Query("DELETE FROM concept")
     suspend fun clear()
 }

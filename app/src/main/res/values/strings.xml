@@ -81,8 +81,10 @@
         <item quantity="one">concept</item>
         <item quantity="other">concepts</item>
     </plurals>
-    <string name="add_concept_action">Add concept</string>
-    <string name="edit_concept_action">Edit concept</string>
+    <string name="create_concept_modal_title">Create concept</string>
+    <string name="edit_concept_modal_title">Edit concept</string>
+    <string name="edit_concept_action">Edit</string>
+    <string name="pin_unpin_concept_action">Pin / Unpin </string>
     <string name="placeholders_add_concept">Describe your new concept</string>
 
 

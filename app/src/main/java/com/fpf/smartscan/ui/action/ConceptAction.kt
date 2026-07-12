@@ -11,7 +11,8 @@ sealed interface ConceptAction {
     data class SetConceptToView(val concept: Concept?): ConceptAction
     data class SetSelectAll(val selectAll: Boolean): ConceptAction
     data class AddConcept(val description: String) : ConceptAction
-    data class UpdateConcept(val concept: Concept, val newDescription: String): ConceptAction
+    data class EditConcept(val newDescription: String): ConceptAction
+    data object PinUnpinConcept: ConceptAction
     data object DeleteConcepts : ConceptAction
     data object ToggleViewAllConcepts: ConceptAction
     data object ToggleSelectionMode: ConceptAction

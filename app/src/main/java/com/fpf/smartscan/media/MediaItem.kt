@@ -5,6 +5,8 @@ import android.net.Uri
 data class MediaItem(
     val id: Long,
     val type: MediaType,
-    val uri: Uri = mediaIdToUri(id, type),
     val description: String? = null
-)
+) {
+    val uri: Uri
+        get() = MediaStoreHelper.mediaIdToUri(id, type)
+}

@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.screens.collections
+package com.fpf.smartscan.ui.components.placeholders
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HideImage
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
 
 @Composable
-fun EmptyCollectionItemsScreen(
+fun EmptyItemsScreen(
     isVisible: Boolean,
 ) {
     if (!isVisible) return

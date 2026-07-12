@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import android.util.Log
 import com.fpf.smartscan.api.ImageSummary
 import com.fpf.smartscan.api.llm.OpenaiClient
+import com.fpf.smartscan.concepts.HighlightsCodec
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
@@ -55,8 +56,8 @@ class ConceptsImageIndexer(
         val base64 = uriToBase64(context, contentUri, maxImageSize)
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
         Log.d(TAG, "LLM Output: ${result.toString()}")
-        if(!result.isTextBasedImage) return null
-        val highlightsAsString = result.highlights.joinToString("| ")
+        if(!result.isTextBasedImage || result.highlights.isEmpty()) return null
+        val highlightsAsString = HighlightsCodec.encode(result.highlights)
         val rawEmbedding = withContext(NonCancellable) { embedder.embed(highlightsAsString) }
         val embed = if(quantize) rawEmbedding.toQInt8Embed() else rawEmbedding.toF32Embed()
         val updatedMetadata = item.copy(description = highlightsAsString)

@@ -27,7 +27,6 @@ import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
@@ -108,7 +107,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -136,7 +134,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow

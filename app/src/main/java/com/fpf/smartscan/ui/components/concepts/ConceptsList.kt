@@ -1,21 +1,12 @@
 package com.fpf.smartscan.ui.components.concepts
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -33,7 +23,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.concepts.Concept
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -41,10 +30,9 @@ fun ConceptsList(
     isVisible: Boolean,
     items: List<Concept>,
     onItemClick: (Concept) -> Unit,
+    onItemLongClick: (Concept) -> Unit,
     selectedItems: Set<Concept> = emptySet(),
     excludedItems: Set<Concept> = emptySet(),
-    onToggleSelected: (Concept) -> Unit,
-    onToggleSelectionMode: () -> Unit,
     onOffsetChange: ((Int) -> Unit)? = null,
     numGridColumns: Int = 3,
     maxCollapsePx: Int = 0,
@@ -55,7 +43,7 @@ fun ConceptsList(
     if (!isVisible) return
 
     val scope = rememberCoroutineScope()
-    val gridState = rememberLazyGridState()
+    val gridState = rememberLazyStaggeredGridState()
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
@@ -98,9 +86,9 @@ fun ConceptsList(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
+        LazyVerticalStaggeredGrid (
+            columns = StaggeredGridCells.Fixed(numGridColumns),
             state = gridState,
-            columns = GridCells.Fixed(numGridColumns),
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(connection),
@@ -110,30 +98,10 @@ fun ConceptsList(
                 ConceptCard(
                     item=item,
                     onItemClick=onItemClick,
-                    onToggleSelected = onToggleSelected,
-                    onToggleSelectionMode = onToggleSelectionMode,
+                    onItemLongClick = onItemLongClick,
                     isSelecting = isSelecting,
                     isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
                 )
-            }
-        }
-
-        AnimatedVisibility(
-            visible = showScrollToTop,
-            enter = fadeIn(animationSpec = tween(300)),
-            exit = fadeOut(animationSpec = tween(300)),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            FloatingActionButton(onClick = {
-                scope.launch {
-                    showScrollToTop = false
-                    onOffsetChange?.invoke(0)
-                    gridState.scrollToItem(0)
-                }
-            }) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
             }
         }
     }

@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.index.IndexingStatus
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
@@ -36,6 +37,7 @@ import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
 import com.fpf.smartscan.ui.screens.collections.CollectionItemsScreen
 import com.fpf.smartscan.ui.screens.collections.CollectionsScreen
+import com.fpf.smartscan.ui.screens.concepts.ConceptItemsScreen
 import com.fpf.smartscan.ui.screens.concepts.ConceptsScreen
 import com.fpf.smartscan.ui.screens.donate.DonateScreen
 import com.fpf.smartscan.ui.screens.search.SearchScreen
@@ -198,13 +200,27 @@ fun Main(
                                 onGenerateHighlights = {
                                     mainViewModel.generateHighlights(listOf(MediaType.IMAGE))
                                 },
-                                onViewConcept = { collection ->
-//                                    navController.currentBackStackEntry
-//                                        ?.savedStateHandle
-//                                        ?.set(NavDataKeys.COLLECTION, collection)
-//
-//                                    navController.navigate(Routes.COLLECTION_ITEMS)
+                                onViewConcept = { concept ->
+                                    navController.currentBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set(NavDataKeys.CONCEPT, concept)
+
+                                    navController.navigate(Routes.CONCEPT_ITEMS)
                                 },
+                            )
+                        }
+                        composable(
+                            route = Routes.CONCEPT_ITEMS,
+                        ) { _ ->
+                            val concept =
+                                navController.previousBackStackEntry?.savedStateHandle?.get<Concept>(
+                                    NavDataKeys.CONCEPT
+                                )
+
+                            ConceptItemsScreen(
+                                onTopBarChange = { topBarState.value = it },
+                                concept = concept,
+                                onBack = { navController.popBackStack() }
                             )
                         }
                         composable(Routes.SETTINGS) {

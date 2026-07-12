@@ -5,6 +5,8 @@ object Routes {
     const val COLLECTIONS = "collections"
     const val COLLECTION_ITEMS = "collection_items"
     const val CONCEPTS = "concepts"
+    const val CONCEPT_ITEMS = "concept_items"
+
     const val SETTINGS = "settings"
     const val SETTINGS_DETAIL = "settings_detail/{type}"
     const val DONATE = "donate"

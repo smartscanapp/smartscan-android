@@ -1,5 +1,6 @@
 package com.fpf.smartscan.media
 
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
@@ -72,6 +73,15 @@ object MediaStoreHelper {
 
         return ids.partition { it in existingIds }
     }
+
+    fun mediaIdToUri(id: Long, mediaType: MediaType): Uri = when (mediaType) {
+            MediaType.IMAGE -> getImageUriFromId(id)
+            MediaType.VIDEO -> getVideoUriFromId(id)
+    }
+
+    fun getImageUriFromId(id: Long): Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+
+    fun getVideoUriFromId(id: Long): Uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
     private fun queryMediaIdDateMap(
         context: Context,

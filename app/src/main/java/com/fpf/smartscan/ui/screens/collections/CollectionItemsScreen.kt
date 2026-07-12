@@ -70,6 +70,7 @@ import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
+import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -270,7 +271,7 @@ fun CollectionItemsScreen(
                 onError = viewModel::onErrorAsyncImage
             )
 
-            EmptyCollectionItemsScreen(
+            EmptyItemsScreen(
                 isVisible = items.itemCount == 0
             )
         }
