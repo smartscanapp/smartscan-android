@@ -23,8 +23,12 @@ class ConceptManager(
         val rawEmbedding = textEmbedder.embed(description)
         val concept = Concept(id = generateId(), description = description, size = 0)
         conceptRepository.insertConcept(concept)
-        conceptEmbedStore.add(listOf(StoredEmbedding(id = concept.id, date = System.currentTimeMillis(), rawEmbedding.toQInt8Embed())))
+
+        val conceptEmbed = StoredEmbedding(id = concept.id, date = System.currentTimeMillis(), rawEmbedding.toQInt8Embed())
+        conceptEmbedStore.add(listOf(conceptEmbed))
+
         ++idCount
+        findAndUpdateMediaMatchingConcept(concept)
     }
 
     suspend fun editConcept(concept: Concept, newDescription: String){
@@ -35,11 +39,13 @@ class ConceptManager(
         val rawEmbedding = textEmbedder.embed(newDescription)
         val updatedEmbed = StoredEmbedding(id = updatedConcept.id, date = System.currentTimeMillis(), rawEmbedding.toQInt8Embed())
         conceptEmbedStore.update(listOf(updatedEmbed))
+
         findAndUpdateMediaMatchingConcept(updatedConcept)
     }
 
     suspend fun deleteConcepts(concepts: List<Concept>){
         conceptRepository.deleteConcepts(concepts)
+        conceptEmbedStore.remove(concepts.map{it.id})
     }
 
     suspend fun findMediaMatchingConcept(concept: Concept): Map<Long, MediaType>{
