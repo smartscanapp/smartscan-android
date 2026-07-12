@@ -23,6 +23,7 @@ import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -86,6 +87,7 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
             is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is ConceptItemsAction.SaveUpdatedItem -> saveUpdatedItem(action.updatedItem)
         }
     }
 
@@ -137,6 +139,15 @@ class ConceptItemsViewModel(
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+
+    private fun saveUpdatedItem(updatedItem: MediaItem){
+        viewModelScope.launch(Dispatchers.IO) {
+            val meta = mediaMetadataRepository.getByIds(listOf(updatedItem.id), updatedItem.type).firstOrNull()?: return@launch
+            val updatedMeta = meta.copy(description = updatedItem.description)
+            mediaMetadataRepository.update(listOf(updatedMeta))
+            mediaMetadataRepository.addToRecentUpdates(updatedItem)
+        }
+    }
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){

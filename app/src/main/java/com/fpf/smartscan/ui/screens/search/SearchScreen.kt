@@ -401,6 +401,10 @@ fun SearchScreen(
                 onUpdateSearchImage = {
                     searchViewModel.onAction(SearchAction.ClearResultView)
                     searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
+                },
+                onSaveUpdatedItem = {
+                    searchViewModel.onAction(SearchAction.SaveUpdatedItem(it))
+                    // TODO: switch to paging source and refresh items here
                 }
             )
         }

@@ -18,6 +18,7 @@ sealed interface SearchAction {
     data class CopyResult(val clipboard: Clipboard, val context: Context): SearchAction
     data class ShareResults(val context: Context): SearchAction
 
+    data class SaveUpdatedItem(val updatedItem: MediaItem): SearchAction
     data class SetSelectAll(val selectAll: Boolean): SearchAction
     data object RemoveUploadedImage: SearchAction
     data object ClearDateFilters: SearchAction

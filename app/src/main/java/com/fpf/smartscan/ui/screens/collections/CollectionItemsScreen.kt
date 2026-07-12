@@ -1,5 +1,6 @@
 package com.fpf.smartscan.ui.screens.collections
 
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -335,7 +336,12 @@ fun CollectionItemsScreen(
                     onClose = { viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))},
                     onUpdateSearchImage = null,
                     onLoadMore = { val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
-                        items[lastIndex]}
+                        items[lastIndex]},
+                    onSaveUpdatedItem = {
+                        viewModel.onAction(CollectionItemAction.SaveUpdatedItem(it))
+                        items.refresh()
+                    }
+
                 )
             }
             }
