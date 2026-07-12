@@ -3,6 +3,7 @@ package com.fpf.smartscan.data.concepts
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
+import com.fpf.smartscan.media.MediaType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -11,6 +12,10 @@ class ConceptRepository(private val dao: ConceptDao) {
     suspend fun getConcepts(): List<Concept> = dao.get().map{it.toDomain()}
     suspend fun getConcepts(ids: List<Long>): List<Concept> = dao.get(ids).map{it.toDomain()}
     suspend fun getConcept(id: Long): Concept? = dao.get(listOf(id)).firstOrNull()?.toDomain()
+
+    suspend fun getLinkedConceptIds(mediaId: Long, mediaType: MediaType) = dao.getLinkedIds(mediaId,mediaType)
+    suspend fun getUnlinkedConceptIds(mediaId: Long, mediaType: MediaType) = dao.getUnlinkedIds(mediaId,mediaType)
+
     suspend fun insertConcepts(concepts: List<Concept>) = dao.insert(concepts.map{it.toEntity()})
     suspend fun insertConcept(concept: Concept) = dao.insert(listOf(concept.toEntity()))
     suspend fun updateConcepts(concepts: List<Concept>) = dao.update(concepts.map{it.toEntity()})

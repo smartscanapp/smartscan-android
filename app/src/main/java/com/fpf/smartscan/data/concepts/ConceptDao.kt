@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.fpf.smartscan.media.MediaType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -36,6 +37,26 @@ interface ConceptDao {
         GROUP BY c.id
     """)
     suspend fun get(ids: List<Long>): List<ConceptWithCount>
+
+    @Query("""
+    SELECT conceptId
+    FROM concept_crossref
+    WHERE mediaId = :mediaId
+      AND mediaType = :mediaType
+""")
+    suspend fun getLinkedIds(mediaId: Long, mediaType: MediaType): List<Long>
+
+    @Query("""
+    SELECT id
+    FROM concept
+    WHERE id NOT IN (
+        SELECT conceptId
+        FROM concept_crossref
+        WHERE mediaId = :mediaId
+          AND mediaType = :mediaType
+    )
+""")
+    suspend fun getUnlinkedIds(mediaId: Long, mediaType: MediaType): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(concepts: List<ConceptEntity>): List<Long>
