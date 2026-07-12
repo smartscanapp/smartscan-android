@@ -15,23 +15,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import kotlinx.coroutines.FlowPreview
 
-
-@OptIn(FlowPreview::class)
 @Composable
 fun TextInputModal(
     isVisible: Boolean,
     title: String,
     onClose: () -> Unit,
     onConfirm: (String) -> Unit,
-    leadingIcon: (@Composable () -> Unit)? = null,
     placeholder: String = "",
+    initialValue: String = "",
+    leadingIcon: (@Composable () -> Unit)? = null,
     onValueChange: ((TextFieldValue) -> Boolean)? = null
 ) {
     if (!isVisible) return
 
-    var value by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
+    var value by remember { mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length))) }
 
     AlertDialog(
         onDismissRequest = { },
