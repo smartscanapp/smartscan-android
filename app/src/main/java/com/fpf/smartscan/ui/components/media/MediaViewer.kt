@@ -9,26 +9,32 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.fpf.smartscan.media.MediaItem
@@ -39,6 +45,7 @@ import com.fpf.smartscan.media.shareMedia
 import com.fpf.smartscan.ui.components.common.ActionRowWithFade
 import com.fpf.smartscan.utils.canOpenUri
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaViewer(
     items: List<MediaItem>,
@@ -46,11 +53,14 @@ fun MediaViewer(
     onClose: () -> Unit,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
+    onSaveUpdatedItem: (MediaItem) -> Unit,
     maxSize: Int? = 1024
 ) {
     if (items.isEmpty()) return
 
     var isActionsVisible by remember { mutableStateOf(true) }
+    var isDescriptionVisible by remember { mutableStateOf(false) }
+
     var currentIndex by remember {
         mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex))
     }
@@ -69,6 +79,7 @@ fun MediaViewer(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+
             if (currentItem.type == MediaType.IMAGE) {
                 ImageDisplay(
                     uri = currentItem.uri,
@@ -76,17 +87,20 @@ fun MediaViewer(
                         .fillMaxSize()
                         .pointerInput(currentIndex) {
                             detectHorizontalDragGestures(
-                                onDragEnd = {
-                                    // handled by drag direction below
-                                },
                                 onHorizontalDrag = { _, dragAmount ->
-                                    if (dragAmount < -20 && currentIndex < items.lastIndex) {
-                                        currentIndex += 1
-                                        if(currentIndex == items.lastIndex - 1){
-                                         onLoadMore?.invoke()
+                                    if (dragAmount < -20 &&
+                                        currentIndex < items.lastIndex
+                                    ) {
+                                        currentIndex++
+
+                                        if (currentIndex == items.lastIndex - 1) {
+                                            onLoadMore?.invoke()
                                         }
-                                    } else if (dragAmount > 20 && currentIndex > 0) {
-                                        currentIndex -= 1
+                                    } else if (
+                                        dragAmount > 20 &&
+                                        currentIndex > 0
+                                    ) {
+                                        currentIndex--
                                     }
                                 }
                             )
@@ -99,10 +113,13 @@ fun MediaViewer(
                 VideoDisplay(
                     uri = currentItem.uri,
                     modifier = Modifier.fillMaxSize(),
-                    onTap = { isActionsVisible = !isActionsVisible },
+                    onTap = {
+                        isActionsVisible = !isActionsVisible
+                    },
                     onSwipeLeft = {
                         if (currentIndex < items.lastIndex) {
-                            currentIndex += 1
+                            currentIndex++
+
                             if (currentIndex == items.lastIndex - 1) {
                                 onLoadMore?.invoke()
                             }
@@ -110,7 +127,7 @@ fun MediaViewer(
                     },
                     onSwipeRight = {
                         if (currentIndex > 0) {
-                            currentIndex -= 1
+                            currentIndex--
                         }
                     }
                 )
@@ -122,6 +139,41 @@ fun MediaViewer(
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
                 isVisible = isActionsVisible
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 24.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        isDescriptionVisible = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Show description"
+                    )
+                }
+            }
+        }
+    }
+
+
+    if (isDescriptionVisible) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                isDescriptionVisible = false
+            }
+        ) {
+            MediaViewerDescriptionView(
+                description = currentItem.description,
+                onSave = { updatedDescription ->
+                    onSaveUpdatedItem(
+                        currentItem.copy(description = updatedDescription),
+                    )
+                }
             )
         }
     }
