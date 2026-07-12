@@ -11,5 +11,5 @@ class ConceptCrossRefRepository(private val dao: ConceptCrossRefDao) {
     suspend fun clear() = dao.clear()
     suspend fun count() = dao.count()
     suspend fun count(clusterId: Long) = dao.countByConceptId(clusterId)
-    suspend fun delete(crossrefs: List<ConceptCrossRefEntity>) = dao.delete(crossrefs)
+    suspend fun delete(crossrefs: List<ConceptCrossRef>) = dao.delete(crossrefs.map{it.toEntity()})
 }
