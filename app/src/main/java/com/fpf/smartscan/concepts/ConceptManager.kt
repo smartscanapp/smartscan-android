@@ -27,9 +27,10 @@ class ConceptManager(
         return concept
     }
 
-    suspend fun updateConcept(concept: Concept, newDescription: String){
+    suspend fun editConcept(concept: Concept, newDescription: String): Concept{
         val updatedConcept = concept.copy(description = newDescription, updatedAt = System.currentTimeMillis())
-        conceptRepository.updateConcept(updatedConcept)
+        conceptRepository.upsertConcept(updatedConcept)
+        return updatedConcept
     }
 
     suspend fun deleteConcepts(concepts: List<Concept>){
