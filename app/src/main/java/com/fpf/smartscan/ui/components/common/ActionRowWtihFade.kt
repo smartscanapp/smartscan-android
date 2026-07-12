@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 
 @Composable
 fun ActionRowWithFade(
@@ -33,6 +34,7 @@ fun ActionRowWithFade(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .zIndex(-1f)
                 .graphicsLayer {
                     this.alpha = alpha
                     this.translationY = translationY
