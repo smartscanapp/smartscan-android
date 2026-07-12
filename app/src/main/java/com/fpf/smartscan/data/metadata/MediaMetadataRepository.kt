@@ -40,7 +40,7 @@ class MediaMetadataRepository(
 
     suspend fun clear() = dao.clear()
 
-    fun removeFromRecentUpdates(mediaItem: MediaItem) = recentlyUpdatedItems.remove(mediaItem)
+    fun clearRecentUpdates() = recentlyUpdatedItems.clear()
     fun addToRecentUpdates(mediaItem: MediaItem) = recentlyUpdatedItems.add(mediaItem)
     fun getRecentlyUpdatedItems(): Set<MediaItem> = recentlyUpdatedItems
 

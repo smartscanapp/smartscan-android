@@ -153,6 +153,10 @@ fun ConceptsScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.checkRecentUpdatesAndUpdateConcepts()
+    }
+
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(ConceptAction.ResetSelection)
     }
@@ -182,7 +186,7 @@ fun ConceptsScreen(
                 ) {
                     LoadingIndicator(true)
                     Text(
-                        text = "Finding matching media...",
+                        text = "Updating matching media...",
                     )
                 }
             }

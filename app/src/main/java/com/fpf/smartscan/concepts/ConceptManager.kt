@@ -1,11 +1,14 @@
 package com.fpf.smartscan.concepts
 
+import android.util.Log
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
+import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
+import com.fpf.smartscansdk.core.embeddings.dot
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 
 class ConceptManager(
@@ -16,6 +19,10 @@ class ConceptManager(
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
 ) {
+
+    companion object {
+        private const val TAG = "ConceptManager"
+    }
     private var idCount: Long = 0L
 
     suspend fun createConcept(description: String){
@@ -62,6 +69,68 @@ class ConceptManager(
     suspend fun addMediaToConcept(mediaMatchesMap: Map<Long, MediaType>, conceptId: Long){
         val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key, mediaType=it.value, conceptId = conceptId)}
         conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
+    }
+
+    suspend fun checkRecentUpdatesAndUpdateConcepts(recentUpdates: Set<MediaItem>){
+        if(recentUpdates.isEmpty()) return
+        if(!textEmbedder.isInitialized()) textEmbedder.initialize()
+
+        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
+
+        val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
+        val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
+        val newMediaEmbeds = mutableListOf<StoredEmbedding>()
+        val updatedMediaEmbeds = mutableListOf<StoredEmbedding>()
+
+        for(media in recentUpdates){
+            if(media.description == null) continue
+
+            val newRawEmbedding = textEmbedder.embed(media.description)
+            //TODO: if not exist use date from MediaItem once i update class,  so date it always matched datedAdded from MediaItem
+            val existingMediaEmbed = imageConceptEmbedStore.get(listOf(media.id)).firstOrNull()
+            val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
+                ?: StoredEmbedding(media.id, System.currentTimeMillis(), newRawEmbedding.toQInt8Embed())
+            if (existingMediaEmbed != null){
+                updatedMediaEmbeds.add(updatedOrNewMediaEmbed)
+            }else{
+                newMediaEmbeds.add(updatedOrNewMediaEmbed)
+            }
+
+            // Check if the recently updated media still matches concepts it belongs to
+            val linkedConceptIds = conceptRepository.getLinkedConceptIds(media.id, media.type)
+            val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
+            if (conceptEmbeds.size != linkedConceptIds.size) error("Missing embeddings for some concepts")
+            for (conceptEmbed in conceptEmbeds){
+                val sim = conceptEmbed.embedding.toQInt8Embed().vector dot updatedOrNewMediaEmbed.embedding.toQInt8Embed().vector
+                if (sim < similarityThreshold){
+                    crossRefsToDelete.add(ConceptCrossRef(media.id, conceptId = conceptEmbed.id, media.type))
+                }
+            }
+
+            // Check if the recently updated media matches any concepts it's not already in
+            val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(media.id, media.type)
+            val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)
+            if (unlinkedConceptIds.size != unlinkedConceptEmbeds.size) error("Missing embeddings for some concepts")
+            for (conceptEmbed in unlinkedConceptEmbeds){
+                val sim = conceptEmbed.embedding.toQInt8Embed().vector dot updatedOrNewMediaEmbed.embedding.toQInt8Embed().vector
+                if (sim >= similarityThreshold){
+                    crossRefsToAdd.add(ConceptCrossRef(media.id, conceptId = conceptEmbed.id, media.type))
+                }
+            }
+        }
+
+        if(crossRefsToDelete.isNotEmpty()){
+            conceptCrossRefRepository.delete(crossRefsToDelete)
+        }
+        if(crossRefsToAdd.isNotEmpty()){
+            conceptCrossRefRepository.insertConceptCrossRefs(crossRefsToAdd)
+        }
+        if(newMediaEmbeds.isNotEmpty()){
+            imageConceptEmbedStore.add(newMediaEmbeds)
+        }
+        if(updatedMediaEmbeds.isNotEmpty()){
+            imageConceptEmbedStore.update(updatedMediaEmbeds)
+        }
     }
 
     private fun generateId(): Long = System.currentTimeMillis() + idCount

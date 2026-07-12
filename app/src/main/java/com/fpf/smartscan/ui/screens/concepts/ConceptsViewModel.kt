@@ -17,6 +17,7 @@ import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
+import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.ui.action.ConceptAction
@@ -44,6 +45,7 @@ class ConceptsViewModel(
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
+    private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
 ) : AndroidViewModel(application) {
@@ -137,7 +139,25 @@ class ConceptsViewModel(
             is ConceptAction.SetAllowedCollections -> setAllowedCollections()
             is ConceptAction.SetCollectionType -> setCollectionType(action.collectionType)
             is ConceptAction.ToggleSelectedCollection -> toggleSelectedCollection(action.collection)
-            ConceptAction.PinUnpinConcept -> TODO()
+            ConceptAction.PinUnpinConcept -> {}
+        }
+    }
+
+    fun checkRecentUpdatesAndUpdateConcepts(){
+        viewModelScope.launch (Dispatchers.IO) {
+            try {
+                val recentUpdates = mediaMetadataRepository.getRecentlyUpdatedItems()
+                if(recentUpdates.isEmpty()) return@launch
+
+                _state.update { it.copy(loading = true) }
+                conceptManager.checkRecentUpdatesAndUpdateConcepts(recentUpdates)
+                mediaMetadataRepository.clearRecentUpdates()
+            }catch (e: Exception){
+                Log.d(TAG, "Error in checkRecentUpdatesAndUpdateConcepts: $e")
+            }
+            finally {
+                _state.update { it.copy(loading = false) }
+            }
         }
     }
 
