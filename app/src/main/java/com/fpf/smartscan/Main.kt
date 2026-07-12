@@ -203,8 +203,8 @@ fun Main(
                                 isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
                                 hasStoragePermission = hasStoragePermission,
                                 onTopBarChange = { topBarState.value = it },
-                                onGenerateHighlights = {
-                                    mainViewModel.generateHighlights(listOf(MediaType.IMAGE))
+                                onIndex = {
+                                    mainViewModel.startConceptIndexing(listOf(MediaType.IMAGE))
                                 },
                                 onViewConcept = { concept ->
                                     navController.currentBackStackEntry

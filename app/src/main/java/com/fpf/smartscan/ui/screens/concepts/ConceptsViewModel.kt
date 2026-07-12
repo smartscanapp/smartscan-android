@@ -112,7 +112,7 @@ class ConceptsViewModel(
             initialValue = emptyList()
         )
 
-    val hasGeneratedHighlights: Boolean
+    val hasIndexed: Boolean
         get() = imageConceptEmbedStore.exists
 
     val hasSelectCollection: Boolean

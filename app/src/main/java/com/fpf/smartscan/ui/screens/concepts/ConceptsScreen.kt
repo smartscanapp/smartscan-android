@@ -72,7 +72,7 @@ fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     isMainScanRequired: Boolean,
-    onGenerateHighlights: ()-> Unit,
+    onIndex: ()-> Unit,
     hasStoragePermission: Boolean,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
@@ -230,14 +230,14 @@ fun ConceptsScreen(
                 isVisible = !isConceptsVisible,
                 isMainScanRequired=isMainScanRequired,
                 hasSelectedCollections = viewModel.hasSelectCollection,
-                hasGeneratedHighlights = viewModel.hasGeneratedHighlights,
-                onGenerateHighlights=onGenerateHighlights
+                hasIndexed = viewModel.hasIndexed,
+                onIndex=onIndex
             )
         }
 
 
         CustomFloatingActionButton (
-            enabled = viewModel.hasSelectCollection && viewModel.hasGeneratedHighlights,
+            enabled = viewModel.hasSelectCollection && viewModel.hasIndexed,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),

@@ -163,7 +163,7 @@ class MainViewModel(
     }
 
 
-    fun generateHighlights(mediaTypes: List<MediaType>){
+    fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
         if (storageAccess != StorageAccess.Denied) {
             _runningMediaTypes.update { mediaTypes.toSet()}
