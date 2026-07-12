@@ -34,7 +34,6 @@ fun ActionRowWithFade(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .zIndex(-1f)
                 .graphicsLayer {
                     this.alpha = alpha
                     this.translationY = translationY
