@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
+import com.fpf.smartscan.concepts.HighlightsCodec
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 
@@ -41,11 +42,7 @@ fun MediaHighlightsCard(
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
 ) {
     val highlights = remember(item.description) {
-        item.description
-            ?.split("| ")
-            ?.map { it.trim() }
-            ?.filter { it.isNotBlank() }
-            ?: emptyList()
+        item.description?.let{ HighlightsCodec.decode(it) }?: emptyList()
     }
     val shape = RoundedCornerShape(12.dp)
 
