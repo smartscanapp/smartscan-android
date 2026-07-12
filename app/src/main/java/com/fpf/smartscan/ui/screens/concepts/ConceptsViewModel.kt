@@ -114,9 +114,6 @@ class ConceptsViewModel(
             initialValue = emptyList()
         )
 
-    private val _event = MutableSharedFlow<CollectionEvent>()
-    val event = _event.asSharedFlow()
-
     val hasGeneratedHighlights: Boolean
         get() = imageConceptEmbedStore.exists
 
