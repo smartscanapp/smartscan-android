@@ -18,7 +18,10 @@ class SwipeablePlayerView(
 
     var onSwipeLeft: (() -> Unit)? = null
     var onSwipeRight: (() -> Unit)? = null
+    var onSwipeUp: (() -> Unit)? = null
+    var onSwipeDown: (() -> Unit)? = null
     var onTap: (() -> Unit)? = null
+
 
     @OptIn(UnstableApi::class)
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -39,6 +42,11 @@ class SwipeablePlayerView(
 
                 if (absX > absY && absX > threshold) {
                     if (dx > 0) onSwipeRight?.invoke() else onSwipeLeft?.invoke()
+                    return true
+                }
+
+                if (absY > absX && absY > threshold) {
+                    if (dy < 0) onSwipeUp?.invoke() else onSwipeDown?.invoke()
                     return true
                 }
 
