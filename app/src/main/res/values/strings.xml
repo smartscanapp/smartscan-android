@@ -25,6 +25,8 @@
     <string name="scan_action">Scan</string>
     <string name="scan_media_action">Scan %1$s</string>
     <string name="scan_rebuild_action">Scan (Rebuild)</string>
+    <string name="view_description_action">View description</string>
+    <string name="open_in_gallery_action">Open in gallery</string>
 
     <!-- Screen titles-->
     <string name="title_search">Search</string>
