@@ -252,13 +252,17 @@ class SearchViewModel(
         cachedIds.addAll(finalResults)
         val totalCount = finalResults.size
         val initialBatch = finalResults.take(RESULTS_BATCH_SIZE) // initial results the rest loaded dynamically
-        val (validIds, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), initialBatch, _state.value.mediaType)
-        val filteredSearchResults = validIds.map { MediaItem(it, _state.value.mediaType) }
+        val mediaIdToDateMap = when(_state.value.mediaType){
+            MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), initialBatch)
+            MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), initialBatch)
+        }
+        val (validIds, idsToPurge) = initialBatch.partition { it in mediaIdToDateMap }
+        val filteredSearchResults = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
 
-        _state.emit( _state.value.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults))
+        _state.update{ it.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults)}
 
         if (filteredSearchResults.isEmpty()) {
-            _state.emit(_state.value.copy(error = getApplication<Application>().getString(R.string.search_error_no_results)))
+            _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
         }
 
         if(idsToPurge.isNotEmpty()){
@@ -296,15 +300,21 @@ class SearchViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val batch = getPaginatedResult(currentItemsCount, RESULTS_BATCH_SIZE, cachedIds)
-                val (filteredResults, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), batch, _state.value.mediaType)
+                val mediaIdToDateMap = when(_state.value.mediaType){
+                    MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), batch)
+                    MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), batch)
+                }
+                val (validIds, idsToPurge) = batch.partition { it in mediaIdToDateMap }
 
-                if (filteredResults.isNotEmpty()) {
-                    val filteredSearchResults = _state.value.searchResults + filteredResults.map { MediaItem(it, _state.value.mediaType) }
-                    _state.emit(_state.value.copy(searchResults = filteredSearchResults))
+                if (validIds.isNotEmpty()) {
+                    val validResultsFromBatch = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
+                    val updatedResults = _state.value.searchResults + validResultsFromBatch
+                    _state.update{it.copy(searchResults = updatedResults)}
                 }
 
                 if (idsToPurge.isNotEmpty()) {
                     cachedIds.removeAll(idsToPurge) // PREVENTS duplicates
+                    _state.update{ it.copy(totalResults = cachedIds.size)}
                     purgeStaleItems(store, idsToPurge)
                 }
             }finally {
@@ -331,7 +341,7 @@ class SearchViewModel(
                 MediaType.VIDEO -> openVideoInGallery(context, item.uri)
             }
         }else{
-            _state.value = _state.value.copy(resultToView = item)
+            _state.update{it.copy(resultToView = item)}
         }
     }
 
