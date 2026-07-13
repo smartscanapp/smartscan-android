@@ -95,9 +95,9 @@ fun ImageSearcher(
                 )
         ) {
             ImageDisplay(
-                maxSize = 1024,
+                maxSize = 720,
                 uri = uri,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             )
             IconButton(
