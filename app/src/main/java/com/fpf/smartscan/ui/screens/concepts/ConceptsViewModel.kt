@@ -136,7 +136,7 @@ class ConceptsViewModel(
             is ConceptAction.SetAllowedCollections -> setAllowedCollections()
             is ConceptAction.SetCollectionType -> setCollectionType(action.collectionType)
             is ConceptAction.ToggleSelectedCollection -> toggleSelectedCollection(action.collection)
-            ConceptAction.PinUnpinConcept -> {}
+            is ConceptAction.PinUnpinConcept -> pinOrUnpinConcepts()
         }
     }
 
@@ -157,6 +157,17 @@ class ConceptsViewModel(
             }
         }
     }
+
+    private fun load(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val allowedCollections = mutableListOf<MediaCollection>()
+            allowedCollections.addAll(getAllowedClusterCollections())
+            allowedCollections.addAll(getAllowedTagCollections())
+            val updatedCollectionState = _state.value.collectionsSelection.copy(selectedItems = allowedCollections.toSet())
+            _state.update { it.copy( collectionsSelection = updatedCollectionState)}
+        }
+    }
+
 
     private fun clearSelection() = _state.update { it.copy(selection = SelectionUtils.clearSelection(it.selection)) }
 
@@ -212,13 +223,11 @@ class ConceptsViewModel(
         }
     }
 
-    private fun load(){
+    private fun pinOrUnpinConcepts(){
         viewModelScope.launch(Dispatchers.IO) {
-            val allowedCollections = mutableListOf<MediaCollection>()
-            allowedCollections.addAll(getAllowedClusterCollections())
-            allowedCollections.addAll(getAllowedTagCollections())
-            val updatedCollectionState = _state.value.collectionsSelection.copy(selectedItems = allowedCollections.toSet())
-            _state.update { it.copy( collectionsSelection = updatedCollectionState)}
+            val concepts = getSelectedConcepts()
+            conceptManager.pinOrUnpinConcepts(concepts.toList())
+            resetSelection()
         }
     }
 
@@ -272,4 +281,5 @@ class ConceptsViewModel(
     private suspend fun getAllConcepts(): MutableSet<Concept> {
         return conceptRepository.getConcepts().toMutableSet()
     }
+
 }
