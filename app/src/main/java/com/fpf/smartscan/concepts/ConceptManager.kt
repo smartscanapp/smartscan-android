@@ -75,7 +75,7 @@ class ConceptManager(
         if(recentUpdates.isEmpty()) return
         if(!textEmbedder.isInitialized()) textEmbedder.initialize()
 
-        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
+//        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
 
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
