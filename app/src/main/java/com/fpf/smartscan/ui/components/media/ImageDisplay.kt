@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Icon
@@ -46,7 +47,7 @@ fun ImageDisplay(
         builder.build()
     }
 
-    Box(modifier = modifier.background(Color.Transparent), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.background(Color.Transparent), contentAlignment = Alignment.Center) {
         if(mediaType == MediaType.VIDEO){
             Icon(Icons.Filled.PlayCircle, contentDescription = null, modifier = Modifier
                 .align(
@@ -58,7 +59,7 @@ fun ImageDisplay(
             model = request,
             contentDescription = "Displayed image",
             contentScale = contentScale,
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxWidth(),
             onError = { onError?.invoke(it) }
         )
     }
