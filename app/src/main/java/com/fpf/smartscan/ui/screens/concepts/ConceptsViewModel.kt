@@ -114,9 +114,6 @@ class ConceptsViewModel(
             initialValue = emptyList()
         )
 
-    val hasIndexed: Boolean
-        get() = imageConceptEmbedStore.exists
-
     val hasSelectCollection: Boolean
         get() = _state.value.collectionsSelection.selectedItems.isNotEmpty()
 

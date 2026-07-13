@@ -114,6 +114,11 @@ fun ConceptsScreen(
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.CLUSTER)) },
             enabled = !state.loading,
         ),
+        MenuActionConfig.Button(
+            label = "Generate summaries",
+            onClick = { onIndex()},
+            enabled = viewModel.hasSelectCollection, // TODO: add api key check here also
+        ),
     )
 
     var offset by remember { mutableIntStateOf(0) }
@@ -233,15 +238,11 @@ fun ConceptsScreen(
             EmptyConceptsScreen(
                 isVisible = !isConceptsVisible,
                 isMainScanRequired=isMainScanRequired,
-                hasSelectedCollections = viewModel.hasSelectCollection,
-                hasIndexed = viewModel.hasIndexed,
-                onIndex=onIndex
             )
         }
 
 
         CustomFloatingActionButton (
-            enabled = viewModel.hasSelectCollection && viewModel.hasIndexed,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),
