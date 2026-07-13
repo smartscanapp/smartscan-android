@@ -90,10 +90,9 @@ class ConceptManager(
             if(media.description == null) continue
 
             val newRawEmbedding = textEmbedder.embed(media.description)
-            //TODO: if not exist use date from MediaItem once i update class,  so date it always matched datedAdded from MediaItem
             val existingMediaEmbed = imageConceptEmbedStore.get(listOf(media.id)).firstOrNull()
             val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
-                ?: StoredEmbedding(media.id, System.currentTimeMillis(), newRawEmbedding.toQInt8Embed())
+                ?: StoredEmbedding(media.id, media.dateAdded, newRawEmbedding.toQInt8Embed())
             if (existingMediaEmbed != null){
                 updatedMediaEmbeds.add(updatedOrNewMediaEmbed)
             }else{

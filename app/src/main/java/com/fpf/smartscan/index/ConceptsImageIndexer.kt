@@ -39,10 +39,8 @@ class ConceptsImageIndexer(
     override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, Embedding>?>) {
         val filteredBatch = batch.filterNotNull()
         val metadataList = filteredBatch.map{it.first}
-        val imageIdToDateMap = getImageToDateMap(context, metadataList.map { it.id })
         val embedsToStore = filteredBatch.map{
-            val date = imageIdToDateMap[it.first.id]?: System.currentTimeMillis()
-            StoredEmbedding(it.first.id, date, it.second)
+            StoredEmbedding(it.first.id, it.first.dateAdded, it.second)
         }
         store.add(embedsToStore)
         mediaMetadataRepository.update(metadataList)
@@ -65,40 +63,5 @@ class ConceptsImageIndexer(
         val topicsStr = "[TOPICS]: ${output.topics.joinToString(", ")}."
         val summary = "[SUMMARY]: ${output.summary}"
         return topicsStr + "\n" + summary
-    }
-
-    private fun getImageToDateMap(context: Context, ids: List<Long>): Map<Long, Long> {
-        val result = mutableMapOf<Long, Long>()
-        val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val projection = arrayOf(
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.DATE_ADDED
-        )
-
-        val chunkSize = 500
-
-        ids.chunked(chunkSize).forEach { chunk ->
-
-            val selection = "${MediaStore.Images.Media._ID} IN (${
-                chunk.joinToString(",")
-            })"
-
-            context.applicationContext.contentResolver.query(
-                uri,
-                projection,
-                selection,
-                null,
-                null
-            )?.use { cursor ->
-
-                val idIdx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-                val dateIdx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
-
-                while (cursor.moveToNext()) {
-                    result[cursor.getLong(idIdx)] = cursor.getLong(dateIdx)
-                }
-            }
-        }
-        return result
     }
 }
