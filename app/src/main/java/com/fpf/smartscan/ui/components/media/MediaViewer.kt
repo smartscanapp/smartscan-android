@@ -1,49 +1,31 @@
 package com.fpf.smartscan.ui.components.media
 
-import android.content.ClipData
 import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.openImageInGallery
-import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.shareMedia
-import com.fpf.smartscan.ui.components.common.ActionRowWithFade
-import com.fpf.smartscan.utils.canOpenUri
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,196 +41,207 @@ fun MediaViewer(
     if (items.isEmpty()) return
 
     var isActionsVisible by remember { mutableStateOf(true) }
-    var isDescriptionVisible by remember { mutableStateOf(false) }
-
-    var currentIndex by remember {
-        mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex))
-    }
-
+    var descriptionExpanded by remember { mutableStateOf(false) }
+    var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
 
-    Popup(
-        onDismissRequest = { onClose() },
-        properties = PopupProperties(
+    Dialog(
+        onDismissRequest = {
+            if (descriptionExpanded) {
+                descriptionExpanded = false
+                isActionsVisible = true
+            } else {
+                onClose()
+            }
+        },
+        properties = DialogProperties(
             dismissOnBackPress = true,
-            focusable = true
+            dismissOnClickOutside = false
         )
     ) {
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
-            if (currentItem.type == MediaType.IMAGE) {
-                ImageDisplay(
-                    uri = currentItem.uri,
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .mediaViewerGestures(
+                        onTap = {
+                            isActionsVisible = !isActionsVisible
+                        },
+                        onSwipeLeft = {
+                            if (currentIndex < items.lastIndex) {
+                                currentIndex++
+
+                                if (currentIndex == items.lastIndex - 1) {
+                                    onLoadMore?.invoke()
+                                }
+                            }
+                        },
+                        onSwipeRight = {
+                            if (currentIndex > 0) {
+                                currentIndex--
+                            }
+                        },
+                        onSwipeUp = {
+                            descriptionExpanded = true
+                            isActionsVisible = false
+                        },
+                        onSwipeDown = {
+                            descriptionExpanded = false
+                            isActionsVisible = true
+                        }
+                    )
+            ) {
+
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(currentIndex) {
-                            detectHorizontalDragGestures(
-                                onHorizontalDrag = { _, dragAmount ->
-                                    if (dragAmount < -20 &&
-                                        currentIndex < items.lastIndex
-                                    ) {
+                        .fillMaxWidth()
+                        .weight(
+                            if (descriptionExpanded) 0.5f else 1f
+                        )
+                ) {
+
+                    when (currentItem.type) {
+                        MediaType.IMAGE -> {
+                            ImageDisplay(
+                                uri = currentItem.uri,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.FillWidth,
+                                maxSize = maxSize,
+                                mediaType = currentItem.type
+                            )
+                        }
+
+                        // Needs to propagate gestures due to Exoplayer
+                        MediaType.VIDEO -> {
+                            VideoDisplay(
+                                uri = currentItem.uri,
+                                modifier = Modifier.fillMaxSize(),
+                                onTap = {
+                                    isActionsVisible = !isActionsVisible
+                                },
+                                onSwipeLeft = {
+
+                                    if (currentIndex < items.lastIndex) {
                                         currentIndex++
 
                                         if (currentIndex == items.lastIndex - 1) {
                                             onLoadMore?.invoke()
                                         }
-                                    } else if (
-                                        dragAmount > 20 &&
-                                        currentIndex > 0
-                                    ) {
+                                    }
+                                },
+                                onSwipeRight = {
+                                    if (currentIndex > 0) {
                                         currentIndex--
                                     }
+                                },
+                                onSwipeUp = {
+                                    descriptionExpanded = true
+                                    isActionsVisible = false
+                                },
+                                onSwipeDown = {
+                                    descriptionExpanded = false
+                                    isActionsVisible = true
                                 }
                             )
-                        },
-                    contentScale = ContentScale.FillWidth,
-                    maxSize = maxSize,
-                    mediaType = currentItem.type
-                )
-            } else {
-                VideoDisplay(
-                    uri = currentItem.uri,
-                    modifier = Modifier.fillMaxSize(),
-                    onTap = {
-                        isActionsVisible = !isActionsVisible
-                    },
-                    onSwipeLeft = {
-                        if (currentIndex < items.lastIndex) {
-                            currentIndex++
-
-                            if (currentIndex == items.lastIndex - 1) {
-                                onLoadMore?.invoke()
-                            }
-                        }
-                    },
-                    onSwipeRight = {
-                        if (currentIndex > 0) {
-                            currentIndex--
                         }
                     }
-                )
+                }
+
+                if (descriptionExpanded) {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.5f)
+                    ) {
+
+                        key (currentItem.id, currentItem.type) {
+                            MediaViewerDescriptionView(
+                                modifier = Modifier.fillMaxSize(),
+                                description = currentItem.description,
+                                onSave = { updated ->
+                                    onSaveUpdatedItem(
+                                        currentItem.copy(
+                                            description = updated
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
-            ActionRow(
+            MediaViewerActionRow(
                 uri = currentItem.uri,
                 type = currentItem.type,
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
                 isVisible = isActionsVisible
             )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        isDescriptionVisible = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Show description"
-                    )
-                }
-            }
-        }
-    }
-
-
-    if (isDescriptionVisible) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                isDescriptionVisible = false
-            }
-        ) {
-            MediaViewerDescriptionView(
-                description = currentItem.description,
-                onSave = { updatedDescription ->
-                    onSaveUpdatedItem(
-                        currentItem.copy(description = updatedDescription),
-                    )
-                }
-            )
         }
     }
 }
 
-@Composable
-fun ActionRow(
-    uri: Uri,
-    type: MediaType,
-    onClose: () -> Unit,
-    onUpdateSearchImage: ((uri: Uri) -> Unit)?,
-    isVisible: Boolean
-) {
-    val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val isUriAccessible = canOpenUri(context, uri)
 
-    ActionRowWithFade(visible = isVisible) {
-        IconButton(onClick = { onClose() }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Close Image",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
+fun Modifier.mediaViewerGestures(
+    onTap: () -> Unit = {},
+    onSwipeLeft: () -> Unit = {},
+    onSwipeRight: () -> Unit = {},
+    onSwipeUp: () -> Unit = {},
+    onSwipeDown: () -> Unit = {},
+    threshold: Float = 100f
+): Modifier {
+    return pointerInput(Unit) {
+        awaitEachGesture {
 
-        if (isUriAccessible) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                IconButton(onClick = { shareMedia(context, uri) }) {
-                    Icon(
-                        Icons.Filled.Share,
-                        contentDescription = "Share",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+            val down = awaitFirstDown()
+            var position = down.position
+
+            while (true) {
+                val event = awaitPointerEvent()
+                val change = event.changes.first()
+
+                position = change.position
+
+                if (change.changedToUpIgnoreConsumed()) {
+                    break
                 }
-                if(type == MediaType.IMAGE) {
-                    IconButton(onClick = {
-                        clipboard.nativeClipboard.setPrimaryClip(
-                            ClipData.newUri(context.contentResolver, "smartscan_media", uri)
-                        )
-                    }) {
-                        Icon(
-                            Icons.Filled.ContentCopy,
-                            contentDescription = "Copy to clipboard",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+            }
+
+            val dx = position.x - down.position.x
+            val dy = position.y - down.position.y
+
+            val absX = abs(dx)
+            val absY = abs(dy)
+
+            when {
+                absX <= threshold && absY <= threshold -> {
+                    onTap()
                 }
-                IconButton(onClick = {
-                    if (type == MediaType.IMAGE) {
-                        openImageInGallery(context, uri)
+
+                absX > absY && absX > threshold -> {
+                    if (dx < 0) {
+                        onSwipeLeft()
                     } else {
-                        openVideoInGallery(context, uri)
+                        onSwipeRight()
                     }
-                }) {
-                    Icon(
-                        Icons.Filled.PhotoLibrary,
-                        contentDescription = "Open in Gallery",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
                 }
-                if (type == MediaType.IMAGE && onUpdateSearchImage != null) {
-                    IconButton(onClick = { onUpdateSearchImage(uri) }) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = "Search image",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+
+                absY > absX && absY > threshold -> {
+                    if (dy < 0) {
+                        onSwipeUp()
+                    } else {
+                        onSwipeDown()
                     }
                 }
             }
         }
     }
 }
-
