@@ -44,6 +44,7 @@ fun MediaViewer(
     var descriptionExpanded by remember { mutableStateOf(false) }
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
+    var showMenu by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = {
@@ -179,10 +180,12 @@ fun MediaViewer(
             }
 
             MediaViewerActionRow(
-                uri = currentItem.uri,
-                type = currentItem.type,
+                item = currentItem,
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
+                toggleMenu = {showMenu = !showMenu},
+                showMenu = showMenu,
+                onViewDescription = {descriptionExpanded = true},
                 isVisible = isActionsVisible
             )
         }

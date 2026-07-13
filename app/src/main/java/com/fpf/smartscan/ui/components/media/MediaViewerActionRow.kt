@@ -2,15 +2,11 @@ package com.fpf.smartscan.ui.components.media
 
 import android.content.ClipData
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -18,25 +14,72 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.fpf.smartscan.R
+import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.shareMedia
+import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.ActionRowWithFade
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.utils.canOpenUri
 
 
 @Composable
 fun MediaViewerActionRow(
-    uri: Uri,
-    type: MediaType,
+    item: MediaItem,
+    showMenu: Boolean,
+    toggleMenu: () -> Unit,
     onClose: () -> Unit,
+    onViewDescription: () -> Unit,
     onUpdateSearchImage: ((uri: Uri) -> Unit)?,
     isVisible: Boolean
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
-    val isUriAccessible = canOpenUri(context, uri)
+    val isUriAccessible = canOpenUri(context, item.uri)
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.view_description_action),
+            onClick = { onViewDescription() },
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.share_action),
+            onClick = { shareMedia(context, item.uri) },
+            enabled = isUriAccessible,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.open_in_gallery_action),
+            onClick ={
+                if (item.type == MediaType.IMAGE) {
+                    openImageInGallery(context, item.uri)
+                } else {
+                    openVideoInGallery(context, item.uri)
+                }
+                     },
+            enabled = isUriAccessible,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.copy_to_clipboard_action),
+            onClick = {
+                clipboard.nativeClipboard.setPrimaryClip(
+                    ClipData.newUri(context.contentResolver, "smartscan_media", item.uri)
+                )
+            },
+            enabled = isUriAccessible && item.type == MediaType.IMAGE,
+            hideIfDisabled = true
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.search_action),
+            onClick = { onUpdateSearchImage?.invoke(item.uri) },
+            enabled = isUriAccessible && item.type == MediaType.IMAGE && onUpdateSearchImage != null,
+            hideIfDisabled = true
+        ),
+    )
 
     ActionRowWithFade(visible = isVisible) {
         IconButton(onClick = { onClose() }) {
@@ -47,54 +90,19 @@ fun MediaViewerActionRow(
             )
         }
 
-        if (isUriAccessible) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                IconButton(onClick = { shareMedia(context, uri) }) {
-                    Icon(
-                        Icons.Filled.Share,
-                        contentDescription = "Share",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                if(type == MediaType.IMAGE) {
-                    IconButton(onClick = {
-                        clipboard.nativeClipboard.setPrimaryClip(
-                            ClipData.newUri(context.contentResolver, "smartscan_media", uri)
-                        )
-                    }) {
-                        Icon(
-                            Icons.Filled.ContentCopy,
-                            contentDescription = "Copy to clipboard",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                IconButton(onClick = {
-                    if (type == MediaType.IMAGE) {
-                        openImageInGallery(context, uri)
-                    } else {
-                        openVideoInGallery(context, uri)
-                    }
-                }) {
-                    Icon(
-                        Icons.Filled.PhotoLibrary,
-                        contentDescription = "Open in Gallery",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                if (type == MediaType.IMAGE && onUpdateSearchImage != null) {
-                    IconButton(onClick = { onUpdateSearchImage(uri) }) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = "Search image",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+        Box{
+            IconButton (onClick = { toggleMenu() }) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = "menu"
+                )
             }
+            DropDownMenuWrapper(
+                modifier = Modifier.widthIn(min = 144.dp),
+                expanded = showMenu,
+                actions = menuActions,
+                onClose = {toggleMenu()}
+            )
         }
     }
 }
