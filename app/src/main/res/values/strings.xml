@@ -73,9 +73,10 @@
 
     <!--Concepts Screen-->
     <string name="concepts_empty_screen_title">No Concepts</string>
-    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning, helping you rediscover information you\'ve saved but forgotten about. To get started follow the steps below:</string>
+    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning, helping you rediscover information you\'ve saved but forgotten about. To get started you can manually add descriptions to media in the Media Viewer or follow the steps below to generate descriptions automatically.</string>
     <string name="concepts_step_select_collections">Select allowed collections from the menu.</string>
-    <string name="concepts_step_generate_summaries">Generate summaries for images in your selected collections.</string>
+    <string name="concepts_step_generate_summaries">Generate descriptions for images in your selected collections.</string>
+    <string name="concepts_required_api_key_note">A SmartScan API key is required to generate descriptions.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>

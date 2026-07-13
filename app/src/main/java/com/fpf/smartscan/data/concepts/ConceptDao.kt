@@ -18,6 +18,7 @@ interface ConceptDao {
         FROM concept c
         LEFT JOIN concept_crossref crossRef ON c.id = crossRef.conceptId
         GROUP BY c.id
+        ORDER BY c.isPinned DESC
     """)
     fun getFlow(): Flow<List<ConceptWithCount>>
 

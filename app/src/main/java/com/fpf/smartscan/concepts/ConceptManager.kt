@@ -55,6 +55,10 @@ class ConceptManager(
         conceptEmbedStore.remove(concepts.map{it.id})
     }
 
+    suspend fun pinOrUnpinConcepts(concepts: List<Concept>){
+        conceptRepository.updateConcepts(concepts.map{it.copy(isPinned = !it.isPinned)})
+    }
+
     suspend fun findMediaMatchingConcept(concept: Concept): Map<Long, MediaType>{
         val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
         val result = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold)
@@ -75,7 +79,7 @@ class ConceptManager(
         if(recentUpdates.isEmpty()) return
         if(!textEmbedder.isInitialized()) textEmbedder.initialize()
 
-        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
+//        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
 
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()

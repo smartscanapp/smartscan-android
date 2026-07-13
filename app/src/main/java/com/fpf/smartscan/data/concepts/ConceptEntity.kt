@@ -8,5 +8,6 @@ data class ConceptEntity (
     @PrimaryKey
     val id: Long,
     val description: String,
+    val isPinned: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis()
 )

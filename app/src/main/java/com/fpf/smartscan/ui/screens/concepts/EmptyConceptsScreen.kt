@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
@@ -26,9 +27,6 @@ import com.fpf.smartscan.R
 fun EmptyConceptsScreen(
     isVisible: Boolean,
     isMainScanRequired: Boolean,
-    hasSelectedCollections: Boolean,
-    hasIndexed: Boolean,
-    onIndex: () -> Unit
 ) {
     if (!isVisible) return
 
@@ -80,15 +78,12 @@ fun EmptyConceptsScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
-                if(!hasIndexed) {
-                    Button(
-                        enabled = hasSelectedCollections,
-                        onClick = onIndex,
-                        modifier = Modifier.padding(top = 8.dp)
-                    ) {
-                        Text("Generate summaries")
-                    }
-                }
+                Text(
+                    text = stringResource(R.string.concepts_required_api_key_note),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    fontStyle = FontStyle.Italic
+                )
             }
         }
     }

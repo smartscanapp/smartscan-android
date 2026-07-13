@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.navigation.TopBarState
+import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
@@ -63,21 +64,23 @@ import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 
 
 @OptIn(FlowPreview::class)
 @Composable
 fun ConceptsScreen(
+    appSettings: StateFlow<AppSettings>,
+    hasStoragePermission: Boolean,
+    isMainScanRequired: Boolean,
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
-    isMainScanRequired: Boolean,
     onIndex: ()-> Unit,
-    hasStoragePermission: Boolean,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
-    val actionBarHeight = 70
+    val settings by appSettings.collectAsState()
     val state by viewModel.state.collectAsState()
     val clusterCollections by viewModel.clusterCollections.collectAsState()
     val tagCollections by viewModel.tagCollections.collectAsState()
@@ -96,8 +99,7 @@ fun ConceptsScreen(
     var isDeletingConcept by remember { mutableStateOf(false) }
     val isActionBarVisible = state.selection.isSelecting && state.selection.selectedCount > 0
 
-    //TODO: update db to store isPinned on concepts
-
+    val actionBarHeight = 70
     val actionBarActions: List<ActionConfig> = listOf(
         ActionConfig( label = stringResource(R.string.edit_concept_action), onClick={ isEditingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
         ActionConfig(label = stringResource(R.string.pin_unpin_concept_action), onClick = {viewModel.onAction(ConceptAction.PinUnpinConcept)}, enabled = !state.loading, icon = Icons.Filled.PushPin),
@@ -113,6 +115,11 @@ fun ConceptsScreen(
             label = "Set allowed auto collections",
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.CLUSTER)) },
             enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = "Generate summaries",
+            onClick = { onIndex()},
+            enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
         ),
     )
 
@@ -233,15 +240,11 @@ fun ConceptsScreen(
             EmptyConceptsScreen(
                 isVisible = !isConceptsVisible,
                 isMainScanRequired=isMainScanRequired,
-                hasSelectedCollections = viewModel.hasSelectCollection,
-                hasIndexed = viewModel.hasIndexed,
-                onIndex=onIndex
             )
         }
 
 
         CustomFloatingActionButton (
-            enabled = viewModel.hasSelectCollection && viewModel.hasIndexed,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),

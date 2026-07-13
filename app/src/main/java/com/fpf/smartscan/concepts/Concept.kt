@@ -8,6 +8,7 @@ data class Concept (
     val id: Long,
     val description: String,
     val size: Int,
+    val isPinned: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis()
 
 ): Parcelable{

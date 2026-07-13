@@ -11,6 +11,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
                 id INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 updatedAt INTEGER NOT NULL,
+                isPinned INTEGER NOT NULL,
                 PRIMARY KEY(id)
             )
             """.trimIndent()
