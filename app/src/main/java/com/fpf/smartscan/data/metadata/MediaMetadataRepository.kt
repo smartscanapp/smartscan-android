@@ -2,12 +2,16 @@ package com.fpf.smartscan.data.metadata
 
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
+import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaType
 
 class MediaMetadataRepository(
     private val dao: MediaMetadataDao
 ) {
+    // Track recently updated descriptions so that in the concepts screens Concepts can be updated accordingly
+    private val recentlyUpdatedItems = mutableSetOf<MediaItem>()
+
     suspend fun insert(items: List<MediaMetadata>) = dao.insert(items.map{it.toEntity()})
 
     suspend fun update(items: List<MediaMetadata>) = dao.update(items.map{it.toEntity()})
@@ -35,4 +39,9 @@ class MediaMetadataRepository(
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 
     suspend fun clear() = dao.clear()
+
+    fun clearRecentUpdates() = recentlyUpdatedItems.clear()
+    fun addToRecentUpdates(mediaItem: MediaItem) = recentlyUpdatedItems.add(mediaItem)
+    fun getRecentlyUpdatedItems(): Set<MediaItem> = recentlyUpdatedItems
+
 }

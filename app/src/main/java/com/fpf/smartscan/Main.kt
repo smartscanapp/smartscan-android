@@ -100,6 +100,12 @@ fun Main(
         }
     }
 
+    LaunchedEffect(conceptImageIndexStatus) {
+        if (conceptImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
+            mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
+        }
+    }
+
     if (currentRoute in listOf(Routes.SEARCH, Routes.COLLECTIONS)) {
         RequestPermissions { _, storageGranted -> hasStoragePermission = storageGranted }
     }
@@ -197,8 +203,8 @@ fun Main(
                                 isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
                                 hasStoragePermission = hasStoragePermission,
                                 onTopBarChange = { topBarState.value = it },
-                                onGenerateHighlights = {
-                                    mainViewModel.generateHighlights(listOf(MediaType.IMAGE))
+                                onIndex = {
+                                    mainViewModel.startConceptIndexing(listOf(MediaType.IMAGE))
                                 },
                                 onViewConcept = { concept ->
                                     navController.currentBackStackEntry

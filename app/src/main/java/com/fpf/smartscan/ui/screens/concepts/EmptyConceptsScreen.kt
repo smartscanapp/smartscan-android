@@ -27,14 +27,14 @@ fun EmptyConceptsScreen(
     isVisible: Boolean,
     isMainScanRequired: Boolean,
     hasSelectedCollections: Boolean,
-    hasGeneratedHighlights: Boolean,
-    onGenerateHighlights: () -> Unit
+    hasIndexed: Boolean,
+    onIndex: () -> Unit
 ) {
     if (!isVisible) return
 
     val steps = listOf(
         stringResource(R.string.concepts_step_select_collections),
-        stringResource(R.string.concepts_step_generate_highlights)
+        stringResource(R.string.concepts_step_generate_summaries)
     )
 
     Box(
@@ -80,13 +80,13 @@ fun EmptyConceptsScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
-                if(!hasGeneratedHighlights) {
+                if(!hasIndexed) {
                     Button(
                         enabled = hasSelectedCollections,
-                        onClick = onGenerateHighlights,
+                        onClick = onIndex,
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
-                        Text("Generate highlights")
+                        Text("Generate summaries")
                     }
                 }
             }

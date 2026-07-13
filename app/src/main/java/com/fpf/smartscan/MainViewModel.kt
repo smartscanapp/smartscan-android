@@ -157,8 +157,13 @@ class MainViewModel(
         _runningMediaTypes.update { it - mediaType}
     }
 
+    fun onConceptIndexingFinished(mediaType: MediaType) {
+        resetConceptIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
+    }
 
-    fun generateHighlights(mediaTypes: List<MediaType>){
+
+    fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
         if (storageAccess != StorageAccess.Denied) {
             _runningMediaTypes.update { mediaTypes.toSet()}
@@ -170,6 +175,13 @@ class MainViewModel(
         when(mediaType){
             MediaType.IMAGE -> ImageIndexListener.reset()
             MediaType.VIDEO -> VideoIndexListener.reset()
+        }
+    }
+
+    private fun resetConceptIndexingState(mediaType: MediaType){
+        when(mediaType){
+            MediaType.IMAGE -> ConceptImageIndexListener.reset()
+            MediaType.VIDEO -> {}
         }
     }
 

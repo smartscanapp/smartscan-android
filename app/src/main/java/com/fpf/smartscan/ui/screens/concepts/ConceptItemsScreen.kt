@@ -128,7 +128,11 @@ fun ConceptItemsScreen(
                     onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView( null))},
                     onUpdateSearchImage = null,
                     onLoadMore = { val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
-                        conceptItems[lastIndex]}
+                        conceptItems[lastIndex]},
+                    onSaveUpdatedItem = {
+                        viewModel.onAction(ConceptItemsAction.SaveUpdatedItem(it))
+                        conceptItems.refresh()
+                    }
                 )
             }
         }

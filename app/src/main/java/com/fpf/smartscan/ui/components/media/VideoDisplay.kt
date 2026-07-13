@@ -22,7 +22,9 @@ fun VideoDisplay(
     onTap: () -> Unit = {},
     onSwipeLeft: () -> Unit = {},
     onSwipeRight: () -> Unit = {},
-) {
+    onSwipeUp: () -> Unit = {},
+    onSwipeDown: () -> Unit = {},
+    ) {
     val context = LocalContext.current
 
     val exoPlayer = remember(context) {
@@ -50,6 +52,8 @@ fun VideoDisplay(
                 this.onTap = onTap
                 this.onSwipeLeft = onSwipeLeft
                 this.onSwipeRight = onSwipeRight
+                this.onSwipeUp = onSwipeUp
+                this.onSwipeDown = onSwipeDown
 
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,

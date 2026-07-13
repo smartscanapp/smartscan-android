@@ -176,6 +176,7 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
             is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is CollectionItemAction.SaveUpdatedItem -> saveUpdatedItem(action.updatedItem)
             }
     }
 
@@ -338,6 +339,15 @@ class CollectionItemsViewModel(
     }
 
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+
+    private fun saveUpdatedItem(updatedItem: MediaItem){
+        viewModelScope.launch(Dispatchers.IO) {
+            val meta = mediaMetadataRepository.getByIds(listOf(updatedItem.id), updatedItem.type).firstOrNull()?: return@launch
+            val updatedMeta = meta.copy(description = updatedItem.description)
+            mediaMetadataRepository.update(listOf(updatedMeta))
+            mediaMetadataRepository.addToRecentUpdates(updatedItem)
+        }
+    }
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

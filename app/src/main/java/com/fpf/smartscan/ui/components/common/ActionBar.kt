@@ -32,6 +32,7 @@ fun ActionBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (action in actions) {
+            if(!action.enabled && action.hideIfDisabled) continue
             Button(
                 enabled = action.enabled,
                 colors = ButtonDefaults.buttonColors(

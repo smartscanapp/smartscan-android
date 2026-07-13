@@ -25,6 +25,8 @@
     <string name="scan_action">Scan</string>
     <string name="scan_media_action">Scan %1$s</string>
     <string name="scan_rebuild_action">Scan (Rebuild)</string>
+    <string name="view_description_action">View description</string>
+    <string name="open_in_gallery_action">Open in gallery</string>
 
     <!-- Screen titles-->
     <string name="title_search">Search</string>
@@ -72,8 +74,8 @@
     <!--Concepts Screen-->
     <string name="concepts_empty_screen_title">No Concepts</string>
     <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning, helping you rediscover information you\'ve saved but forgotten about. To get started follow the steps below:</string>
-    <string name="concepts_step_select_collections">Select collections from the menu that contain text-based images (e.g. Reddit posts, articles, and book pages).</string>
-    <string name="concepts_step_generate_highlights">Generate highlights for images in your selected collections.</string>
+    <string name="concepts_step_select_collections">Select allowed collections from the menu.</string>
+    <string name="concepts_step_generate_summaries">Generate summaries for images in your selected collections.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>

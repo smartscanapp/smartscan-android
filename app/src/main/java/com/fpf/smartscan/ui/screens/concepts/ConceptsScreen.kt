@@ -72,7 +72,7 @@ fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     isMainScanRequired: Boolean,
-    onGenerateHighlights: ()-> Unit,
+    onIndex: ()-> Unit,
     hasStoragePermission: Boolean,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
@@ -153,6 +153,10 @@ fun ConceptsScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.checkRecentUpdatesAndUpdateConcepts()
+    }
+
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(ConceptAction.ResetSelection)
     }
@@ -182,7 +186,7 @@ fun ConceptsScreen(
                 ) {
                     LoadingIndicator(true)
                     Text(
-                        text = "Finding matching media...",
+                        text = "Updating matching media...",
                     )
                 }
             }
@@ -230,14 +234,14 @@ fun ConceptsScreen(
                 isVisible = !isConceptsVisible,
                 isMainScanRequired=isMainScanRequired,
                 hasSelectedCollections = viewModel.hasSelectCollection,
-                hasGeneratedHighlights = viewModel.hasGeneratedHighlights,
-                onGenerateHighlights=onGenerateHighlights
+                hasIndexed = viewModel.hasIndexed,
+                onIndex=onIndex
             )
         }
 
 
         CustomFloatingActionButton (
-            enabled = viewModel.hasSelectCollection && viewModel.hasGeneratedHighlights,
+            enabled = viewModel.hasSelectCollection && viewModel.hasIndexed,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding( 32.dp),
