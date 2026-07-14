@@ -22,7 +22,7 @@ import com.fpf.smartscansdk.core.processors.MemoryOptions
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
-class ConceptsImageIndexer(
+class CloudImageIndexer(
     context: Context,
     private val embedder: TextEmbeddingProvider,
     private val openaiClient: OpenaiClient,

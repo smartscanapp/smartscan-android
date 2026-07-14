@@ -26,8 +26,8 @@ import com.fpf.smartscan.concepts.getAllowedClusters
 import com.fpf.smartscan.concepts.getAllowedTags
 import com.fpf.smartscan.constants.DEFAULT_SYSTEM_PROMPT
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.index.ConceptImageIndexListener
-import com.fpf.smartscan.index.ConceptsImageIndexer
+import com.fpf.smartscan.index.CloudImageIndexListener
+import com.fpf.smartscan.index.CloudImageIndexer
 import com.fpf.smartscan.index.ImageIndexListener
 import com.fpf.smartscan.index.IndexJob
 import com.fpf.smartscan.index.VideoIndexListener
@@ -118,7 +118,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
             try {
                 val indexJob = IndexJob.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
                 when(indexJob){
-                    IndexJob.MAIN ->runMainIndexPipeline(mediaTypes)
+                    IndexJob.MAIN -> runMainIndexPipeline(mediaTypes)
                     IndexJob.CONCEPTS -> runConceptsIndexPipeline(mediaTypes)
                 }
             }
@@ -217,10 +217,10 @@ class MediaIndexForegroundService : Service(), KoinComponent {
             mediaTypes.forEach { mediaType ->
                 when (mediaType) {
                     MediaType.IMAGE -> {
-                        val imageIndexer = ConceptsImageIndexer(
+                        val imageIndexer = CloudImageIndexer(
                             context = application,
                             embedder=textEmbedder,
-                            listener = ConceptImageIndexListener,
+                            listener = CloudImageIndexListener,
                             store = imageConceptEmbedStore,
                             mediaMetadataRepository = metadataRepo,
                             quantize = true,

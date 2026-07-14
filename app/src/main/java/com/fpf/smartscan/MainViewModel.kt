@@ -16,7 +16,7 @@ import com.fpf.smartscan.data.ModelRepository
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.index.ConceptImageIndexListener
+import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.index.ImageIndexListener
 import com.fpf.smartscan.index.IndexJob
 import com.fpf.smartscan.index.VideoIndexListener
@@ -63,8 +63,8 @@ class MainViewModel(
     val modelDownloadProgress = modelRepository.modelDownloadProgress
     val modelDownloadStatus = modelRepository.modelDownloadStatus
 
-    val conceptImageIndexProgress = ConceptImageIndexListener.progress
-    val conceptImageIndexStatus = ConceptImageIndexListener.indexingStatus
+    val cloudImageIndexProgress = CloudImageIndexListener.progress
+    val cloudImageIndexStatus = CloudImageIndexListener.indexingStatus
 
     private val _hasIndexedImages = MutableStateFlow<Boolean?>(null)
     private val _hasIndexedVideos = MutableStateFlow<Boolean?>(null)
@@ -187,7 +187,7 @@ class MainViewModel(
 
     private fun resetConceptIndexingState(mediaType: MediaType){
         when(mediaType){
-            MediaType.IMAGE -> ConceptImageIndexListener.reset()
+            MediaType.IMAGE -> CloudImageIndexListener.reset()
             MediaType.VIDEO -> {}
         }
     }

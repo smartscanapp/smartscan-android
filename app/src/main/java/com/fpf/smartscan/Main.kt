@@ -67,20 +67,20 @@ fun Main(
     val videoIndexProgress by mainViewModel.videoIndexProgress.collectAsState()
     val imageIndexStatus by mainViewModel.imageIndexStatus.collectAsState()
     val videoIndexStatus by mainViewModel.videoIndexStatus.collectAsState()
-    val conceptImageIndexProgress by mainViewModel.conceptImageIndexProgress.collectAsState()
-    val conceptImageIndexStatus by mainViewModel.conceptImageIndexStatus.collectAsState()
-
-    // Model downloading
-    val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
-    val modelDownloadProgress by mainViewModel.modelDownloadProgress.collectAsState()
-
+    val cloudImageIndexProgress by mainViewModel.cloudImageIndexProgress.collectAsState()
+    val cloudImageIndexStatus by mainViewModel.cloudImageIndexStatus.collectAsState()
     val hasIndexedImages by mainViewModel.hasIndexedImages.collectAsState()
     val hasIndexedVideos by mainViewModel.hasIndexedVideos.collectAsState()
     val runningMediaTypes by mainViewModel.runningMediaTypes.collectAsState()
     val isIndexing = imageIndexStatus == IndexingStatus.ACTIVE ||
             videoIndexStatus == IndexingStatus.ACTIVE ||
-            runningMediaTypes.isNotEmpty() ||
-            conceptImageIndexStatus == IndexingStatus.ACTIVE
+            cloudImageIndexStatus == IndexingStatus.ACTIVE ||
+            runningMediaTypes.isNotEmpty()
+
+
+    // Model downloading
+    val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
+    val modelDownloadProgress by mainViewModel.modelDownloadProgress.collectAsState()
 
     var hasStoragePermission by remember { mutableStateOf(false) }
     var showFirstScanModal by remember { mutableStateOf(false) }
@@ -105,8 +105,8 @@ fun Main(
         }
     }
 
-    LaunchedEffect(conceptImageIndexStatus) {
-        if (conceptImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
+    LaunchedEffect(cloudImageIndexStatus) {
+        if (cloudImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
             mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
         }
     }
@@ -150,10 +150,10 @@ fun Main(
                 if(isIndexing) {
                     ScanLoadingView(
                         isIndexing = true,
-                        imageIndexStatus = if(conceptImageIndexStatus == IndexingStatus.ACTIVE)  conceptImageIndexStatus else imageIndexStatus,
+                        imageIndexStatus = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexStatus else imageIndexStatus,
                         videoIndexStatus = videoIndexStatus,
                         videoIndexProgress = videoIndexProgress,
-                        imageIndexProgress = if(conceptImageIndexStatus == IndexingStatus.ACTIVE)  conceptImageIndexProgress else imageIndexProgress,
+                        imageIndexProgress = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexProgress else imageIndexProgress,
                         title = stringResource(R.string.scan_in_progress_title),
                         message = stringResource(R.string.scan_in_progress_content)
                     )
