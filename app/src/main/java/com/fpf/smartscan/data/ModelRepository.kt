@@ -68,6 +68,8 @@ class ModelRepository(
     fun getInstalledModels(type: ModelType?=null): List<ModelName> = ModelManager.listModels(application, type)
 
     fun getAvailableModelRegistry(): Map<ModelName, ModelInfo> = ModelRegistry.filter { item -> item.key in listOf(ModelName.ALL_MINILM_L6_V2)}
+
+    fun modelExist(modelName: ModelName): Boolean = ModelManager.modelExists(application, modelName)
 }
 
 enum class ModelDownloadStatus {

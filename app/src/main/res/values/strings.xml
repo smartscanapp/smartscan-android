@@ -5,6 +5,27 @@
     <string name="source_code_url">https://github.com/dev-diaries41/smartscan</string>
     <string name="reddit_url">https://www.reddit.com/r/SmartScan/</string>
 
+
+    <!-- Screen titles-->
+    <string name="title_search">Search</string>
+    <string name="title_concepts">Concepts</string>
+    <string name="title_collections">Collections</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_donate">Donate</string>
+
+    <!-- Notifications -->
+    <string name="worker_channel_id">Background Tasks</string>
+    <string name="worker_channel_name">Background Tasks Notifications</string>
+    <string name="worker_channel_description">Notifications for background tasks</string>
+    <string name="service_media_index_channel_id">Media Index</string>
+    <string name="service_media_index_channel_name">Media Index Notifications</string>
+    <string name="notif_title_media_index_service">Scanning media</string>
+    <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
+    <string name="notif_title_index_error_service">%1$s scan error</string>
+    <string name="notif_content_index_error_service">An error occurred during scan. Try manually re-scanning.</string>
+    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try manually re-scanning.</string>
+    <string name="notif_title_index_complete">Scan complete</string>
+
     <!--___Actions___-->
     <string name="share_action">Share</string>
     <string name="move_action">Move</string>
@@ -27,26 +48,8 @@
     <string name="scan_rebuild_action">Scan (Rebuild)</string>
     <string name="view_description_action">View description</string>
     <string name="open_in_gallery_action">Open in gallery</string>
+    <string name="download_model_action">Download model</string>
 
-    <!-- Screen titles-->
-    <string name="title_search">Search</string>
-    <string name="title_concepts">Concepts</string>
-    <string name="title_collections">Collections</string>
-    <string name="title_settings">Settings</string>
-    <string name="title_donate">Donate</string>
-
-    <!-- Notifications -->
-    <string name="worker_channel_id">Background Tasks</string>
-    <string name="worker_channel_name">Background Tasks Notifications</string>
-    <string name="worker_channel_description">Notifications for background tasks</string>
-    <string name="service_media_index_channel_id">Media Index</string>
-    <string name="service_media_index_channel_name">Media Index Notifications</string>
-    <string name="notif_title_media_index_service">Scanning media</string>
-    <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
-    <string name="notif_title_index_error_service">%1$s scan error</string>
-    <string name="notif_content_index_error_service">An error occurred during scan. Try manually re-scanning.</string>
-    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try manually re-scanning.</string>
-    <string name="notif_title_index_complete">Scan complete</string>
 
     <!--Alerts-->
     <string name="alert_space_not_allowed">Spaces are not allowed</string>
@@ -78,6 +81,7 @@
     <string name="concepts_step_generate_summaries">Generate descriptions for images in your selected collections.</string>
     <string name="concepts_required_api_key_note">A SmartScan API key is required to generate descriptions.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
+    <string name="concepts_download_model">A new model is required to use Concepts. Download it now to enable this feature. You can manage this model anytime from Settings.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>
     <plurals name="concept_count">
