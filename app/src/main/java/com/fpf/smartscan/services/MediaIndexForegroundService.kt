@@ -6,13 +6,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import com.fpf.smartscan.R
 import com.fpf.smartscan.MainActivity
-import com.fpf.smartscan.api.llm.LLMProviderConfig
-import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
@@ -21,30 +17,15 @@ import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE
 import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.cluster.ClusterManager
-import com.fpf.smartscan.concepts.getAllowedClusters
-import com.fpf.smartscan.concepts.getAllowedTags
-import com.fpf.smartscan.constants.DEFAULT_SYSTEM_PROMPT
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.index.ConceptImageIndexListener
-import com.fpf.smartscan.index.ConceptsImageIndexer
-import com.fpf.smartscan.index.ImageIndexListener
-import com.fpf.smartscan.index.IndexJob
-import com.fpf.smartscan.index.VideoIndexListener
-import com.fpf.smartscan.settings.loadSettings
-import com.fpf.smartscan.index.indexMedia
-import com.fpf.smartscan.index.indexMediaForConcepts
-import com.fpf.smartscan.utils.showNotification
+import com.fpf.smartscan.index.CloudIndexJobManager
+import com.fpf.smartscan.index.IndexJobType
+import com.fpf.smartscan.index.LocalIndexJobManager
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
-import com.fpf.smartscansdk.core.indexers.ImageIndexer
-import com.fpf.smartscansdk.core.indexers.VideoIndexer
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
-import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
-import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,24 +38,47 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     companion object {
         const val EXTRA_MEDIA_TYPES = "extra_media_types"
         const val EXTRA_INDEX_JOB = "extra_index_job"
-        private const val NOTIFICATION_ID = 200
+        private const val NOTIFICATION_ID = 300
         private const val TAG = "MediaIndexService"
     }
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
     private val imageEmbedder by lazy { ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
     private val textEmbedder by lazy { ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2) }
-    private val metadataRepo: MediaMetadataRepository by inject()
+    private val mediaMetadataRepository: MediaMetadataRepository by inject()
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
-    private val imageStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
-    private val videoStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
-    private val clusterStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
-    private val imageConceptEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
+    private val imageEmbedStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
+    private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
+    private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
+    private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
 
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
 
+    private val cloudIndexJobManager by lazy {
+        CloudIndexJobManager(
+            application = application,
+            sharedPrefs=sharedPrefs,
+            textEmbedder = textEmbedder,
+            imageConceptsEmbedStore = imageConceptsEmbedStore,
+            mediaMetadataRepository = mediaMetadataRepository,
+        )
+    }
+
+    private val localIndexJobManager by lazy {
+        LocalIndexJobManager(
+            application = application,
+            sharedPrefs=sharedPrefs,
+            imageEmbedder = imageEmbedder,
+            imageEmbedStore = imageEmbedStore,
+            videoEmbedStore = videoEmbedStore,
+            clusterEmbedStore = clusterEmbedStore,
+            mediaMetadataRepository = mediaMetadataRepository,
+            clusterMetadataRepository = clusterMetadataRepository,
+            clusterCrossRefRepository = clusterCrossRefRepository
+        )
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -88,9 +92,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
             this, 0, activityIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(
-            this, getString(R.string.service_media_index_channel_id)
-        )
+        val notification = NotificationCompat.Builder(this, getString(R.string.service_media_index_channel_id))
             .setContentTitle(getString(R.string.notif_title_media_index_service))
             .setContentText(getString(R.string.notif_content_media_index_service))
             .setSmallIcon(R.drawable.smartscan_logo)
@@ -111,15 +113,13 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val mediaTypes = intent?.getStringArrayListExtra(EXTRA_MEDIA_TYPES)
-                ?.map(MediaType::valueOf)
-                ?: MediaType.entries
         serviceScope.launch {
             try {
-                val indexJob = IndexJob.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
+                val mediaTypes = intent?.getStringArrayListExtra(EXTRA_MEDIA_TYPES)?.map(MediaType::valueOf) ?: MediaType.entries
+                val indexJob = IndexJobType.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
                 when(indexJob){
-                    IndexJob.MAIN ->runMainIndexPipeline(mediaTypes)
-                    IndexJob.CONCEPTS -> runConceptsIndexPipeline(mediaTypes)
+                    IndexJobType.CLOUD -> cloudIndexJobManager.run(mediaTypes)
+                    IndexJobType.LOCAL -> localIndexJobManager.run(mediaTypes)
                 }
             }
             finally {
@@ -128,128 +128,6 @@ class MediaIndexForegroundService : Service(), KoinComponent {
             }
         }
         return START_NOT_STICKY
-    }
-    private suspend fun runMainIndexPipeline(mediaTypes: List<MediaType>){
-        try {
-            val appSettings = loadSettings(sharedPrefs)
-            imageEmbedder.initialize()
-
-            val clusterManager = ClusterManager(
-                clusterEmbedStore = clusterStore,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
-                clusterCrossRefRepository = clusterCrossRefRepository,
-                clusterMetadataRepository = clusterMetadataRepository,
-                mediaMetadataRepository = metadataRepo,
-            )
-
-            mediaTypes.forEach { mediaType ->
-                when (mediaType) {
-                    MediaType.IMAGE -> {
-                        val imageIndexer = ImageIndexer(
-                            imageEmbedder,
-                            context = application,
-                            listener = ImageIndexListener,
-                            store = imageStore,
-                            quantize = true
-                        )
-                        indexMedia(
-                            application,
-                            MediaType.IMAGE,
-                            imageStore,
-                            imageIndexer,
-                            metadataRepo,
-                            appSettings.searchableImageDirectories.map { it.toUri() })
-                    }
-
-                    MediaType.VIDEO -> {
-                        val videoIndexer = VideoIndexer(
-                            imageEmbedder,
-                            context = application,
-                            listener = VideoIndexListener,
-                            store = videoStore,
-                            quantize = true,
-                            width = IMAGE_SIZE_X,
-                            height = IMAGE_SIZE_Y
-                        )
-                        indexMedia(
-                            application,
-                            MediaType.VIDEO,
-                            videoStore,
-                            videoIndexer,
-                            metadataRepo,
-                            appSettings.searchableVideoDirectories.map { it.toUri() })
-                    }
-                }
-            }
-
-            try {
-                clusterManager.cluster()
-            } catch (e: Exception) {
-                Log.e(TAG, "Clustering failed:", e)
-                val title = application.getString(R.string.notif_title_index_error_service, "Media")
-                val content = application.getString(R.string.notif_content_cluster_error_service)
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
-            }
-        } catch (e: CancellationException) {
-            Log.w(TAG, "Indexing job cancelled:", e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Indexing failed:", e)
-            val title = application.getString(R.string.notif_title_index_error_service, "Media")
-            val content = application.getString(R.string.notif_content_index_error_service)
-            showNotification(application, title, content, NOTIFICATION_ID + 1)
-        } finally {
-            imageEmbedder.closeSession()
-        }
-    }
-
-    private suspend fun runConceptsIndexPipeline(mediaTypes: List<MediaType>){
-        try {
-            val appSettings = loadSettings(sharedPrefs)
-            val allowedTags= getAllowedTags(sharedPrefs)
-            val allowedClusters = getAllowedClusters(sharedPrefs)
-            val openaiClient = OpenaiClient(
-                apiKey = appSettings.openaiApiKey?: error("Missing OpenAI API key"),
-                config = LLMProviderConfig(model = "gpt-5.4-mini", systemPrompt = DEFAULT_SYSTEM_PROMPT, maxTokens = 500)
-            )
-            textEmbedder.initialize()
-
-            mediaTypes.forEach { mediaType ->
-                when (mediaType) {
-                    MediaType.IMAGE -> {
-                        val imageIndexer = ConceptsImageIndexer(
-                            context = application,
-                            embedder=textEmbedder,
-                            listener = ConceptImageIndexListener,
-                            store = imageConceptEmbedStore,
-                            mediaMetadataRepository = metadataRepo,
-                            quantize = true,
-                            openaiClient = openaiClient
-                        )
-                        indexMediaForConcepts(
-                            mediaType,
-                            imageIndexer,
-                            metadataRepo,
-                            allowedTags = allowedTags.toList(),
-                            allowedClusters = allowedClusters.toList()
-                        )
-                    }
-
-                    MediaType.VIDEO -> {
-                     // TODO
-                    }
-                }
-            }
-        } catch (e: CancellationException) {
-            Log.w(TAG, "Indexing job cancelled:", e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Concept Indexing failed:", e)
-            val title = application.getString(R.string.notif_title_index_error_service, "Media")
-            val content = application.getString(R.string.notif_content_index_error_service)
-            showNotification(application, title, content, NOTIFICATION_ID + 1)
-        } finally {
-            textEmbedder.closeSession()
-        }
     }
 
     override fun onDestroy() {
