@@ -15,27 +15,19 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fpf.smartscan.R
 import com.fpf.smartscansdk.ml.models.ModelInfo
 
 @Composable
@@ -47,8 +39,6 @@ fun ModelCard(
     isInstalled: Boolean,
 ) {
     val context = LocalContext.current
-    var isDownloadAlertVisible by remember { mutableStateOf(false) }
-
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let { selectedUri ->
             context.contentResolver.takePersistableUriPermission(
@@ -57,30 +47,6 @@ fun ModelCard(
             )
             onImport?.invoke(uri, modelInfo)
         }
-    }
-
-
-    if(isDownloadAlertVisible){
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text(stringResource(R.string.download_model_alert_title)) },
-            text = { Text(stringResource(R.string.download_model_alert_description)) },
-            dismissButton = {
-                TextButton(onClick = {
-                    isDownloadAlertVisible = false
-                }) {
-                    Text("Cancel")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    isDownloadAlertVisible = false
-                    onDownload(modelInfo)
-                }) {
-                    Text("OK")
-                }
-            }
-        )
     }
 
     Card(
@@ -132,7 +98,7 @@ fun ModelCard(
                         }else {
                             Button(
                                 modifier = Modifier.padding(horizontal = 0.dp),
-                                onClick = { isDownloadAlertVisible = true }
+                                onClick = { onDownload(modelInfo) }
                             ) {
                                 Icon(
                                     Icons.Default.Download,
