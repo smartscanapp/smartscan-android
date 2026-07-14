@@ -24,6 +24,7 @@ import com.fpf.smartscan.ui.theme.ThemeMode
 import com.fpf.smartscan.utils.BackupUtils
 import com.fpf.smartscansdk.ml.models.ModelInfo
 import com.fpf.smartscansdk.ml.models.ModelManager
+import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -46,6 +47,9 @@ class SettingsViewModel(application: Application, private val modelRepository: M
     val isRestoreLoading: StateFlow<Boolean> = _isRestoreLoading
 
     val installedModels = modelRepository.installedModels
+
+    val availableModelRegistry: Map<ModelName, ModelInfo>
+        get() = modelRepository.getAvailableModelRegistry()
 
 
     companion object {

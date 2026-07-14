@@ -56,7 +56,6 @@ fun SettingsDetailScreen(
     val appSettings by viewModel.appSettings.collectAsState()
     val installedModels by viewModel.installedModels.collectAsState()
     val context = LocalContext.current
-    val modelList = ModelRegistry.filter {item -> item.key in listOf(ModelName.ALL_MINILM_L6_V2)}
 
     LaunchedEffect(Unit) {
         viewModel.modelEvent.collect { event ->
@@ -119,7 +118,7 @@ fun SettingsDetailScreen(
                 SettingsRoutes.MODELS -> {
                     ModelsList(
                         installedModels = installedModels,
-                        modelList = modelList.values.toList(),
+                        modelList = viewModel.availableModelRegistry.values.toList(),
                         onDownload= { viewModel.downloadModel(it) },
                         onDelete = viewModel::deleteModel,
                     )
