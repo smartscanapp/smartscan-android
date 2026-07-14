@@ -19,12 +19,12 @@ import com.fpf.smartscansdk.ml.models.ModelName
 
 @Composable
 fun ModelsList(
-    importedModels: List<ModelName>,
-    availableModels: List<ModelInfo>,
-    onDownload: (url: String) -> Unit,
-    onImport: (uri: Uri, modelInfo: ModelInfo) -> Unit,
-    onDelete: (model: ModelInfo) -> Unit
-) {
+    installedModels: List<ModelName>,
+    modelList: List<ModelInfo>,
+    onDownload: (ModelInfo) -> Unit,
+    onDelete: (model: ModelInfo) -> Unit,
+    onImport: ((uri: Uri, modelInfo: ModelInfo) -> Unit)? = null,
+    ) {
     val scrollState = rememberScrollState()
 
     Column(modifier = Modifier.verticalScroll(scrollState).fillMaxSize()) {
@@ -32,6 +32,6 @@ fun ModelsList(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.alpha(0.8f).padding(bottom = 16.dp),
         )
-        availableModels.forEach { modelInfo -> ModelCard(modelInfo = modelInfo, onDownload = onDownload, onImport=onImport, onDelete = onDelete, isImported = importedModels.contains(modelInfo.name)) }
+        modelList.forEach { modelInfo -> ModelCard(modelInfo = modelInfo, onDownload = onDownload, onImport=onImport, onDelete = onDelete, isInstalled = installedModels.contains(modelInfo.name)) }
     }
 }

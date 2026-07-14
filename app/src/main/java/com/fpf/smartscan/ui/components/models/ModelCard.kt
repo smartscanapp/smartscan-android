@@ -41,10 +41,10 @@ import com.fpf.smartscansdk.ml.models.ModelInfo
 @Composable
 fun ModelCard(
     modelInfo: ModelInfo,
-    onDownload: (url: String) -> Unit,
-    onImport: (uri: Uri, modelInfo: ModelInfo) -> Unit,
+    onDownload: (ModelInfo) -> Unit,
     onDelete: (model: ModelInfo) -> Unit,
-    isImported: Boolean,
+    onImport: ((uri: Uri, modelInfo: ModelInfo) -> Unit)? = null,
+    isInstalled: Boolean,
 ) {
     val context = LocalContext.current
     var isDownloadAlertVisible by remember { mutableStateOf(false) }
@@ -55,7 +55,7 @@ fun ModelCard(
                 selectedUri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
-            onImport(uri, modelInfo)
+            onImport?.invoke(uri, modelInfo)
         }
     }
 
@@ -75,7 +75,7 @@ fun ModelCard(
             confirmButton = {
                 TextButton(onClick = {
                     isDownloadAlertVisible = false
-                    onDownload(modelInfo.url)
+                    onDownload(modelInfo)
                 }) {
                     Text("OK")
                 }
@@ -117,7 +117,7 @@ fun ModelCard(
                         verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        if(isImported){
+                        if(isInstalled){
                             Button(
                                 modifier = Modifier.padding(horizontal = 0.dp),
                                 onClick = { onDelete(modelInfo) }
@@ -129,7 +129,7 @@ fun ModelCard(
                                 )
                                 Text(text = "Delete", fontSize = 12.sp)
                             }
-                        }else{
+                        }else {
                             Button(
                                 modifier = Modifier.padding(horizontal = 0.dp),
                                 onClick = { isDownloadAlertVisible = true }
@@ -141,16 +141,27 @@ fun ModelCard(
                                 )
                                 Text(text = "Download", fontSize = 12.sp)
                             }
-                            Button(
-                                modifier = Modifier.padding(horizontal = 0.dp),
-                                onClick = { launcher.launch(arrayOf("application/zip", "application/octet-stream", "application/x-tflite")) },
-                            ) {
-                                Icon(
-                                    Icons.Default.FileUpload,
-                                    contentDescription = "Import icon",
-                                    modifier = Modifier.padding(end = 4.dp).size(16.dp)
-                                )
-                                Text(text = "Import", fontSize = 12.sp)
+
+                            if (onImport != null) {
+                                Button(
+                                    modifier = Modifier.padding(horizontal = 0.dp),
+                                    onClick = {
+                                        launcher.launch(
+                                            arrayOf(
+                                                "application/zip",
+                                                "application/octet-stream",
+                                                "application/x-tflite"
+                                            )
+                                        )
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Default.FileUpload,
+                                        contentDescription = "Import icon",
+                                        modifier = Modifier.padding(end = 4.dp).size(16.dp)
+                                    )
+                                    Text(text = "Import", fontSize = 12.sp)
+                                }
                             }
                         }
                     }
