@@ -29,7 +29,7 @@ import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.index.CloudImageIndexer
 import com.fpf.smartscan.index.ImageIndexListener
-import com.fpf.smartscan.index.IndexJob
+import com.fpf.smartscan.index.IndexJobType
 import com.fpf.smartscan.index.VideoIndexListener
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.index.indexMedia
@@ -116,10 +116,10 @@ class MediaIndexForegroundService : Service(), KoinComponent {
                 ?: MediaType.entries
         serviceScope.launch {
             try {
-                val indexJob = IndexJob.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
+                val indexJob = IndexJobType.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
                 when(indexJob){
-                    IndexJob.MAIN -> runMainIndexPipeline(mediaTypes)
-                    IndexJob.CONCEPTS -> runConceptsIndexPipeline(mediaTypes)
+                    IndexJobType.LOCAL -> runLocalIndexPipeline(mediaTypes)
+                    IndexJobType.CLOUD -> runCloudIndexPipeline(mediaTypes)
                 }
             }
             finally {
@@ -129,7 +129,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
         }
         return START_NOT_STICKY
     }
-    private suspend fun runMainIndexPipeline(mediaTypes: List<MediaType>){
+    private suspend fun runLocalIndexPipeline(mediaTypes: List<MediaType>){
         try {
             val appSettings = loadSettings(sharedPrefs)
             imageEmbedder.initialize()
@@ -203,7 +203,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
         }
     }
 
-    private suspend fun runConceptsIndexPipeline(mediaTypes: List<MediaType>){
+    private suspend fun runCloudIndexPipeline(mediaTypes: List<MediaType>){
         try {
             val appSettings = loadSettings(sharedPrefs)
             val allowedTags= getAllowedTags(sharedPrefs)

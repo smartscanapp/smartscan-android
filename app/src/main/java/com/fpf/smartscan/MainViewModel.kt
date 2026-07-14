@@ -18,7 +18,7 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.index.ImageIndexListener
-import com.fpf.smartscan.index.IndexJob
+import com.fpf.smartscan.index.IndexJobType
 import com.fpf.smartscan.index.VideoIndexListener
 import com.fpf.smartscan.index.rebuildIndex
 import com.fpf.smartscan.index.refreshIndex
@@ -172,7 +172,7 @@ class MainViewModel(
         val storageAccess = getStorageAccess(getApplication())
         if (storageAccess != StorageAccess.Denied) {
             _runningMediaTypes.update { mediaTypes.toSet()}
-            refreshIndex(getApplication(), mediaTypes, IndexJob.CONCEPTS)
+            refreshIndex(getApplication(), mediaTypes, IndexJobType.CLOUD)
         }
     }
 

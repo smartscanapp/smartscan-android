@@ -19,7 +19,7 @@ import java.io.File
 import kotlin.collections.map
 
 
-fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJob = IndexJob.MAIN) {
+fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJobType = IndexJobType.LOCAL) {
     Intent(context.applicationContext, MediaIndexForegroundService::class.java)
         .putStringArrayListExtra(
             MediaIndexForegroundService.EXTRA_MEDIA_TYPES,
@@ -29,7 +29,7 @@ fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: Index
         .also { intent -> context.applicationContext.startForegroundService(intent) }
 }
 
-fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJob = IndexJob.MAIN) {
+fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJobType = IndexJobType.LOCAL) {
     val running = isServiceRunning(context.applicationContext, MediaIndexForegroundService::class.java)
     if(running){
         context.applicationContext.stopService(Intent(context.applicationContext, MediaIndexForegroundService::class.java))
