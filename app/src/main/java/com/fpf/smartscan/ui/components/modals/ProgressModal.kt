@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.components.common
+package com.fpf.smartscan.ui.components.modals
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
@@ -6,15 +6,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.fpf.smartscan.ui.components.common.ProgressBar
 
 @Composable
-fun ProgressBox(
+fun ProgressModal(
     isVisible: Boolean,
     title: String,
     progress: Int,
     modifier: Modifier = Modifier,
     label: String = "",
-    onCancel: () -> Unit,
+    onCancel: (() -> Unit)? = null,
 ) {
     if (!isVisible) return
 
@@ -34,10 +35,12 @@ fun ProgressBox(
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = onCancel
-            ) {
-                Text(text = "Cancel")
+            if(onCancel != null) {
+                TextButton(
+                    onClick = onCancel
+                ) {
+                    Text(text = "Cancel")
+                }
             }
         },
         confirmButton = {}

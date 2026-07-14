@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.navArgument
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +32,7 @@ import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.ui.components.ScanLoadingView
 import com.fpf.smartscan.ui.components.ScanModal
 import com.fpf.smartscan.ui.components.UpdatePopUp
-import com.fpf.smartscan.ui.components.common.ProgressBox
+import com.fpf.smartscan.ui.components.modals.ProgressModal
 import com.fpf.smartscan.ui.permissions.RequestPermissions
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
@@ -278,7 +277,7 @@ fun Main(
         }
     }
 
-    ProgressBox(
+    ProgressModal(
         isVisible = modelDownloadStatus == ModelDownloadStatus.ACTIVE,
         progress = modelDownloadProgress,
         onCancel={},
