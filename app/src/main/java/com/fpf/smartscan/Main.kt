@@ -280,7 +280,6 @@ fun Main(
     ProgressModal(
         isVisible = modelDownloadStatus == ModelDownloadStatus.ACTIVE,
         progress = modelDownloadProgress,
-        onCancel={},
         title = "Downloading model"
     )
 
