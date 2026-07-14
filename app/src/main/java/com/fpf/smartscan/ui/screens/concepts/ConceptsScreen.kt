@@ -139,7 +139,7 @@ fun ConceptsScreen(
 
     val screenTitle = stringResource(R.string.title_concepts)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(menuActions) {
         onTopBarChange(
             TopBarState(
                 title = screenTitle,
