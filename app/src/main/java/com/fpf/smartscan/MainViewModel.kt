@@ -12,6 +12,7 @@ import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.DataSyncHelper
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.data.ModelRepository
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
@@ -44,6 +45,7 @@ class MainViewModel(
     private val clusterStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
+    private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -57,6 +59,9 @@ class MainViewModel(
     val imageIndexStatus = ImageIndexListener.indexingStatus
     val videoIndexProgress = VideoIndexListener.progress
     val videoIndexStatus = VideoIndexListener.indexingStatus
+
+    val modelDownloadProgress = modelRepository.modelDownloadProgress
+    val modelDownloadStatus = modelRepository.modelDownloadStatus
 
     val conceptImageIndexProgress = ConceptImageIndexListener.progress
     val conceptImageIndexStatus = ConceptImageIndexListener.indexingStatus
@@ -170,6 +175,8 @@ class MainViewModel(
             refreshIndex(getApplication(), mediaTypes, IndexJob.CONCEPTS)
         }
     }
+
+    fun resetModelProgress() = modelRepository.reset()
 
     private fun resetIndexingState(mediaType: MediaType){
         when(mediaType){

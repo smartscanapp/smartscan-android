@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.navArgument
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.data.ModelDownloadStatus
 import com.fpf.smartscan.index.IndexingStatus
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
@@ -32,6 +32,7 @@ import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.ui.components.ScanLoadingView
 import com.fpf.smartscan.ui.components.ScanModal
 import com.fpf.smartscan.ui.components.UpdatePopUp
+import com.fpf.smartscan.ui.components.modals.ProgressModal
 import com.fpf.smartscan.ui.permissions.RequestPermissions
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
@@ -58,16 +59,20 @@ fun Main(
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val mainViewModel: MainViewModel = koinViewModel()
-    val settingsViewModel: SettingsViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = koinViewModel()
     val isUpdatePopUpVisible by mainViewModel.isUpdatePopUpVisible.collectAsState()
 
+    // Indexing
     val imageIndexProgress by mainViewModel.imageIndexProgress.collectAsState()
     val videoIndexProgress by mainViewModel.videoIndexProgress.collectAsState()
     val imageIndexStatus by mainViewModel.imageIndexStatus.collectAsState()
     val videoIndexStatus by mainViewModel.videoIndexStatus.collectAsState()
-
     val conceptImageIndexProgress by mainViewModel.conceptImageIndexProgress.collectAsState()
     val conceptImageIndexStatus by mainViewModel.conceptImageIndexStatus.collectAsState()
+
+    // Model downloading
+    val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
+    val modelDownloadProgress by mainViewModel.modelDownloadProgress.collectAsState()
 
     val hasIndexedImages by mainViewModel.hasIndexedImages.collectAsState()
     val hasIndexedVideos by mainViewModel.hasIndexedVideos.collectAsState()
@@ -103,6 +108,12 @@ fun Main(
     LaunchedEffect(conceptImageIndexStatus) {
         if (conceptImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
             mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
+        }
+    }
+
+    LaunchedEffect(modelDownloadStatus) {
+        if (modelDownloadStatus in listOf(ModelDownloadStatus.COMPLETE, ModelDownloadStatus.FAILED)) {
+            mainViewModel.resetModelProgress()
         }
     }
 
@@ -265,6 +276,12 @@ fun Main(
             }
         }
     }
+
+    ProgressModal(
+        isVisible = modelDownloadStatus == ModelDownloadStatus.ACTIVE,
+        progress = modelDownloadProgress,
+        title = "Downloading model"
+    )
 
     ScanModal(
         showFirstScanModal,

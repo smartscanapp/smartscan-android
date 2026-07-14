@@ -64,6 +64,7 @@ import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
+import com.fpf.smartscan.ui.components.placeholders.MissingModelScreen
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -82,6 +83,7 @@ fun ConceptsScreen(
 
     val settings by appSettings.collectAsState()
     val state by viewModel.state.collectAsState()
+    val hasDownloadModel by viewModel.hasDownloadedModel.collectAsState()
     val clusterCollections by viewModel.clusterCollections.collectAsState()
     val tagCollections by viewModel.tagCollections.collectAsState()
     val collections = when(state.selectedCollectionType) {
@@ -171,111 +173,120 @@ fun ConceptsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top
-        ) {
-            if(!hasStoragePermission){
-                Text(
-                    text = stringResource(R.string.concepts_storage_permissions),
-                    color = Color.Red,
-                    modifier = Modifier.padding(vertical=8.dp).align(Alignment.CenterHorizontally),
-                )
-            }
-
-            if(state.loading){
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    LoadingIndicator(true)
+        if (!hasDownloadModel) {
+            MissingModelScreen(
+                message = stringResource(R.string.concepts_download_model),
+                onDownload = { viewModel.downloadModel() }
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                if (!hasStoragePermission) {
                     Text(
-                        text = "Updating matching media...",
+                        text = stringResource(R.string.concepts_storage_permissions),
+                        color = Color.Red,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .align(Alignment.CenterHorizontally),
                     )
                 }
+
+                if (state.loading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        LoadingIndicator(true)
+                        Text(
+                            text = "Updating matching media...",
+                        )
+                    }
+                }
+
+                SlideRevealBox(
+                    isVisible = state.selection.isSelecting,
+                    reverse = true,
+                    offsetPx = offset,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .heightIn(max = maxCollapsablePx.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    SelectionHeaderRow(
+                        selectedCount = state.selection.selectedCount,
+                        checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalConcepts),
+                        onSelectAllChange = { viewModel.onAction(ConceptAction.SetSelectAll(it)) }
+                    )
+                }
+
+                ConceptsList(
+                    isVisible = isConceptsVisible,
+                    numGridColumns = 2,
+                    items = concepts,
+                    isSelecting = state.selection.isSelecting,
+                    selectAll = state.selection.selectAll,
+                    selectedItems = state.selection.selectedItems,
+                    excludedItems = state.selection.excludedItems,
+                    onItemClick = {
+                        if (state.selection.isSelecting) {
+                            viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
+                        } else {
+                            viewModel.onAction(ConceptAction.SetConceptToView(it))
+                        }
+                    },
+                    onItemLongClick = {
+                        viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
+                        viewModel.onAction(ConceptAction.ToggleSelectionMode)
+                        offset = 0
+                    },
+                    onOffsetChange = { offset = it },
+                    maxCollapsePx = maxCollapsablePx,
+                )
+                EmptyConceptsScreen(
+                    isVisible = !isConceptsVisible,
+                    isMainScanRequired = isMainScanRequired,
+                )
             }
+
+
+            CustomFloatingActionButton(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(32.dp),
+                onClick = {
+                    isCreatingConcept = true
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add concept button")
+            }
+
 
             SlideRevealBox(
-                isVisible = state.selection.isSelecting,
-                reverse = true,
+                isVisible = isActionBarVisible,
                 offsetPx = offset,
                 modifier = Modifier
+                    .align(Alignment.BottomCenter)
                     .zIndex(1f)
-                    .heightIn(max = maxCollapsablePx.dp)
-                    .padding(bottom = 8.dp)
+                    .then(
+                        if (offset != 0)
+                            Modifier.clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {}
+                        else Modifier
+                    )
             ) {
-                SelectionHeaderRow (
-                    selectedCount = state.selection.selectedCount,
-                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalConcepts),
-                    onSelectAllChange = {viewModel.onAction(ConceptAction.SetSelectAll(it))}
+
+                ActionBar(
+                    actions = actionBarActions,
+                    modifier = Modifier.height(actionBarHeight.dp),
                 )
             }
-
-            ConceptsList(
-                isVisible = isConceptsVisible,
-                numGridColumns = 2,
-                items = concepts,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                selectedItems = state.selection.selectedItems,
-                excludedItems = state.selection.excludedItems,
-                onItemClick = {
-                    if(state.selection.isSelecting){
-                        viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
-                    }
-                    else{
-                        viewModel.onAction(ConceptAction.SetConceptToView(it)) }
-                    },
-                onItemLongClick = {
-                    viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
-                    viewModel.onAction(ConceptAction.ToggleSelectionMode)
-                    offset = 0
-                },
-                onOffsetChange = {  offset = it },
-                maxCollapsePx = maxCollapsablePx,
-            )
-            EmptyConceptsScreen(
-                isVisible = !isConceptsVisible,
-                isMainScanRequired=isMainScanRequired,
-            )
-        }
-
-
-        CustomFloatingActionButton (
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding( 32.dp),
-            onClick = {
-                isCreatingConcept = true
-            }
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add concept button")
-        }
-
-
-        SlideRevealBox(
-            isVisible = isActionBarVisible,
-            offsetPx = offset,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .zIndex(1f)
-                .then(
-                    if (offset != 0)
-                        Modifier.clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) {}
-                    else Modifier
-                )
-        ) {
-
-            ActionBar(
-                actions = actionBarActions,
-                modifier = Modifier.height(actionBarHeight.dp),
-            )
         }
     }
 

@@ -42,7 +42,8 @@ import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
-import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
+import com.fpf.smartscansdk.ml.models.ModelManager
+import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,13 +65,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
     private val imageEmbedder by lazy { ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
-    private val textEmbedder by lazy {
-        MiniLMTextEmbedder(application,
-            ModelAssetSource.Resource(R.raw.minilm_sentence_transformer_quant),
-            vocabSource = ModelAssetSource.Resource(R.raw.minilm_vocab),
-            configSource = ModelAssetSource.Resource(R.raw.minilm_config))
-    }
-
+    private val textEmbedder by lazy { ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2) }
     private val metadataRepo: MediaMetadataRepository by inject()
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()

@@ -13,6 +13,7 @@ import com.fpf.smartscan.concepts.getAllowedTags
 import com.fpf.smartscan.concepts.setAllowedClusters
 import com.fpf.smartscan.concepts.setAllowedTags
 import com.fpf.smartscan.constants.PrefsNames
+import com.fpf.smartscan.data.ModelRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
@@ -26,6 +27,9 @@ import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
+import com.fpf.smartscansdk.ml.models.ModelManager
+import com.fpf.smartscansdk.ml.models.ModelName
+import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,6 +52,7 @@ class ConceptsViewModel(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptsViewModel"
@@ -57,20 +62,26 @@ class ConceptsViewModel(
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
     private val textEmbedder by lazy {
-        MiniLMTextEmbedder(application,
-            ModelAssetSource.Resource(R.raw.minilm_sentence_transformer_quant),
-            vocabSource = ModelAssetSource.Resource(R.raw.minilm_vocab),
-            configSource = ModelAssetSource.Resource(R.raw.minilm_config))
+        ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2)
     }
 
-    val conceptManager = ConceptManager(
-        similarityThreshold = SIMILARITY_THRESHOLD,
-        textEmbedder=textEmbedder,
-        conceptRepository=conceptRepository,
-        conceptCrossRefRepository=conceptCrossRefRepository,
-        conceptEmbedStore=conceptEmbedStore,
-        imageConceptEmbedStore=imageConceptEmbedStore
-    )
+    val hasDownloadedModel: StateFlow<Boolean> = modelRepository.installedModels
+            .map { ModelName.ALL_MINILM_L6_V2 in it }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = modelRepository.modelExist(ModelName.ALL_MINILM_L6_V2)
+            )
+    val conceptManager by lazy {
+        ConceptManager(
+            similarityThreshold = SIMILARITY_THRESHOLD,
+            textEmbedder = textEmbedder,
+            conceptRepository = conceptRepository,
+            conceptCrossRefRepository = conceptCrossRefRepository,
+            conceptEmbedStore = conceptEmbedStore,
+            imageConceptEmbedStore = imageConceptEmbedStore
+        )
+    }
 
     private val _state = MutableStateFlow(ConceptsState())
     val state: StateFlow<ConceptsState> = _state
@@ -139,6 +150,8 @@ class ConceptsViewModel(
             is ConceptAction.PinUnpinConcept -> pinOrUnpinConcepts()
         }
     }
+
+    fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
 
     fun checkRecentUpdatesAndUpdateConcepts(){
         viewModelScope.launch (Dispatchers.IO) {

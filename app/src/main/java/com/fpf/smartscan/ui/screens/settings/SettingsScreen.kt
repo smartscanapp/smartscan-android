@@ -210,6 +210,13 @@ fun SettingsScreen(
         ),
     )
 
+    val modelsSettingActions: List<SettingActionConfig> = listOf(
+        SettingActionConfig.Button(
+            label = stringResource(R.string.setting_manage_models),
+            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.MODELS)) },
+        ),
+    )
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -237,6 +244,11 @@ fun SettingsScreen(
                 )
 
                 SettingSection(
+                    stringResource(id = R.string.setting_models),
+                    settingActionConfigs = modelsSettingActions
+                )
+
+                SettingSection(
                     "Cloud processing",
                     settingActionConfigs = cloudProcessingSettingActions
                 )
@@ -251,18 +263,6 @@ fun SettingsScreen(
                     settingActionConfigs = otherSettingActions
                 )
             }
-
-//                Text(
-//                    text = stringResource(id = R.string.advanced_settings),
-//                    style = MaterialTheme.typography.titleMedium,
-//                    modifier = Modifier.padding(vertical = 8.dp),
-//                    color = MaterialTheme.colorScheme.primary
-//                )
-//                ActionItem(
-//                    text = stringResource(id = R.string.setting_models),
-//                    onClick = { onNavigate(Routes.settingsDetail(SettingTypes.MODELS)) },
-//                )
-//                Spacer(modifier = Modifier.height(24.dp))
 
             Column(
                 modifier = Modifier
