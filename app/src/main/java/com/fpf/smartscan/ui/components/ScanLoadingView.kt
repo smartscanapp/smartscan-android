@@ -83,7 +83,8 @@ fun ScanLoadingView(
             Text(
                 text = title,
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             message?.let {
@@ -91,7 +92,8 @@ fun ScanLoadingView(
                     text = it,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 

@@ -8,7 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.MediaDatabase
-import com.fpf.smartscan.data.ModelRepository
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
 import com.fpf.smartscan.events.ModelEvent
@@ -23,7 +23,6 @@ import com.fpf.smartscan.ui.theme.ThemeManager
 import com.fpf.smartscan.ui.theme.ThemeMode
 import com.fpf.smartscan.utils.BackupUtils
 import com.fpf.smartscansdk.ml.models.ModelInfo
-import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow

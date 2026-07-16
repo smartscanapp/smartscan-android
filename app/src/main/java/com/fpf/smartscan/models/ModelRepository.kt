@@ -1,8 +1,9 @@
-package com.fpf.smartscan.data
+package com.fpf.smartscan.models
 
 import android.app.Application
 import android.util.Log
 import com.fpf.smartscansdk.core.SmartScanException
+import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
 import com.fpf.smartscansdk.ml.models.ModelInfo
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
@@ -38,6 +39,8 @@ class ModelRepository(
 
     val installedModels: StateFlow<List<ModelName>> = _installedModels
 
+    private var miniLmTextEmbedder: TextEmbeddingProvider? = null
+
 
     fun downloadModel( modelInfo: ModelInfo){
         scope.launch {
@@ -69,7 +72,13 @@ class ModelRepository(
 
     fun getAvailableModelRegistry(): Map<ModelName, ModelInfo> = ModelRegistry.filter { item -> item.key in listOf(ModelName.ALL_MINILM_L6_V2)}
 
-    fun modelExist(modelName: ModelName): Boolean = ModelManager.modelExists(application, modelName)
+    // 'Singleton' used because this model is required in various parts of the app
+    fun getMiniLmTextEmbedder(): TextEmbeddingProvider {
+        miniLmTextEmbedder?.let { return it }
+        val model = ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2)
+        miniLmTextEmbedder = model
+        return model
+    }
 }
 
 enum class ModelDownloadStatus {

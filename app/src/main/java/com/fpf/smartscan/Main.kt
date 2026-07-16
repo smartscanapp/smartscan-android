@@ -20,7 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.data.ModelDownloadStatus
+import com.fpf.smartscan.models.ModelDownloadStatus
 import com.fpf.smartscan.index.IndexingStatus
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
@@ -41,10 +41,12 @@ import com.fpf.smartscan.ui.screens.collections.CollectionsScreen
 import com.fpf.smartscan.ui.screens.concepts.ConceptItemsScreen
 import com.fpf.smartscan.ui.screens.concepts.ConceptsScreen
 import com.fpf.smartscan.ui.screens.donate.DonateScreen
+import com.fpf.smartscan.ui.screens.models.DownloadModelScreen
 import com.fpf.smartscan.ui.screens.search.SearchScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsDetailScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsViewModel
+import com.fpf.smartscansdk.ml.models.ModelName
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,6 +83,7 @@ fun Main(
     // Model downloading
     val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
     val modelDownloadProgress by mainViewModel.modelDownloadProgress.collectAsState()
+    val installedModels by mainViewModel.installedModels.collectAsState()
 
     var hasStoragePermission by remember { mutableStateOf(false) }
     var showFirstScanModal by remember { mutableStateOf(false) }
@@ -121,14 +124,29 @@ fun Main(
         RequestPermissions { _, storageGranted -> hasStoragePermission = storageGranted }
     }
 
-    if (isUpdatePopUpVisible) {
-        UpdatePopUp(
+
+    when{
+        isUpdatePopUpVisible -> UpdatePopUp(
             isVisible = true,
             updates = mainViewModel.getUpdates(),
             onClose = { mainViewModel.closeUpdatePopUp() },
         )
-    } else {
-        Scaffold(
+        isIndexing -> ScanLoadingView(
+            isIndexing = true,
+            imageIndexStatus = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexStatus else imageIndexStatus,
+            videoIndexStatus = videoIndexStatus,
+            videoIndexProgress = videoIndexProgress,
+            imageIndexProgress = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexProgress else imageIndexProgress,
+            title = stringResource(R.string.scan_in_progress_title),
+            message = stringResource(R.string.scan_in_progress_content)
+        )
+
+        ModelName.ALL_MINILM_L6_V2 !in installedModels -> DownloadModelScreen(
+            message = stringResource(R.string.download_model_message),
+            onDownload = { mainViewModel.downloadModel() }
+        )
+
+        else -> Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
@@ -142,140 +160,129 @@ fun Main(
                     }
                 )
             },
-            bottomBar = { if (!isIndexing) BottomNavigationBar(navController) }
+            bottomBar = {  BottomNavigationBar(navController) }
         ) { paddingValues ->
             Column(
                 modifier = Modifier.padding(paddingValues)
             ) {
-                if(isIndexing) {
-                    ScanLoadingView(
-                        isIndexing = true,
-                        imageIndexStatus = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexStatus else imageIndexStatus,
-                        videoIndexStatus = videoIndexStatus,
-                        videoIndexProgress = videoIndexProgress,
-                        imageIndexProgress = if(cloudImageIndexStatus == IndexingStatus.ACTIVE)  cloudImageIndexProgress else imageIndexProgress,
-                        title = stringResource(R.string.scan_in_progress_title),
-                        message = stringResource(R.string.scan_in_progress_content)
-                    )
-                }else {
-                    NavHost(
-                        navController = navController,
-                        startDestination = Routes.SEARCH,
+                NavHost(
+                    navController = navController,
+                    startDestination = Routes.SEARCH,
                     ) {
-                        composable(Routes.SEARCH) {
-                            SearchScreen(
-                                appSettings = settingsViewModel.appSettings,
-                                onTopBarChange = { topBarState.value = it },
-                                intentSearchQuery = intentSearchQuery,
-                                isIndexing = isIndexing,
-                                hasIndexedImages = hasIndexedImages,
-                                hasIndexedVideos = hasIndexedVideos,
-                                hasStoragePermission = hasStoragePermission,
-                                onIndex = {
-                                    requiredMediaTypeToIndex = it
-                                    showFirstScanModal = true
-                                },
-                                )
-                        }
-                        composable(Routes.COLLECTIONS) {
-                            CollectionsScreen(
-                                isIndexing = isIndexing,
-                                hasIndexedImages = hasIndexedImages,
-                                hasIndexedVideos = hasIndexedVideos,
-                                hasStoragePermission = hasStoragePermission,
-                                onIndex = { showFirstScanModal = true },
-                                onTopBarChange = { topBarState.value = it },
-                                onViewCollection = { collection ->
-                                    navController.currentBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set(NavDataKeys.COLLECTION, collection)
+                    composable(Routes.SEARCH) {
+                        SearchScreen(
+                            appSettings = settingsViewModel.appSettings,
+                            onTopBarChange = { topBarState.value = it },
+                            intentSearchQuery = intentSearchQuery,
+                            isIndexing = isIndexing,
+                            hasIndexedImages = hasIndexedImages,
+                            hasIndexedVideos = hasIndexedVideos,
+                            hasStoragePermission = hasStoragePermission,
+                            onIndex = {
+                                requiredMediaTypeToIndex = it
+                                showFirstScanModal = true
+                            },
+                            )
+                    }
+                    composable(Routes.COLLECTIONS) {
+                        CollectionsScreen(
+                            isIndexing = isIndexing,
+                            hasIndexedImages = hasIndexedImages,
+                            hasIndexedVideos = hasIndexedVideos,
+                            hasStoragePermission = hasStoragePermission,
+                            onIndex = { showFirstScanModal = true },
+                            onTopBarChange = { topBarState.value = it },
+                            onViewCollection = { collection ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(NavDataKeys.COLLECTION, collection)
 
-                                    navController.navigate(Routes.COLLECTION_ITEMS)
-                                },
+                                navController.navigate(Routes.COLLECTION_ITEMS)
+                            },
+                        )
+                    }
+                    composable(
+                        route = Routes.COLLECTION_ITEMS,
+                    ) { _ ->
+                        val collection =
+                            navController.previousBackStackEntry?.savedStateHandle?.get<MediaCollection>(
+                                NavDataKeys.COLLECTION
                             )
-                        }
-                        composable(
-                            route = Routes.COLLECTION_ITEMS,
-                        ) { _ ->
-                            val collection =
-                                navController.previousBackStackEntry?.savedStateHandle?.get<MediaCollection>(
-                                    NavDataKeys.COLLECTION
-                                )
 
-                            CollectionItemsScreen(
-                                onTopBarChange = { topBarState.value = it },
-                                collection = collection,
-                                appSettings = settingsViewModel.appSettings,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
-                        composable(Routes.CONCEPTS) {
-                            ConceptsScreen(
-                                appSettings = settingsViewModel.appSettings,
-                                isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
-                                hasStoragePermission = hasStoragePermission,
-                                onTopBarChange = { topBarState.value = it },
-                                onIndex = {
-                                    mainViewModel.startConceptIndexing(listOf(MediaType.IMAGE))
-                                },
-                                onViewConcept = { concept ->
-                                    navController.currentBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set(NavDataKeys.CONCEPT, concept)
+                        CollectionItemsScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            collection = collection,
+                            appSettings = settingsViewModel.appSettings,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Routes.CONCEPTS) {
+                        ConceptsScreen(
+                            appSettings = settingsViewModel.appSettings,
+                            isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
+                            hasStoragePermission = hasStoragePermission,
+                            onTopBarChange = { topBarState.value = it },
+                            onIndex = {
+                                mainViewModel.startConceptIndexing(listOf(MediaType.IMAGE))
+                            },
+                            onViewConcept = { concept ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(NavDataKeys.CONCEPT, concept)
 
-                                    navController.navigate(Routes.CONCEPT_ITEMS)
-                                },
+                                navController.navigate(Routes.CONCEPT_ITEMS)
+                            },
+                        )
+                    }
+                    composable(
+                        route = Routes.CONCEPT_ITEMS,
+                    ) { _ ->
+                        val concept =
+                            navController.previousBackStackEntry?.savedStateHandle?.get<Concept>(
+                                NavDataKeys.CONCEPT
                             )
-                        }
-                        composable(
-                            route = Routes.CONCEPT_ITEMS,
-                        ) { _ ->
-                            val concept =
-                                navController.previousBackStackEntry?.savedStateHandle?.get<Concept>(
-                                    NavDataKeys.CONCEPT
-                                )
 
-                            ConceptItemsScreen(
-                                onTopBarChange = { topBarState.value = it },
-                                concept = concept,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
-                        composable(Routes.SETTINGS) {
-                            SettingsScreen(
-                                onTopBarChange = { topBarState.value = it },
-                                viewModel = settingsViewModel,
-                                onNavigate = { route: String ->
-                                    navController.navigate(route)
-                                },
-                                onRestartApp = onRestartApp,
-                                onScanRebuild = { showScanAndRebuildModal = true },
-                                onScanRefresh = { showRefreshScanModel = true }
-                            )
-                        }
-                        composable(
-                            route = Routes.SETTINGS_DETAIL,
-                            arguments = listOf(navArgument("type") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val type = backStackEntry.arguments?.getString("type") ?: ""
-                            SettingsDetailScreen(
-                                onTopBarChange = { topBarState.value = it },
-                                type = type,
-                                viewModel = settingsViewModel,
-                                onBack = { navController.popBackStack() },
-                            )
-                        }
-                        composable(Routes.DONATE) {
-                            DonateScreen(
-                                onTopBarChange = { topBarState.value = it },
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        ConceptItemsScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            concept = concept,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Routes.SETTINGS) {
+                        SettingsScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            viewModel = settingsViewModel,
+                            onNavigate = { route: String ->
+                                navController.navigate(route)
+                            },
+                            onRestartApp = onRestartApp,
+                            onScanRebuild = { showScanAndRebuildModal = true },
+                            onScanRefresh = { showRefreshScanModel = true }
+                        )
+                    }
+                    composable(
+                        route = Routes.SETTINGS_DETAIL,
+                        arguments = listOf(navArgument("type") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val type = backStackEntry.arguments?.getString("type") ?: ""
+                        SettingsDetailScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            type = type,
+                            viewModel = settingsViewModel,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(Routes.DONATE) {
+                        DonateScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                 }
             }
         }
     }
+
 
     ProgressModal(
         isVisible = modelDownloadStatus == ModelDownloadStatus.ACTIVE,
