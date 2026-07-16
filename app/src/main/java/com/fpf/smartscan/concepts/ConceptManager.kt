@@ -76,14 +76,10 @@ class ConceptManager(
     }
 
     suspend fun updateConceptLinks(mediaEmbed: StoredEmbedding, type: MediaType): ConceptUpdateLinksResult{
-        val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
-        val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
-
         // Check if the recently updated media still matches concepts it belongs to
-        crossRefsToDelete.addAll(findConceptLinksToRemove( mediaEmbed, type))
-
+        val crossRefsToDelete = findConceptLinksToRemove( mediaEmbed, type)
         // Check if the recently updated media matches any concepts it's not already in
-        crossRefsToAdd.addAll(findConceptLinksToAdd( mediaEmbed, type))
+        val crossRefsToAdd = findConceptLinksToAdd( mediaEmbed, type)
 
         if(crossRefsToDelete.isNotEmpty()){
             conceptCrossRefRepository.delete(crossRefsToDelete)
