@@ -54,7 +54,7 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 fun ImageSearcher(
     uri: Uri?,
     mediaType: MediaType,
-    mediaTypeSelectorEnabled: Boolean,
+    mediaTypeSelectorEnabled: Boolean = true,
     onMediaTypeChange: (type: MediaType) -> Unit,
     onSearch: () -> Unit,
     onRemoveImage: () -> Unit,
