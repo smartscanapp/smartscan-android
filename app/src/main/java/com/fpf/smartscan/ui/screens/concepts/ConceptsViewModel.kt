@@ -45,6 +45,7 @@ class ConceptsViewModel(
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val videoConceptEmbedStore: FileEmbeddingStore,
     private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
     companion object {
@@ -62,7 +63,8 @@ class ConceptsViewModel(
             conceptRepository = conceptRepository,
             conceptCrossRefRepository = conceptCrossRefRepository,
             conceptEmbedStore = conceptEmbedStore,
-            imageConceptEmbedStore = imageConceptEmbedStore
+            imageConceptEmbedStore = imageConceptEmbedStore,
+            videoConceptEmbedStore=videoConceptEmbedStore
         )
     }
 

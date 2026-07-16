@@ -74,8 +74,9 @@ val viewModelModule = module {
             conceptCrossRefRepository = get(),
             modelRepository = get(),
             conceptEmbedStore = get(CONCEPT_EMBED_STORE),
-            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE)
-        )
+            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
+            videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
+            )
     }
     viewModel {
         ConceptItemsViewModel(
