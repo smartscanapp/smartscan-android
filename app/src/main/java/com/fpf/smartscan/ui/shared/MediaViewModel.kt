@@ -1,7 +1,7 @@
 package com.fpf.smartscan.ui.shared
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.util.Log
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.concepts.ConceptManager
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
@@ -18,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MediaViewModel(
-    application: Application,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
@@ -26,13 +25,15 @@ class MediaViewModel(
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val modelRepository: ModelRepository,
-) : AndroidViewModel(application) {
+) : ViewModel() {
+    companion object {
+        private const val TAG = "MediaViewModel"
+    }
 
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
     val conceptManager by lazy {
         ConceptManager(
-            textEmbedder = textEmbedder,
             conceptRepository = conceptRepository,
             conceptCrossRefRepository = conceptCrossRefRepository,
             conceptEmbedStore = conceptEmbedStore,
@@ -40,14 +41,20 @@ class MediaViewModel(
         )
     }
 
-    private fun saveUpdatedItem(updatedMedia: MediaItem){
+    fun saveUpdatedItem(updatedMedia: MediaItem){
         viewModelScope.launch (Dispatchers.IO) {
             mediaMetadataRepository.update(listOf(updatedMedia.toMetadata()))
-            // Fire forget
+
+            // Fire-forget
             viewModelScope.launch(Dispatchers.Default){
-                updateMediaDescriptionEmbed(updatedMedia)
+                val updatedEmbed = updateMediaDescriptionEmbed(updatedMedia)
+                updatedEmbed?.let{
+                    val result = conceptManager.updateConceptLinks(it, updatedMedia.type)
+                    Log.d(TAG, "Result:\nremoved: ${result.removed} concept links | added: ${result.added} concept links")
+                }
             }
         }
+        Log.d(TAG, "Updated media description for: ${updatedMedia.id}")
     }
 
 
