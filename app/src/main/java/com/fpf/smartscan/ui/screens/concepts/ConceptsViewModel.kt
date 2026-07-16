@@ -57,9 +57,7 @@ class ConceptsViewModel(
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
-    private val textEmbedder by lazy {
-        ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2)
-    }
+    private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
     val conceptManager by lazy {
         ConceptManager(

@@ -21,6 +21,7 @@ import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.index.CloudIndexJobManager
 import com.fpf.smartscan.index.LocalIndexJobManager
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.services.MediaIndexForegroundService
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.isServiceRunning
@@ -60,8 +61,11 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
         }
     }
 
+    private val modelRepository: ModelRepository by inject()
     private val imageEmbedder by lazy { ClipImageEmbedder(applicationContext, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
-    private val textEmbedder by lazy { ModelManager.getTextEmbedder(applicationContext, ModelName.ALL_MINILM_L6_V2) }
+
+    // Reuses singleton minilm model
+    private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()

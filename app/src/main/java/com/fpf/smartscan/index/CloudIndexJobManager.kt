@@ -32,6 +32,7 @@ class CloudIndexJobManager(
         private const val NOTIFICATION_ID = 200
     }
 
+    // TextEmbedder used here is not closed because it's a singleton as model is required throughout app.
     suspend fun run(mediaTypes: List<MediaType>){
         try {
             val appSettings = loadSettings(sharedPrefs)
@@ -76,8 +77,6 @@ class CloudIndexJobManager(
             val title = application.getString(R.string.notif_title_index_error_service, "Media")
             val content = application.getString(R.string.notif_content_index_error_service)
             showNotification(application, title, content, NOTIFICATION_ID + 1)
-        } finally {
-            textEmbedder.closeSession()
         }
     }
 
