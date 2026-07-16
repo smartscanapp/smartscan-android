@@ -94,7 +94,7 @@ val viewModelModule = module {
         MediaViewModel(
             imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
             videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
-            conceptEmbedStore= get(),
+            conceptEmbedStore = get(CONCEPT_EMBED_STORE),
             conceptRepository = get(),
             mediaMetadataRepository= get(),
             conceptCrossRefRepository=get(),
