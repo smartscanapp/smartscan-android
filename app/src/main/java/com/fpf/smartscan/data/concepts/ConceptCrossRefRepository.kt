@@ -3,6 +3,7 @@ package com.fpf.smartscan.data.concepts
 import com.fpf.smartscan.concepts.ConceptCrossRef
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
+import com.fpf.smartscan.media.MediaType
 
 class ConceptCrossRefRepository(private val dao: ConceptCrossRefDao) {
     suspend fun getAllCrossRefs(): List<ConceptCrossRef> = dao.get().map{it.toDomain()}
@@ -12,4 +13,6 @@ class ConceptCrossRefRepository(private val dao: ConceptCrossRefDao) {
     suspend fun count() = dao.count()
     suspend fun count(clusterId: Long) = dao.countByConceptId(clusterId)
     suspend fun delete(crossrefs: List<ConceptCrossRef>) = dao.delete(crossrefs.map{it.toEntity()})
+    suspend fun delete(mediaId: Long, type: MediaType) = dao.delete(mediaId, type)
+
 }

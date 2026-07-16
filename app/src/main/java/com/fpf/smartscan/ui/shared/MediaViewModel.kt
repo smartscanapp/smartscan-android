@@ -37,7 +37,8 @@ class MediaViewModel(
             conceptRepository = conceptRepository,
             conceptCrossRefRepository = conceptCrossRefRepository,
             conceptEmbedStore = conceptEmbedStore,
-            imageConceptEmbedStore = imageConceptEmbedStore
+            imageConceptEmbedStore = imageConceptEmbedStore,
+            videoConceptEmbedStore = videoConceptEmbedStore
         )
     }
 
@@ -48,34 +49,38 @@ class MediaViewModel(
             // Fire-forget
             viewModelScope.launch(Dispatchers.Default){
                 val updatedEmbed = updateMediaDescriptionEmbed(updatedMedia)
-                updatedEmbed?.let{
-                    val result = conceptManager.updateConceptLinks(it, updatedMedia.type)
-                    Log.d(TAG, "Result:\nremoved: ${result.removed} concept links | added: ${result.added} concept links")
+                if(updatedEmbed == null){
+                    deleteStaleConceptEmbed(updatedMedia.id, updatedMedia.type)
+                    return@launch
                 }
+                val result = conceptManager.updateConceptLinks(updatedEmbed, updatedMedia.type)
+                Log.d(TAG, "Result:\nremoved: ${result.removed} concept links | added: ${result.added} concept links")
             }
         }
         Log.d(TAG, "Updated media description for: ${updatedMedia.id}")
     }
 
+    private suspend fun deleteStaleConceptEmbed(mediaStoreId: Long, type: MediaType) {
+        conceptCrossRefRepository.delete(mediaStoreId, type)
+        val mediaConceptEmbedStore = conceptManager.getMediaConceptEmbedStore(type)
+        mediaConceptEmbedStore.remove(listOf(mediaStoreId))
+    }
+
 
     private suspend fun updateMediaDescriptionEmbed(updatedMedia: MediaItem): StoredEmbedding? {
         if (!textEmbedder.isInitialized()) textEmbedder.initialize()
-        if (updatedMedia.description == null) return null
+        val mediaConceptEmbedStore = conceptManager.getMediaConceptEmbedStore(updatedMedia.type)
 
+        if (updatedMedia.description.isNullOrBlank()) return null
         val newRawEmbedding = textEmbedder.embed(updatedMedia.description)
+        //TODO: add `upsert` method to EmbeddingStore
         val existingMediaEmbed = imageConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
         val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
                 ?: StoredEmbedding(updatedMedia.id, updatedMedia.dateAdded, newRawEmbedding.toQInt8Embed())
         if (existingMediaEmbed != null) {
-            when(updatedMedia.type){
-                MediaType.VIDEO -> videoConceptEmbedStore.update(listOf(updatedOrNewMediaEmbed))
-                MediaType.IMAGE -> imageConceptEmbedStore.update(listOf(updatedOrNewMediaEmbed))
-            }
+            mediaConceptEmbedStore.update(listOf(updatedOrNewMediaEmbed))
         } else {
-            when(updatedMedia.type){
-                MediaType.VIDEO -> videoConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
-                MediaType.IMAGE -> imageConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
-            }
+            mediaConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
         }
         return updatedOrNewMediaEmbed
     }
