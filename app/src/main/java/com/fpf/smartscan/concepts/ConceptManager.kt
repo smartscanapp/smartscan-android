@@ -14,6 +14,7 @@ class ConceptManager(
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val videoConceptEmbedStore: FileEmbeddingStore,
     private val similarityThreshold: Float = DEFAULT_SIMILARITY_THRESHOLD,
     ) {
 
@@ -59,11 +60,7 @@ class ConceptManager(
         conceptRepository.updateConcepts(concepts.map{it.copy(isPinned = !it.isPinned)})
     }
 
-    suspend fun findMediaMatchingConcept(concept: Concept): Map<Long, MediaType>{
-        val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
-        val result = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold)
-        return result.ids.associateWith { MediaType.IMAGE } // will add video support later
-    }
+
 
     suspend fun findAndUpdateMediaMatchingConcept(concept: Concept){
         val mediaMatchesMap = findMediaMatchingConcept(concept)
@@ -94,6 +91,18 @@ class ConceptManager(
         )
     }
 
+    private suspend fun findMediaMatchingConcept(concept: Concept): Map<Long, MediaType>{
+        val mediaMatches:  MutableMap<Long, MediaType> = mutableMapOf()
+
+        val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
+        val imageResults = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold)
+        imageResults.ids.forEach { mediaMatches[it] = MediaType.IMAGE }
+
+        val videoResults = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold)
+        videoResults.ids.forEach { mediaMatches[it] = MediaType.VIDEO }
+        return mediaMatches
+    }
+
     private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaEmbed.id, type)
@@ -121,6 +130,11 @@ class ConceptManager(
             }
         }
         return crossRefsToAdd
+    }
+
+    fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
+        MediaType.VIDEO -> videoConceptEmbedStore
+        MediaType.IMAGE -> imageConceptEmbedStore
     }
 
     private fun generateId(): Long = System.currentTimeMillis() + idCount
