@@ -13,7 +13,6 @@ sealed interface ConceptItemsAction {
     data class SetMediaToView(val item: MediaItem?): ConceptItemsAction
     data class SetConceptToView(val concept: Concept): ConceptItemsAction
     data class SetSelectAll(val selectAll: Boolean): ConceptItemsAction
-    data class SaveUpdatedItem(val updatedItem: MediaItem): ConceptItemsAction
     data class SetMediaTypeFilter(val mediaType: MediaType?): ConceptItemsAction
     data object ToggleSelectionMode: ConceptItemsAction
     data object ClearSelection: ConceptItemsAction
