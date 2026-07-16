@@ -1,9 +1,7 @@
 package com.fpf.smartscan.concepts
 
-import android.util.Log
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
-import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
@@ -12,17 +10,24 @@ import com.fpf.smartscansdk.core.embeddings.dot
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 
 class ConceptManager(
-    private val similarityThreshold: Float,
     private val textEmbedder: TextEmbeddingProvider,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
-) {
+    private val similarityThreshold: Float = DEFAULT_SIMILARITY_THRESHOLD,
+    ) {
 
     companion object {
         private const val TAG = "ConceptManager"
+        const val DEFAULT_SIMILARITY_THRESHOLD = 0.25f
     }
+
+    data class ConceptUpdateLinksResult(
+        val removed: Int,
+        val added: Int
+    )
+
     private var idCount: Long = 0L
 
     suspend fun createConcept(description: String){
@@ -75,65 +80,15 @@ class ConceptManager(
         conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
     }
 
-    suspend fun findConceptLinksToRemove(mediaItem: MediaItem, mediaEmbed: StoredEmbedding): MutableList<ConceptCrossRef>{
-        val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
-        val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaItem.id, mediaItem.type)
-        val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
-        if (conceptEmbeds.size != linkedConceptIds.size) error("Missing embeddings for some concepts")
-        for (conceptEmbed in conceptEmbeds){
-            val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
-            if (sim < similarityThreshold){
-                crossRefsToDelete.add(ConceptCrossRef(mediaItem.id, conceptId = conceptEmbed.id, mediaItem.type))
-            }
-        }
-        return crossRefsToDelete
-    }
-
-
-    suspend fun findConceptLinksToAdd(mediaItem: MediaItem, mediaEmbed: StoredEmbedding): MutableList<ConceptCrossRef>{
-        val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
-        val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(mediaItem.id, mediaItem.type)
-        val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)
-        if (unlinkedConceptIds.size != unlinkedConceptEmbeds.size) error("Missing embeddings for some concepts")
-        for (conceptEmbed in unlinkedConceptEmbeds){
-            val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
-            if (sim >= similarityThreshold){
-                crossRefsToAdd.add(ConceptCrossRef(mediaItem.id, conceptId = conceptEmbed.id, mediaItem.type))
-            }
-        }
-        return crossRefsToAdd
-    }
-
-    suspend fun checkRecentUpdatesAndUpdateConcepts(recentUpdates: Set<MediaItem>){
-        if(recentUpdates.isEmpty()) return
-        if(!textEmbedder.isInitialized()) textEmbedder.initialize()
-
-//        Log.d(TAG, "Recently updated: ${recentUpdates.size}")
-
+    suspend fun updateConceptLinks(mediaEmbed: StoredEmbedding, type: MediaType): ConceptUpdateLinksResult{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
-        val newMediaEmbeds = mutableListOf<StoredEmbedding>()
-        val updatedMediaEmbeds = mutableListOf<StoredEmbedding>()
 
-        for(media in recentUpdates){
-            if(media.description == null) continue
+        // Check if the recently updated media still matches concepts it belongs to
+        crossRefsToDelete.addAll(findConceptLinksToRemove( mediaEmbed, type))
 
-            val newRawEmbedding = textEmbedder.embed(media.description)
-            val existingMediaEmbed = imageConceptEmbedStore.get(listOf(media.id)).firstOrNull()
-            val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
-                ?: StoredEmbedding(media.id, media.dateAdded, newRawEmbedding.toQInt8Embed())
-            if (existingMediaEmbed != null){
-                updatedMediaEmbeds.add(updatedOrNewMediaEmbed)
-            }else{
-                newMediaEmbeds.add(updatedOrNewMediaEmbed)
-            }
-
-            // Check if the recently updated media still matches concepts it belongs to
-            crossRefsToDelete.addAll(findConceptLinksToRemove(media, updatedOrNewMediaEmbed))
-
-            // Check if the recently updated media matches any concepts it's not already in
-            crossRefsToAdd.addAll(findConceptLinksToAdd(media, updatedOrNewMediaEmbed))
-        }
+        // Check if the recently updated media matches any concepts it's not already in
+        crossRefsToAdd.addAll(findConceptLinksToAdd( mediaEmbed, type))
 
         if(crossRefsToDelete.isNotEmpty()){
             conceptCrossRefRepository.delete(crossRefsToDelete)
@@ -141,12 +96,40 @@ class ConceptManager(
         if(crossRefsToAdd.isNotEmpty()){
             conceptCrossRefRepository.insertConceptCrossRefs(crossRefsToAdd)
         }
-        if(newMediaEmbeds.isNotEmpty()){
-            imageConceptEmbedStore.add(newMediaEmbeds)
+
+        return ConceptUpdateLinksResult(
+            removed = crossRefsToDelete.size,
+            added = crossRefsToAdd.size
+        )
+    }
+
+    private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+        val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
+        val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaEmbed.id, type)
+        val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
+        if (conceptEmbeds.size != linkedConceptIds.size) error("Missing embeddings for some concepts")
+        for (conceptEmbed in conceptEmbeds){
+            val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
+            if (sim < similarityThreshold){
+                crossRefsToDelete.add(ConceptCrossRef(mediaEmbed.id, conceptId = conceptEmbed.id, type))
+            }
         }
-        if(updatedMediaEmbeds.isNotEmpty()){
-            imageConceptEmbedStore.update(updatedMediaEmbeds)
+        return crossRefsToDelete
+    }
+
+
+    private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+        val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
+        val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(mediaEmbed.id, type)
+        val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)
+        if (unlinkedConceptIds.size != unlinkedConceptEmbeds.size) error("Missing embeddings for some concepts")
+        for (conceptEmbed in unlinkedConceptEmbeds){
+            val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
+            if (sim >= similarityThreshold){
+                crossRefsToAdd.add(ConceptCrossRef(mediaEmbed.id, conceptId = conceptEmbed.id, type))
+            }
         }
+        return crossRefsToAdd
     }
 
     private fun generateId(): Long = System.currentTimeMillis() + idCount
