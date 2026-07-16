@@ -15,6 +15,8 @@ val VIDEO_EMBED_STORE = named("video_embed_store")
 val CLUSTER_EMBED_STORE = named("cluster_embed_store")
 val CONCEPT_EMBED_STORE = named("concept_embed_store")
 val CONCEPT_IMAGE_EMBED_STORE = named("concept_image_embed_store")
+val CONCEPT_VIDEO_EMBED_STORE = named("concept_video_embed_store")
+
 
 val embedStoreModule = module {
     single(IMAGE_EMBED_STORE) {
@@ -37,5 +39,9 @@ val embedStoreModule = module {
     single(CONCEPT_IMAGE_EMBED_STORE) {
         val app = get<Application>()
         FileEmbeddingStore(File(app.filesDir, EmbeddingStoresFilesQuant.IMAGE_CONCEPT), MINILM_EMBEDDING_DIM, quantize = true)
+    }
+    single(CONCEPT_VIDEO_EMBED_STORE) {
+        val app = get<Application>()
+        FileEmbeddingStore(File(app.filesDir, EmbeddingStoresFilesQuant.VIDEO_CONCEPT), MINILM_EMBEDDING_DIM, quantize = true)
     }
 }
