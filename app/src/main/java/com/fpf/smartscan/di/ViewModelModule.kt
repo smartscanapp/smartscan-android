@@ -8,6 +8,7 @@ import com.fpf.smartscan.ui.screens.concepts.ConceptItemsViewModel
 import com.fpf.smartscan.ui.screens.concepts.ConceptsViewModel
 import com.fpf.smartscan.ui.screens.search.SearchViewModel
 import com.fpf.smartscan.ui.screens.settings.SettingsViewModel
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
@@ -86,6 +87,18 @@ val viewModelModule = module {
         SettingsViewModel(
             application = get(),
             modelRepository = get()
+        )
+    }
+
+    viewModel {
+        MediaViewModel(
+            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
+            videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
+            conceptEmbedStore= get(),
+            conceptRepository = get(),
+            mediaMetadataRepository= get(),
+            conceptCrossRefRepository=get(),
+            modelRepository=get()
         )
     }
 }

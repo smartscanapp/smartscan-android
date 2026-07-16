@@ -46,6 +46,7 @@ import com.fpf.smartscan.ui.screens.search.SearchScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsDetailScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsViewModel
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscansdk.ml.models.ModelName
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,6 +63,7 @@ fun Main(
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val mainViewModel: MainViewModel = koinViewModel()
     val settingsViewModel: SettingsViewModel = koinViewModel()
+    val mediaViewModel: MediaViewModel = koinViewModel()
     val isUpdatePopUpVisible by mainViewModel.isUpdatePopUpVisible.collectAsState()
 
     // Indexing
@@ -171,10 +173,10 @@ fun Main(
                     ) {
                     composable(Routes.SEARCH) {
                         SearchScreen(
+                            mediaViewModel = mediaViewModel,
                             appSettings = settingsViewModel.appSettings,
                             onTopBarChange = { topBarState.value = it },
                             intentSearchQuery = intentSearchQuery,
-                            isIndexing = isIndexing,
                             hasIndexedImages = hasIndexedImages,
                             hasIndexedVideos = hasIndexedVideos,
                             hasStoragePermission = hasStoragePermission,
@@ -186,7 +188,6 @@ fun Main(
                     }
                     composable(Routes.COLLECTIONS) {
                         CollectionsScreen(
-                            isIndexing = isIndexing,
                             hasIndexedImages = hasIndexedImages,
                             hasIndexedVideos = hasIndexedVideos,
                             hasStoragePermission = hasStoragePermission,
@@ -210,6 +211,7 @@ fun Main(
                             )
 
                         CollectionItemsScreen(
+                            mediaViewModel = mediaViewModel,
                             onTopBarChange = { topBarState.value = it },
                             collection = collection,
                             appSettings = settingsViewModel.appSettings,
@@ -243,6 +245,7 @@ fun Main(
                             )
 
                         ConceptItemsScreen(
+                            mediaViewModel = mediaViewModel,
                             onTopBarChange = { topBarState.value = it },
                             concept = concept,
                             onBack = { navController.popBackStack() }
