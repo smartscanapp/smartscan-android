@@ -29,6 +29,8 @@ import com.fpf.smartscan.ui.permissions.getStorageAccess
 import com.fpf.smartscan.utils.isWorkScheduled
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.ml.models.ModelName
+import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +64,7 @@ class MainViewModel(
 
     val modelDownloadProgress = modelRepository.modelDownloadProgress
     val modelDownloadStatus = modelRepository.modelDownloadStatus
+    val installedModels = modelRepository.installedModels
 
     val cloudImageIndexProgress = CloudImageIndexListener.progress
     val cloudImageIndexStatus = CloudImageIndexListener.indexingStatus
@@ -177,6 +180,8 @@ class MainViewModel(
     }
 
     fun resetModelProgress() = modelRepository.reset()
+
+    fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
 
     private fun resetIndexingState(mediaType: MediaType){
         when(mediaType){

@@ -5,7 +5,6 @@ import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.concepts.ConceptManager
 import com.fpf.smartscan.concepts.getAllowedClusters
@@ -25,8 +24,6 @@ import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
-import com.fpf.smartscansdk.ml.embeddings.minilm.MiniLMTextEmbedder
-import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
 import com.fpf.smartscansdk.ml.models.ModelRegistry
@@ -65,13 +62,6 @@ class ConceptsViewModel(
         ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2)
     }
 
-    val hasDownloadedModel: StateFlow<Boolean> = modelRepository.installedModels
-            .map { ModelName.ALL_MINILM_L6_V2 in it }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = modelRepository.modelExist(ModelName.ALL_MINILM_L6_V2)
-            )
     val conceptManager by lazy {
         ConceptManager(
             similarityThreshold = SIMILARITY_THRESHOLD,
@@ -150,9 +140,6 @@ class ConceptsViewModel(
             is ConceptAction.PinUnpinConcept -> pinOrUnpinConcepts()
         }
     }
-
-    fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
-
     fun checkRecentUpdatesAndUpdateConcepts(){
         viewModelScope.launch (Dispatchers.IO) {
             try {
