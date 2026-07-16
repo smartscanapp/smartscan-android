@@ -17,15 +17,13 @@ import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
-import com.fpf.smartscansdk.ml.models.ModelManager
-import com.fpf.smartscansdk.ml.models.ModelName
+import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,7 +43,6 @@ class ConceptsViewModel(
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository,
     private val conceptEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val modelRepository: ModelRepository
@@ -62,7 +59,6 @@ class ConceptsViewModel(
     val conceptManager by lazy {
         ConceptManager(
             similarityThreshold = SIMILARITY_THRESHOLD,
-            textEmbedder = textEmbedder,
             conceptRepository = conceptRepository,
             conceptCrossRefRepository = conceptCrossRefRepository,
             conceptEmbedStore = conceptEmbedStore,
@@ -137,23 +133,6 @@ class ConceptsViewModel(
             is ConceptAction.PinUnpinConcept -> pinOrUnpinConcepts()
         }
     }
-    fun checkRecentUpdatesAndUpdateConcepts(){
-        viewModelScope.launch (Dispatchers.IO) {
-            try {
-                val recentUpdates = mediaMetadataRepository.getRecentlyUpdatedItems()
-                if(recentUpdates.isEmpty()) return@launch
-
-                _state.update { it.copy(loading = true) }
-                conceptManager.checkRecentUpdatesAndUpdateConcepts(recentUpdates)
-                mediaMetadataRepository.clearRecentUpdates()
-            }catch (e: Exception){
-                Log.d(TAG, "Error in checkRecentUpdatesAndUpdateConcepts: $e")
-            }
-            finally {
-                _state.update { it.copy(loading = false) }
-            }
-        }
-    }
 
     private fun load(){
         viewModelScope.launch(Dispatchers.IO) {
@@ -164,7 +143,6 @@ class ConceptsViewModel(
             _state.update { it.copy( collectionsSelection = updatedCollectionState)}
         }
     }
-
 
     private fun clearSelection() = _state.update { it.copy(selection = SelectionUtils.clearSelection(it.selection)) }
 
@@ -191,7 +169,9 @@ class ConceptsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _state.update { it.copy(loading = true) }
-                conceptManager.createConcept(description)
+                if(!textEmbedder.isInitialized()) textEmbedder.initialize()
+                val rawDescriptionEmbedding = textEmbedder.embed(description)
+                conceptManager.createConcept(description, rawDescriptionEmbedding.toQInt8Embed())
             }finally {
                 _state.update { it.copy(loading = false) }
             }
@@ -203,8 +183,10 @@ class ConceptsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _state.update { it.copy(loading = true) }
+                if(!textEmbedder.isInitialized()) textEmbedder.initialize()
+                val rawDescriptionEmbedding = textEmbedder.embed(newDescription)
                 resetSelection()
-                conceptManager.editConcept(concept, newDescription)
+                conceptManager.editConcept(concept, rawDescriptionEmbedding.toQInt8Embed())
             }finally {
                 _state.update { it.copy(loading = false) }
             }
