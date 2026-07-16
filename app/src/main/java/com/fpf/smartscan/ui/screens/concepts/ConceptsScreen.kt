@@ -160,10 +160,6 @@ fun ConceptsScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.checkRecentUpdatesAndUpdateConcepts()
-    }
-
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(ConceptAction.ResetSelection)
     }
