@@ -13,13 +13,11 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.data.concepts.ConceptPagingSource
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.openImageInGallery
-import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.shareMediaMulti
-import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
@@ -87,7 +85,6 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
             is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
-            is ConceptItemsAction.SaveUpdatedItem -> saveUpdatedItem(action.updatedItem)
         }
     }
 
@@ -139,15 +136,6 @@ class ConceptItemsViewModel(
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
-
-    private fun saveUpdatedItem(updatedItem: MediaItem){
-        viewModelScope.launch(Dispatchers.IO) {
-            val meta = mediaMetadataRepository.getByIds(listOf(updatedItem.id), updatedItem.type).firstOrNull()?: return@launch
-            val updatedMeta = meta.copy(description = updatedItem.description)
-            mediaMetadataRepository.update(listOf(updatedMeta))
-            mediaMetadataRepository.addToRecentUpdates(updatedItem)
-        }
-    }
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
