@@ -12,7 +12,7 @@ import com.fpf.smartscan.concepts.getAllowedTags
 import com.fpf.smartscan.concepts.setAllowedClusters
 import com.fpf.smartscan.concepts.setAllowedTags
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.ModelRepository
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
@@ -26,7 +26,6 @@ import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
-import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

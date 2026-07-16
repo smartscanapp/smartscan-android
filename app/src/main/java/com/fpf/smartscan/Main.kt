@@ -20,7 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.data.ModelDownloadStatus
+import com.fpf.smartscan.models.ModelDownloadStatus
 import com.fpf.smartscan.index.IndexingStatus
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType

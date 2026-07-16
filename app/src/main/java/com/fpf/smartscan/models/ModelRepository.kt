@@ -1,4 +1,4 @@
-package com.fpf.smartscan.data
+package com.fpf.smartscan.models
 
 import android.app.Application
 import android.util.Log
