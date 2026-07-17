@@ -201,7 +201,7 @@ fun CollectionsScreen(
             ) {
                 SelectionHeaderRow (
                     selectedCount = state.selection.selectedCount,
-                    checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
+                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalCollections),
                     onSelectAllChange = {viewModel.onAction(CollectionAction.SetSelectAll(it))}
                 )
             }
