@@ -2,12 +2,18 @@ package com.fpf.smartscan.data.metadata
 
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
+import com.fpf.smartscan.events.MediaEvent
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaType
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class MediaMetadataRepository(
     private val dao: MediaMetadataDao
 ) {
+
+    private val _event = MutableSharedFlow<MediaEvent>()
+    val event = _event.asSharedFlow()
 
     suspend fun insert(items: List<MediaMetadata>) = dao.insert(items.map{it.toEntity()})
 
@@ -36,5 +42,7 @@ class MediaMetadataRepository(
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 
     suspend fun clear() = dao.clear()
+
+    suspend fun emitEvent(event: MediaEvent) = _event.emit(event)
 
 }

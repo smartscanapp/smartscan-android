@@ -8,9 +8,12 @@ import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.data.mappers.toMetadata
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.events.MediaEvent
+import com.fpf.smartscan.events.MediaEventType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.models.ModelRepository
+import com.fpf.smartscan.utils.Queue
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
@@ -32,6 +35,15 @@ class MediaViewModel(
 
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
+    private val queue = Queue<MediaEvent>(
+        concurrency = 4,
+        scope = viewModelScope,
+        onProcess = { jobData, workerId ->
+            Log.d(TAG, "Worker $workerId processing ${jobData.updatedEmbed.id}")
+            conceptManager.updateConceptLinks(jobData.updatedEmbed, jobData.mediaType)
+        }
+    )
+
     val conceptManager by lazy {
         ConceptManager(
             conceptRepository = conceptRepository,
@@ -40,6 +52,14 @@ class MediaViewModel(
             imageConceptEmbedStore = imageConceptEmbedStore,
             videoConceptEmbedStore = videoConceptEmbedStore
         )
+    }
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            mediaMetadataRepository.event.collect{
+                event -> handleEvents(event)
+            }
+        }
     }
 
     fun saveUpdatedItem(updatedMedia: MediaItem){
@@ -54,7 +74,7 @@ class MediaViewModel(
                     return@launch
                 }
                 val result = conceptManager.updateConceptLinks(updatedEmbed, updatedMedia.type)
-                Log.d(TAG, "Result:\nremoved: ${result.removed} concept links | added: ${result.added} concept links")
+                Log.d(TAG, "removed: ${result.removed} concept links | added: ${result.added} concept links")
             }
         }
         Log.d(TAG, "Updated media description for: ${updatedMedia.id}")
@@ -74,7 +94,7 @@ class MediaViewModel(
         if (updatedMedia.description.isNullOrBlank()) return null
         val newRawEmbedding = textEmbedder.embed(updatedMedia.description)
         //TODO: add `upsert` method to EmbeddingStore
-        val existingMediaEmbed = imageConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
+        val existingMediaEmbed = mediaConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
         val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
                 ?: StoredEmbedding(updatedMedia.id, updatedMedia.dateAdded, newRawEmbedding.toQInt8Embed())
         if (existingMediaEmbed != null) {
@@ -83,5 +103,13 @@ class MediaViewModel(
             mediaConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
         }
         return updatedOrNewMediaEmbed
+    }
+
+    private suspend fun handleEvents(event: MediaEvent){
+        when(event.eventType){
+            MediaEventType.EMBED_UPDATE -> {
+                queue.submit(event)
+            }
+        }
     }
 }
