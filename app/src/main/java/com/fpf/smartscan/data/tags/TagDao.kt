@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+
 @Dao
 interface TagDao {
     @Query("SELECT * FROM media_tag")
@@ -23,6 +24,8 @@ interface TagDao {
     @Query("SELECT * FROM media_tag WHERE id in (:ids)")
     suspend fun getByIds(ids: List<Long>): List<TagEntity>
 
+    // Crossref count used as size to always use crossrefs as source of truth
+    // and importantly so Flow automatically retriggers when crossrefs change
     @Query("""
     SELECT
         t.id AS tagId,

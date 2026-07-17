@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import com.fpf.smartscan.constants.EmbeddingStoresFilesQuant
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.errors.AppException
 import java.io.File
 
 object BackupUtils {
@@ -15,22 +16,23 @@ object BackupUtils {
     
     suspend fun backup(context: Context, outputUri: Uri){
         val indexZipFile = File(context.cacheDir, BACKUP_FILENAME)
-        val imageEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE)
-        val videoEmbeddingStoreFile = File(context.filesDir,  EmbeddingStoresFilesQuant.VIDEO)
-        val clusterEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER)
         val hashFile = File(context.cacheDir, HASH_FILENAME)
         val dbPath = context.getDatabasePath(MediaDatabase.DB_NAME)
 
-        val embedStoreFiles = listOf(imageEmbeddingStoreFile, videoEmbeddingStoreFile, clusterEmbeddingStoreFile)
+        val embedStoreFiles = getMainEmbedStoreFiles(context) + getConceptEmbedStoreFiles(context)
         val filesToZip = listOf( hashFile, dbPath) + embedStoreFiles
 
         try {
-            if(embedStoreFiles.none{it.exists()}) error("Missing index file(s)")
+            if(embedStoreFiles.none{it.exists()}) throw AppException.BackupException("Missing index file(s)")
             val hashes: List<String> = filesToZip.filter { it.exists() && it != hashFile }.map{hashFile(it)}
             hashFile.writeText(hashes.joinToString("\n") )
             zipFiles(indexZipFile, filesToZip)
             copyToUri(context, outputUri, indexZipFile)
-        }finally {
+        }catch (e: Exception){
+            Log.e(TAG, "Unknow backup error", e)
+            throw AppException.BackupException(cause = e)
+        }
+        finally {
             indexZipFile.delete()
             hashFile.delete()
         }
@@ -46,9 +48,14 @@ object BackupUtils {
 
             if(!isValidBackupFile(extractedFiles)){
                 extractedFiles.forEach { it.delete() }
-                error("Invalid backup file")
+                throw AppException.RestoreException("Invalid backup file")
             }
-        }finally {
+        }
+        catch (e: Exception){
+            Log.e(TAG, "Unknow restore error", e)
+            throw AppException.RestoreException(cause = e)
+        }
+        finally {
             indexZipFile.delete()
         }
 
@@ -75,6 +82,20 @@ object BackupUtils {
         val otherFiles = extractedFiles.filterNot{it.name == HASH_FILENAME}
         val otherFileHashes = otherFiles.map{hashFile(it)}
         return hashesFromFile.toSet() == otherFileHashes.toSet()
+    }
+
+    private fun getMainEmbedStoreFiles(context: Context): List<File>{
+        val imageEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE)
+        val videoEmbeddingStoreFile = File(context.filesDir,  EmbeddingStoresFilesQuant.VIDEO)
+        val clusterEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER)
+        return listOf(imageEmbeddingStoreFile, videoEmbeddingStoreFile, clusterEmbeddingStoreFile)
+    }
+
+    private fun getConceptEmbedStoreFiles(context: Context): List<File>{
+        val imageConceptEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE_CONCEPT)
+        val videoConceptEmbeddingStoreFile = File(context.filesDir,  EmbeddingStoresFilesQuant.VIDEO_CONCEPT)
+        val conceptEmbedStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.CONCEPT)
+        return listOf(imageConceptEmbeddingStoreFile, videoConceptEmbeddingStoreFile, conceptEmbedStoreFile)
     }
 
 }

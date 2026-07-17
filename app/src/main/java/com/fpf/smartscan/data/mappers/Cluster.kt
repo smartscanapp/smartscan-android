@@ -1,6 +1,7 @@
 package com.fpf.smartscan.data.mappers
 
 import com.fpf.smartscan.cluster.ClusterCrossRef
+import com.fpf.smartscan.cluster.StoredClusterMetadata
 import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterMetadataEntity
 import com.fpf.smartscansdk.core.cluster.ClusterMetadata
@@ -18,19 +19,25 @@ fun ClusterCrossRefEntity.toDomain(): ClusterCrossRef = ClusterCrossRef(
     mediaType = mediaType
 )
 
-fun ClusterMetadataEntity.toDomain(): Pair<Long, ClusterMetadata> = Pair(clusterId,
-    ClusterMetadata(
-        prototypeSize = prototypeSize,
-        label=label,
-        meanSimilarity = meanSimilarity,
-        stdSimilarity = stdSimilarity
-    )
+fun ClusterMetadataEntity.toDomain(): StoredClusterMetadata = StoredClusterMetadata(
+    clusterId = clusterId,
+    label = label,
+    meanSimilarity = meanSimilarity,
+    stdSimilarity = stdSimilarity,
+    prototypeSize = prototypeSize
 )
 
-fun Pair<Long, ClusterMetadata>.toEntity(): ClusterMetadataEntity = ClusterMetadataEntity(
-    clusterId = first,
-    label = second.label,
-    meanSimilarity = second.meanSimilarity,
-    stdSimilarity = second.stdSimilarity,
-    prototypeSize = second.prototypeSize
+fun StoredClusterMetadata.toEntity(): ClusterMetadataEntity = ClusterMetadataEntity(
+    clusterId = clusterId,
+    label = label,
+    meanSimilarity = meanSimilarity,
+    stdSimilarity = stdSimilarity,
+    prototypeSize = prototypeSize
+)
+
+fun StoredClusterMetadata.toIncrementalClusterMetadata(): ClusterMetadata = ClusterMetadata(
+    label = label,
+    meanSimilarity = meanSimilarity,
+    stdSimilarity = stdSimilarity,
+    prototypeSize = prototypeSize
 )

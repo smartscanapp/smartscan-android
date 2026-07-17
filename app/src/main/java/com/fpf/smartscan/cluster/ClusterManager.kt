@@ -2,12 +2,12 @@ package com.fpf.smartscan.cluster
 
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.data.mappers.toIncrementalClusterMetadata
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.utils.reservoirSample
 import com.fpf.smartscansdk.core.cluster.Cluster
-import com.fpf.smartscansdk.core.cluster.ClusterMetadata
 import com.fpf.smartscansdk.core.cluster.ClusterResult
 import com.fpf.smartscansdk.core.cluster.IncrementalClusterer
 import com.fpf.smartscansdk.core.embeddings.Embedding
@@ -85,9 +85,9 @@ class ClusterManager(
     }
 
     suspend fun updateLabel(clusterId: Long, newLabel: String){
-        val (clusterId, metadata) = clusterMetadataRepository.getMetadata(clusterId)?: return
+        val metadata = clusterMetadataRepository.getMetadata(clusterId)?: return
         val updatedMeta = metadata.copy(label = newLabel)
-        clusterMetadataRepository.updateMetadata(Pair(clusterId, updatedMeta))
+        clusterMetadataRepository.updateMetadata(updatedMeta)
     }
 
     private suspend fun getAllClusters(): Map<Long, Cluster> {
@@ -96,7 +96,7 @@ class ClusterManager(
 
             clusterEmbedStore.get().mapNotNull { cluster ->
                 metadataMap[cluster.id]?.let { meta ->
-                    cluster.id to Cluster(cluster.id, cluster.embedding, meta)
+                    cluster.id to Cluster(cluster.id, cluster.embedding, meta.toIncrementalClusterMetadata())
                 }
             }.toMap()
         } else emptyMap()
@@ -106,20 +106,22 @@ class ClusterManager(
         val (existingClusters, newClusters) = clusterResult.clusters.values.partition { it.clusterId in existingClusterIds }
 
         val existingMetadata = existingClusters.map {
-            Pair(it.clusterId, ClusterMetadata(
+            StoredClusterMetadata(
+                clusterId = it.clusterId,
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
                 stdSimilarity = it.metadata.stdSimilarity,
-                label = it.metadata.label)
+                label = it.metadata.label
             )
         }
 
         val newMetadata = newClusters.map {
-            Pair( it.clusterId, ClusterMetadata(
+            StoredClusterMetadata(
+                clusterId = it.clusterId,
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
                 stdSimilarity = it.metadata.stdSimilarity,
-                label = it.metadata.label)
+                label = it.metadata.label
             )
         }
 
@@ -153,9 +155,11 @@ class ClusterManager(
     }
 
     private suspend fun createNewCluster(itemEmbeds: List<StoredEmbedding>, clusterLabel: String, itemsMediaTypeMap: Map<Long, MediaType>): Long{
+        val clusterId = generateId()
         val (metadata, prototype ) = if(itemEmbeds.size == 1) {
             val defaultThreshold = getDefaultThreshold(getAllClusters())
-            val meta = ClusterMetadata(
+            val meta = StoredClusterMetadata(
+                clusterId = clusterId,
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = defaultThreshold,
                 stdSimilarity = 0f,
@@ -166,7 +170,8 @@ class ClusterManager(
         }else{
             val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(itemEmbeds.map { it.embedding })
 
-            val meta = ClusterMetadata(
+            val meta = StoredClusterMetadata(
+                clusterId = clusterId,
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = meanSim,
                 stdSimilarity = stdSim,
@@ -175,14 +180,13 @@ class ClusterManager(
             Pair(meta, prototypeEmbedding)
         }
 
-        val clusterId = generateId()
         val clusterEmbed =  StoredEmbedding(
             id = clusterId,
             embedding = prototype.toQInt8Embed(),
             date = System.currentTimeMillis()
         )
         clusterEmbedStore.add(listOf(clusterEmbed))
-        clusterMetadataRepository.insertMetadata(Pair(clusterId, metadata))
+        clusterMetadataRepository.insertMetadata(metadata)
 
         val crossRefs = itemEmbeds.mapNotNull {
             val mediaType = itemsMediaTypeMap[it.id]?: return@mapNotNull null
@@ -238,10 +242,10 @@ class ClusterManager(
         val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(embeddings)
         val oldStoredEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()?: error("Cluster embedding not found")
         val updatedStoredEmbed = oldStoredEmbed.copy(embedding = prototypeEmbedding)
-        val (id, clusterMetadata) = clusterMetadataRepository.getMetadata(clusterId)?: return
+        val clusterMetadata = clusterMetadataRepository.getMetadata(clusterId)?: return
         val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = mediaIds.size)
         clusterEmbedStore.update(listOf(updatedStoredEmbed))
-        clusterMetadataRepository.updateMetadata(Pair(id, updatedMetadata))
+        clusterMetadataRepository.updateMetadata(updatedMetadata)
     }
 
     private fun generateId(): Long {

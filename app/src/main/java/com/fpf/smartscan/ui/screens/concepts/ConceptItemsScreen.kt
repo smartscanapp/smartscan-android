@@ -89,8 +89,8 @@ fun ConceptItemsScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
+//                .padding(16.dp),
             verticalArrangement = Arrangement.Top
         ) {
             ConceptItemsList(

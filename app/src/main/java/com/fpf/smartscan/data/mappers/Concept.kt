@@ -24,11 +24,13 @@ fun Concept.toEntity(): ConceptEntity = ConceptEntity(
 fun ConceptCrossRef.toEntity() = ConceptCrossRefEntity(
     conceptId=conceptId,
     mediaId = mediaId,
-    mediaType = mediaType
+    mediaType = mediaType,
+    similarity = similarity
 )
 
 fun ConceptCrossRefEntity.toDomain() = ConceptCrossRef(
     conceptId=conceptId,
     mediaId = mediaId,
-    mediaType = mediaType
+    mediaType = mediaType,
+    similarity = similarity
 )

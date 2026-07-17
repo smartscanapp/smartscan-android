@@ -3,7 +3,6 @@ package com.fpf.smartscan.ui.state
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.ui.state.common.Selectable
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class ConceptsState(
@@ -14,5 +13,5 @@ data class ConceptsState(
     val totalConcepts: Int = 0,
     val totalCollections: Int = 0,
     val collectionsSelection: SelectionState<MediaCollection> = SelectionState(),
-    override val selection: SelectionState<Concept> = SelectionState()
-): Selectable<Concept>
+    val selection: SelectionState<Concept> = SelectionState()
+)
