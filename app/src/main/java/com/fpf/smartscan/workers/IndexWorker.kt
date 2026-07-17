@@ -76,6 +76,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
 
     private val sharedPrefs by lazy { applicationContext.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
 
+    // Disable listener for background jobs
+    // Note: May later use worker specific listener
     private val cloudIndexJobManager by lazy {
         CloudIndexJobManager(
             application = applicationContext as Application,
@@ -83,6 +85,7 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             textEmbedder = textEmbedder,
             imageConceptsEmbedStore = imageConceptsEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
+            useListener = false
         )
     }
 
@@ -96,7 +99,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             clusterEmbedStore = clusterEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
             clusterMetadataRepository = clusterMetadataRepository,
-            clusterCrossRefRepository = clusterCrossRefRepository
+            clusterCrossRefRepository = clusterCrossRefRepository,
+            useListener = false
         )
     }
 

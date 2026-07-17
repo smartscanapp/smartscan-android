@@ -26,6 +26,7 @@ class CloudIndexJobManager(
     private val textEmbedder: TextEmbeddingProvider,
     private val imageConceptsEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
+    private val useListener: Boolean = true
 ) {
     companion object {
         private const val TAG = "CloudIndexJobManager"
@@ -50,7 +51,7 @@ class CloudIndexJobManager(
                         val imageIndexer = CloudImageIndexer(
                             context = application,
                             embedder=textEmbedder,
-                            listener = CloudImageIndexListener,
+                            listener = if(useListener) CloudImageIndexListener else null,
                             store = imageConceptsEmbedStore,
                             mediaMetadataRepository = mediaMetadataRepository,
                             quantize = true,

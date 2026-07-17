@@ -36,7 +36,8 @@ class LocalIndexJobManager(
     private val clusterEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository
+    private val clusterCrossRefRepository: ClusterCrossRefRepository,
+    private val useListener: Boolean = true
 ) {
     companion object {
         private const val TAG = "LocalIndexJobManager"
@@ -64,7 +65,7 @@ class LocalIndexJobManager(
                         val imageIndexer = ImageIndexer(
                             imageEmbedder,
                             context = application,
-                            listener = ImageIndexListener,
+                            listener = if(useListener) ImageIndexListener else null,
                             store = imageEmbedStore,
                             quantize = true
                         )
@@ -81,7 +82,7 @@ class LocalIndexJobManager(
                         val videoIndexer = VideoIndexer(
                             imageEmbedder,
                             context = application,
-                            listener = VideoIndexListener,
+                            listener = if(useListener) VideoIndexListener else null,
                             store = videoEmbedStore,
                             quantize = true,
                             width = IMAGE_SIZE_X,
