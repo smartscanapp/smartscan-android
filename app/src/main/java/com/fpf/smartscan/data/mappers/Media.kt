@@ -11,17 +11,24 @@ fun MediaMetadataEntity.toDomain(): MediaMetadata = MediaMetadata(
     description=description
 )
 
-fun MediaMetadataEntity.toDomainItem(): MediaItem = MediaItem(
-    id=id,
-    type = type,
-    description=description,
-    dateAdded = dateAdded
-)
-
 fun MediaMetadata.toEntity(): MediaMetadataEntity = MediaMetadataEntity(
     id=id,
     type = type,
     dateAdded = dateAdded,
+    description=description
+)
+
+fun MediaMetadata.toItem(): MediaItem = MediaItem(
+    id=id,
+    type=type,
+    dateAdded=dateAdded,
+    description=description
+)
+
+fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
+    id=id,
+    type=type,
+    dateAdded=dateAdded,
     description=description
 )
 

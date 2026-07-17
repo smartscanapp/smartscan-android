@@ -59,6 +59,7 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.screens.search.SearchViewModel.Companion.RESULTS_BATCH_SIZE
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.formatDate
 import com.fpf.smartscan.utils.toEpochSeconds
 import kotlinx.coroutines.FlowPreview
@@ -67,15 +68,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @OptIn(FlowPreview::class)
 @Composable
 fun SearchScreen(
     searchViewModel: SearchViewModel = koinViewModel(),
+    mediaViewModel: MediaViewModel = koinViewModel(),
     appSettings:  StateFlow<AppSettings>,
     onTopBarChange: (TopBarState) -> Unit,
-    isIndexing: Boolean,
     hasIndexedImages: Boolean?,
     hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
@@ -155,7 +157,7 @@ fun SearchScreen(
     }
 
     LaunchedEffect(hasIndexedVideos, hasIndexedImages, state.mediaType, hasStoragePermission) {
-        if (isIndexing || !hasStoragePermission) return@LaunchedEffect
+        if ( !hasStoragePermission) return@LaunchedEffect
 
         val firstImageIndexRequired = state.mediaType == MediaType.IMAGE && hasIndexedImages ==false
         val firstVideoIndexRequired = state.mediaType == MediaType.VIDEO && hasIndexedVideos==false
@@ -175,7 +177,7 @@ fun SearchScreen(
         searchViewModel.externalSearch(intentSearchQuery, appSettings.textQueryStrictness, appSettings.imageQueryStrictness, appSettings.enableDedupe)
     }
 
-    LaunchedEffect(isIndexing) {
+    LaunchedEffect(Unit) {
         onTopBarChange(
             TopBarState(
                 title = screenTitle,
@@ -195,7 +197,7 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) {
         snapshotFlow { searchViewModel.searchFieldState.text }
-            .debounce(50)
+            .debounce(50.milliseconds)
             .collectLatest { query: CharSequence ->
                 val subStringEnd = searchViewModel.searchFieldState.selection.end
                 tagAutoCompleteTagResults = searchViewModel.handleAutoCompletionCheck(query, subStringEnd)
@@ -251,7 +253,6 @@ fun SearchScreen(
                             uri = state.queryImage,
                             mediaType = state.mediaType,
                             imageSize = 140.dp,
-                            mediaTypeSelectorEnabled = !isIndexing,
                             onSearch = {
                                 searchViewModel.onAction(SearchAction.Search(appSettings.imageQueryStrictness, appSettings.enableDedupe))
                             },
@@ -288,7 +289,7 @@ fun SearchScreen(
                             SearchBar(
                                 modifier = Modifier.weight(1f),
                                 searchFieldState = searchViewModel.searchFieldState,
-                                enabled = hasStoragePermission && !state.loading && !isIndexing ,
+                                enabled = hasStoragePermission && !state.loading ,
                                 onSearch = {
                                     searchViewModel.onAction(SearchAction.Search(appSettings.textQueryStrictness, appSettings.enableDedupe))
                                 },
@@ -301,13 +302,12 @@ fun SearchScreen(
                                 placeholders = searchBarPlaceholders,
                                 trailingIcon = {
                                     IconButton (
-                                        enabled = !isIndexing,
                                         onClick = { isSelectingMediaType = true }
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowDropDown,
                                             contentDescription = "Dropdown",
-                                            tint = if (!isIndexing) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                            tint =  MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
@@ -403,7 +403,7 @@ fun SearchScreen(
                     searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
                 },
                 onSaveUpdatedItem = {
-                    searchViewModel.onAction(SearchAction.SaveUpdatedItem(it))
+                    mediaViewModel.saveUpdatedItem(it)
                     // TODO: switch to paging source and refresh items here
                 }
             )

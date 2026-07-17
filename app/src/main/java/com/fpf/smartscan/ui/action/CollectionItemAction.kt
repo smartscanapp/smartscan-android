@@ -18,8 +18,6 @@ sealed interface CollectionItemAction {
     data class SetSelectAll(val selectAll: Boolean): CollectionItemAction
     data class SetMediaTypeFilter(val mediaType: MediaType?): CollectionItemAction
 
-    data class SaveUpdatedItem(val updatedItem: MediaItem): CollectionItemAction
-
     data object RemoveMedia : CollectionItemAction
     data object ToggleSelectionMode: CollectionItemAction
     data object ClearSelection: CollectionItemAction

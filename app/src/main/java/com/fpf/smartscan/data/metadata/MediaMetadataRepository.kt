@@ -2,15 +2,18 @@ package com.fpf.smartscan.data.metadata
 
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
-import com.fpf.smartscan.media.MediaItem
+import com.fpf.smartscan.events.MediaEvent
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaType
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class MediaMetadataRepository(
     private val dao: MediaMetadataDao
 ) {
-    // Track recently updated descriptions so that in the concepts screens Concepts can be updated accordingly
-    private val recentlyUpdatedItems = mutableSetOf<MediaItem>()
+
+    private val _event = MutableSharedFlow<MediaEvent>()
+    val event = _event.asSharedFlow()
 
     suspend fun insert(items: List<MediaMetadata>) = dao.insert(items.map{it.toEntity()})
 
@@ -40,8 +43,6 @@ class MediaMetadataRepository(
 
     suspend fun clear() = dao.clear()
 
-    fun clearRecentUpdates() = recentlyUpdatedItems.clear()
-    fun addToRecentUpdates(mediaItem: MediaItem) = recentlyUpdatedItems.add(mediaItem)
-    fun getRecentlyUpdatedItems(): Set<MediaItem> = recentlyUpdatedItems
+    suspend fun emitEvent(event: MediaEvent) = _event.emit(event)
 
 }

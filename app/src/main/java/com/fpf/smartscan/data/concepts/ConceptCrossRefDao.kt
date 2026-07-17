@@ -6,6 +6,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import com.fpf.smartscan.media.MediaType
 
 @Dao
 interface ConceptCrossRefDao {
@@ -30,4 +32,9 @@ interface ConceptCrossRefDao {
 
     @Delete
     suspend fun delete(crossrefs: List<ConceptCrossRefEntity>)
+
+
+    @Transaction
+    @Query("DELETE FROM concept_crossref WHERE mediaId =:mediaId AND mediaType =:mediaType ")
+    suspend fun delete(mediaId: Long, mediaType: MediaType)
 }

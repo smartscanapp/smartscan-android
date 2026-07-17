@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
@@ -31,7 +32,6 @@ import com.fpf.smartscan.media.removeStaleMedia
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.media.shareMediaMulti
-import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
@@ -133,7 +133,6 @@ class SearchViewModel(
             is SearchAction.ToggleSelectionMode -> toggleSelectionMode()
             is SearchAction.ResetSelection -> resetSelection()
             is SearchAction.ClearSelection -> clearSelection()
-            is SearchAction.SaveUpdatedItem -> saveUpdatedItem(action.updatedItem)
         }
     }
 
@@ -430,14 +429,6 @@ class SearchViewModel(
 
     private fun queryResultToMap(result: QueryResult): Map<Long, Float> = result.sims?.let(result.ids::zip)?.toMap() ?: emptyMap()
 
-    private fun saveUpdatedItem(updatedItem: MediaItem){
-        viewModelScope.launch(Dispatchers.IO) {
-            val meta = mediaMetadataRepository.getByIds(listOf(updatedItem.id), updatedItem.type).firstOrNull()?: return@launch
-            val updatedMeta = meta.copy(description = updatedItem.description)
-            mediaMetadataRepository.update(listOf(updatedMeta))
-            mediaMetadataRepository.addToRecentUpdates(updatedItem)
-        }
-    }
 
     override fun onCleared() {
         textEmbedder.closeSession()

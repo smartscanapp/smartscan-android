@@ -65,13 +65,13 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.components.collections.CollectionItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -83,6 +83,7 @@ fun CollectionItemsScreen(
     collection: MediaCollection?,
     onTopBarChange: (TopBarState) -> Unit,
     onBack: () -> Unit,
+    mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: CollectionItemsViewModel = koinViewModel(),
     ) {
     if(collection == null) return
@@ -338,7 +339,7 @@ fun CollectionItemsScreen(
                     onLoadMore = { val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
                         items[lastIndex]},
                     onSaveUpdatedItem = {
-                        viewModel.onAction(CollectionItemAction.SaveUpdatedItem(it))
+                        mediaViewModel.saveUpdatedItem(it)
                         items.refresh()
                     }
 

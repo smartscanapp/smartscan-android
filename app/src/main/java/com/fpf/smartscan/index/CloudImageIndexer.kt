@@ -8,6 +8,8 @@ import com.fpf.smartscan.api.ImageSummary
 import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.events.MediaEvent
+import com.fpf.smartscan.events.MediaEventType
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.utils.uriToBase64
 import com.fpf.smartscansdk.core.embeddings.Embedding
@@ -45,6 +47,7 @@ class CloudImageIndexer(
         store.add(embedsToStore)
         mediaMetadataRepository.update(metadataList)
         listener?.onBatchComplete(context, batch)
+        embedsToStore.forEachIndexed { index, embed -> mediaMetadataRepository.emitEvent(MediaEvent(eventType = MediaEventType.EMBED_UPDATE, updatedEmbed = embed, mediaType =metadataList[index].type ))}
     }
 
     override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding>? {

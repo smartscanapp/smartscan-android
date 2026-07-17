@@ -2,10 +2,10 @@ package com.fpf.smartscan.data.concepts
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.toItem
 
 class ConceptPagingSource(
     private val mediaType: MediaType? = null,

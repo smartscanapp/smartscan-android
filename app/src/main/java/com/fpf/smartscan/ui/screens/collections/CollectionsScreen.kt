@@ -69,7 +69,6 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CollectionsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    isIndexing: Boolean,
     hasIndexedImages: Boolean?,
     hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
@@ -164,7 +163,7 @@ fun CollectionsScreen(
     }
 
     LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
-        val firstIndexRequired = !isIndexing && hasIndexedImages == false && hasIndexedVideos == false
+        val firstIndexRequired =  hasIndexedImages == false && hasIndexedVideos == false
         if( firstIndexRequired && hasStoragePermission){
             onIndex()
         }

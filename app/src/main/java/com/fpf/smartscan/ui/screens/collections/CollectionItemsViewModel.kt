@@ -19,6 +19,7 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.data.tags.TagPagingSource
 import com.fpf.smartscan.data.clusters.ClusterPagingSource
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
@@ -31,7 +32,6 @@ import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
-import com.fpf.smartscan.media.toItem
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
@@ -176,7 +176,6 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
             is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
-            is CollectionItemAction.SaveUpdatedItem -> saveUpdatedItem(action.updatedItem)
             }
     }
 
@@ -339,15 +338,6 @@ class CollectionItemsViewModel(
     }
 
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
-
-    private fun saveUpdatedItem(updatedItem: MediaItem){
-        viewModelScope.launch(Dispatchers.IO) {
-            val meta = mediaMetadataRepository.getByIds(listOf(updatedItem.id), updatedItem.type).firstOrNull()?: return@launch
-            val updatedMeta = meta.copy(description = updatedItem.description)
-            mediaMetadataRepository.update(listOf(updatedMeta))
-            mediaMetadataRepository.addToRecentUpdates(updatedItem)
-        }
-    }
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

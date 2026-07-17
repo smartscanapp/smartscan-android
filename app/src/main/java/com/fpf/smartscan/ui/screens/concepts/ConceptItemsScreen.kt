@@ -36,6 +36,7 @@ import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -43,6 +44,7 @@ fun ConceptItemsScreen(
     concept: Concept?,
     onTopBarChange: (TopBarState) -> Unit,
     onBack: () -> Unit,
+    mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: ConceptItemsViewModel = koinViewModel(),
 ) {
     if(concept == null) return
@@ -130,7 +132,7 @@ fun ConceptItemsScreen(
                     onLoadMore = { val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
                         conceptItems[lastIndex]},
                     onSaveUpdatedItem = {
-                        viewModel.onAction(ConceptItemsAction.SaveUpdatedItem(it))
+                        mediaViewModel.saveUpdatedItem(it)
                         conceptItems.refresh()
                     }
                 )
