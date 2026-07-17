@@ -188,7 +188,7 @@ class ConceptsViewModel(
                 if(!textEmbedder.isInitialized()) textEmbedder.initialize()
                 val rawDescriptionEmbedding = textEmbedder.embed(newDescription)
                 resetSelection()
-                conceptManager.editConcept(concept, rawDescriptionEmbedding.toQInt8Embed())
+                conceptManager.editConcept(concept.copy(description = newDescription), rawDescriptionEmbedding.toQInt8Embed())
             }finally {
                 _state.update { it.copy(loading = false) }
             }
