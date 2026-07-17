@@ -69,8 +69,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CollectionsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    hasIndexedImages: Boolean?,
-    hasIndexedVideos: Boolean?,
+    isMainScanRequired: Boolean,
     hasStoragePermission: Boolean,
     onIndex: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
@@ -160,13 +159,6 @@ fun CollectionsScreen(
 //                }
             )
         )
-    }
-
-    LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
-        val firstIndexRequired =  hasIndexedImages == false && hasIndexedVideos == false
-        if( firstIndexRequired && hasStoragePermission){
-            onIndex()
-        }
     }
 
     BackHandler(enabled = state.selection.isSelecting) {
@@ -312,7 +304,7 @@ fun CollectionsScreen(
                 maxCollapsePx = maxCollapsablePx,
             )
 
-            EmptyCollectionScreen(isVisible = !isCollectionVisible)
+            EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired )
         }
 
 

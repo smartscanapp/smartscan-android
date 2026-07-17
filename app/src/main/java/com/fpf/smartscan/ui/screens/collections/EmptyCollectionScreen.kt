@@ -1,5 +1,6 @@
 package com.fpf.smartscan.ui.screens.collections
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,7 +23,8 @@ import com.fpf.smartscan.R
 @Composable
 fun EmptyCollectionScreen(
     isVisible: Boolean,
-) {
+    isMainScanRequired: Boolean,
+    ) {
     if (!isVisible) return
 
     Box(
@@ -32,6 +35,7 @@ fun EmptyCollectionScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.PhotoLibrary,
@@ -43,14 +47,18 @@ fun EmptyCollectionScreen(
             Text(
                 text = stringResource(R.string.collections_no_collections_title),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displayMedium,
+                modifier = Modifier.padding(bottom = 32.dp)
             )
+
+            if( isMainScanRequired){
+                Text(text = stringResource(R.string.alert_initial_scan_required), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+            }
 
             Text(
                 text = stringResource(R.string.collections_no_collections_description),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }
