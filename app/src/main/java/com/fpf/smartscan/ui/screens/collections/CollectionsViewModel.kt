@@ -15,8 +15,6 @@ import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.events.CollectionEventType
 import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.index.refreshIndex
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.state.CollectionsState
@@ -37,16 +35,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class CollectionsViewModel( 
+class CollectionsViewModel(
     application: Application,
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
     ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "CollectionsViewModel"
@@ -59,9 +57,9 @@ class CollectionsViewModel(
         mediaMetadataRepository = mediaMetadataRepository,
     )
     val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterStore,
-        imageEmbedStore = imageStore,
-        videoEmbedStore = videoStore,
+        clusterEmbedStore = clusterEmbedStore,
+        imageEmbedStore = imageEmbedStore,
+        videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
         mediaMetadataRepository = mediaMetadataRepository,
@@ -71,15 +69,14 @@ class CollectionsViewModel(
     val state: StateFlow<CollectionsState> = _state
 
     val clusterCollections: StateFlow<List<MediaCollection>> = combine(
-        clusterCrossRefRepository.getClustersWithCount(),
+        clusterMetadataRepository.getCollections(),
         _state.map {  it.showAllCollections to  it.collectionType }.distinctUntilChanged()
-    ) { clusters, ( showAllCollections, collectionType) ->
+    ) { collections, ( showAllCollections, collectionType) ->
         if(collectionType == CollectionType.CLUSTER){
-            _state.update { it.copy(totalCollections = clusters.size) }
+            _state.update { it.copy(totalCollections = collections.size) }
         }
-        val filteredClusters = if (showAllCollections) clusters else clusters.take(TOP_N)
-
-        clusterManager.toCollections(filteredClusters)
+        val filterCollections = if (showAllCollections) collections else collections.take(TOP_N)
+        filterCollections
     }.flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
@@ -88,14 +85,14 @@ class CollectionsViewModel(
         )
 
     val tagCollections: StateFlow<List<MediaCollection>> = combine(
-        tagCrossRefRepository.getTagsWithCounts(),
+        tagRepository.getCollections(),
         _state.map {  it.showAllCollections to  it.collectionType }.distinctUntilChanged()
-    ) { tagsWithCount, ( showAllCollections, collectionType) ->
+    ) { collections, ( showAllCollections, collectionType) ->
         if(collectionType == CollectionType.TAG){
-            _state.update { it.copy(totalCollections = tagsWithCount.size) }
+            _state.update { it.copy(totalCollections = collections.size) }
         }
-        val tags = if (showAllCollections) tagsWithCount else tagsWithCount.take(TOP_N)
-        tagManager.toCollections(tags)
+        val filteredCollections = if (showAllCollections) collections else collections.take(TOP_N)
+        filteredCollections
     }.flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
@@ -229,14 +226,14 @@ class CollectionsViewModel(
                 if(currentState.showAllCollections) {
                     clusterCollections.value
                 } else {
-                    clusterManager.toCollections(clusterCrossRefRepository.getClustersWithCount().first() )
+                    clusterMetadataRepository.getCollections().first()
                 }
             }
             CollectionType.TAG -> {
                 if(currentState.showAllCollections) {
                     tagCollections.value
                 } else {
-                    tagManager.toCollections(tagCrossRefRepository.getTagsWithCounts().first())
+                    tagRepository.getCollections().first()
                 }
             }
         }.toMutableSet()

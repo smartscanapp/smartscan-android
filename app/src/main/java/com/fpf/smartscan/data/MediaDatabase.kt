@@ -5,30 +5,37 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.fpf.smartscan.data.clusters.ClusterCrossRef
+import com.fpf.smartscan.data.clusters.ClusterCrossRefEntity
 import com.fpf.smartscan.data.clusters.ClusterCrossRefDao
-import com.fpf.smartscan.data.clusters.MediaClusterMetadata
+import com.fpf.smartscan.data.clusters.ClusterMetadataEntity
 import com.fpf.smartscan.data.clusters.ClusterMetadataDao
-import com.fpf.smartscan.data.metadata.MediaMetadata
+import com.fpf.smartscan.data.concepts.ConceptCrossRefDao
+import com.fpf.smartscan.data.concepts.ConceptCrossRefEntity
+import com.fpf.smartscan.data.concepts.ConceptDao
+import com.fpf.smartscan.data.concepts.ConceptEntity
+import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.data.metadata.MediaMetadataDao
 import com.fpf.smartscan.data.migrations.MIGRATION_1_2
 import com.fpf.smartscan.data.migrations.MIGRATION_2_3
 import com.fpf.smartscan.data.migrations.MIGRATION_3_4
-import com.fpf.smartscan.data.tags.Tag
-import com.fpf.smartscan.data.tags.TagCrossRef
+import com.fpf.smartscan.data.migrations.MIGRATION_4_5
+import com.fpf.smartscan.data.tags.TagEntity
+import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefDao
 import com.fpf.smartscan.data.tags.TagDao
 
 
 @Database(
     entities = [
-        MediaMetadata::class,
-        MediaClusterMetadata::class,
-        ClusterCrossRef::class,
-        Tag::class,
-        TagCrossRef::class
+        MediaMetadataEntity::class,
+        ClusterMetadataEntity::class,
+        ClusterCrossRefEntity::class,
+        TagEntity::class,
+        TagCrossRefEntity::class,
+        ConceptEntity::class,
+        ConceptCrossRefEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(MediaTypeConverter::class)
@@ -42,12 +49,12 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun tagCrossRefDao(): TagCrossRefDao
     abstract fun tagDao(): TagDao
 
+    abstract fun conceptCrossRefDao(): ConceptCrossRefDao
+    abstract fun conceptDao(): ConceptDao
+
     companion object {
         @Volatile
         private var INSTANCE: MediaDatabase? = null
-
-        const val OLD_DB_IMAGE_NAME = "image_tag_database"
-        const val OLD_DB_VIDEO_NAME = "video_tag_database"
         const val DB_NAME = "media_database"
 
         const val TAG = "MediaDatabase"
@@ -66,7 +73,12 @@ abstract class MediaDatabase : RoomDatabase() {
                     MediaDatabase::class.java,
                     DB_NAME
                 ).setJournalMode(JournalMode.TRUNCATE)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(
+                        MIGRATION_1_2,
+                        MIGRATION_2_3,
+                        MIGRATION_3_4,
+                        MIGRATION_4_5
+                    )
                     .build()
 
                 INSTANCE = instance

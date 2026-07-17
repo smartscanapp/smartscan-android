@@ -1,16 +1,12 @@
 package com.fpf.smartscan.tag
 
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.data.tags.Tag
-import com.fpf.smartscan.data.tags.TagCrossRef
+import com.fpf.smartscan.data.tags.TagEntity
+import com.fpf.smartscan.data.tags.TagCrossRefEntity
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.TagWithCount
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
 
 class TagManager(
     private val tagRepository: TagRepository,
@@ -21,7 +17,7 @@ class TagManager(
         val existing = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
         var id = existing?.id
         if(id == null){
-            id = tagRepository.insertTags(listOf(Tag(name = tagName.trim()))).first()
+            id = tagRepository.insertTags(listOf(NewTag(name = tagName.trim()))).first()
         }
         val tagEntries = items.map { TagCrossRef(mediaId = it.id, tagId = id, mediaType = it.type) }
         tagCrossRefRepository.insertTagCrossRefs(tagEntries)
@@ -87,7 +83,7 @@ class TagManager(
     }
 
     suspend fun createNewTagAndMoveItems(items: Set<MediaItem>, currentTagName: String, newTagName: String){
-        val newTagId = tagRepository.insertTags(listOf(Tag(name = newTagName))).firstOrNull()?: return
+        val newTagId = tagRepository.insertTags(listOf(NewTag(name = newTagName))).firstOrNull()?: return
         moveItems(items, currentTagName, newTagId)
     }
 
@@ -98,22 +94,6 @@ class TagManager(
         val currentTag = tagRepository.getTagsByName(listOf(currentTagName)).firstOrNull()?: return
         items.groupBy { it.type }.forEach { (type, items) ->
             tagCrossRefRepository.deleteMediaMatchTag(  items.map{it.id}, currentTag.id, type)
-        }
-    }
-
-    suspend fun toCollections(tags: List<TagWithCount>): List<MediaCollection> {
-        return tags.mapNotNull {
-            val mediaMeta = mediaMetadataRepository.getByTag(it.id, limit = 1, offset = 0).firstOrNull()
-            val uri = mediaMeta?.let { mediaMeta -> mediaIdToUri(mediaMeta.id, mediaMeta.type) }
-            uri?.let { uri ->
-                MediaCollection(
-                    id = it.id,
-                    name = it.name,
-                    thumbNail = uri,
-                    size = it.count,
-                    type = CollectionType.TAG
-                )
-            }
         }
     }
 }

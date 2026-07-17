@@ -1,64 +1,48 @@
 package com.fpf.smartscan.data.metadata
 
+import com.fpf.smartscan.data.mappers.toDomain
+import com.fpf.smartscan.data.mappers.toEntity
+import com.fpf.smartscan.events.MediaEvent
+import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaType
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class MediaMetadataRepository(
     private val dao: MediaMetadataDao
 ) {
-    suspend fun insert(items: List<MediaMetadata>) = dao.insert(items)
 
-    suspend fun insert(item: MediaMetadata) = dao.insert(item)
+    private val _event = MutableSharedFlow<MediaEvent>()
+    val event = _event.asSharedFlow()
 
-    suspend fun update(items: List<MediaMetadata>) = dao.update(items)
+    suspend fun insert(items: List<MediaMetadata>) = dao.insert(items.map{it.toEntity()})
 
-    suspend fun update(item: MediaMetadata) = dao.update(item)
-
+    suspend fun update(items: List<MediaMetadata>) = dao.update(items.map{it.toEntity()})
     suspend fun getUnclusteredItemIds(): Map<Long, MediaType> = dao.getUnclusteredItemIds().associate { it.id to it.type }
 
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadata> = dao.getByIds(mediaIds, type)
-    suspend fun getByType(type: MediaType): List<MediaMetadata> = dao.getByType(type)
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadata> = dao.getByIds(mediaIds, type).map{it.toDomain()}
+    suspend fun getByType(type: MediaType): List<MediaMetadata> = dao.getByType(type).map{it.toDomain()}
     suspend fun getIdsByType(type: MediaType): List<Long> = dao.getIdsByType(type)
+    suspend fun getByTag(tagId: Long): List<MediaMetadata> = dao.getByTag(tagId).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, limit, offset).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, type, limit, offset).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, type: MediaType): List<MediaMetadata> = dao.getByTag(tagId, type).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadata> = dao.getByTag(tagId, type, startDate, endDate).map{it.toDomain()}
 
-    suspend fun getByTag(tagId: Long): List<MediaMetadata> = dao.getByTag(tagId)
+    suspend fun getByTagsWithoutDescription(tagIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByTagsWithoutDescription(tagIds, mediaType).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, limit, offset).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long): List<MediaMetadata> = dao.getByCluster(clusterId).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type, limit, offset).map{it.toDomain()}
+    suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByClustersWithoutDescription(clusterIds, mediaType).map{it.toDomain()}
 
-    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, limit, offset)
-
-    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, type, limit, offset)
-    suspend fun getByTag(tagId: Long, type: MediaType): List<MediaMetadata> = dao.getByTag(tagId, type)
-
-    suspend fun getByTag(tagId: Long, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, startDate, endDate, limit, offset)
-
-    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, type, startDate, endDate, limit, offset)
-
-    suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadata> = dao.getByTag(tagId, type, startDate, endDate)
-
-    suspend fun countByTag(tagId: Long): Int = dao.countByTag(tagId)
-
-    suspend fun countByTag(tagId: Long, type: MediaType): Int = dao.countByTag(tagId, type)
-
-    suspend fun countByTag(tagId: Long, startDate: Long?, endDate: Long?): Int = dao.countByTag(tagId, startDate, endDate)
-
-    suspend fun countByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): Int = dao.countByTag(tagId, type, startDate, endDate)
-    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, limit, offset)
-    suspend fun getByCluster(clusterId: Long): List<MediaMetadata> = dao.getByCluster(clusterId)
-    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type, limit, offset)
-
-    suspend fun getByCluster(clusterId: Long, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, startDate, endDate, limit, offset)
-
-    suspend fun getByCluster(clusterId: Long, type: MediaType, startDate: Long?, endDate: Long?, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type, startDate, endDate, limit, offset)
-
-    suspend fun countByCluster(clusterId: Long): Int = dao.countByCluster(clusterId)
-
-    suspend fun countByCluster(clusterId: Long, type: MediaType): Int = dao.countByCluster(clusterId, type)
-
-    suspend fun countByCluster(clusterId: Long, startDate: Long, endDate: Long): Int = dao.countByCluster(clusterId, startDate, endDate)
-
-    suspend fun countByCluster(clusterId: Long, type: MediaType, startDate: Long?, endDate: Long?): Int = dao.countByCluster(clusterId, type, startDate, endDate)
-
-    suspend fun deleteByTag(tagId: Long) = dao.deleteByTag(tagId)
-    suspend fun deleteByCluster(clusterId: Long) = dao.deleteByCluster(clusterId)
+    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, limit, offset).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long): List<MediaMetadata> = dao.getByConcept(conceptId).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, type, limit, offset).map{it.toDomain()}
 
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 
     suspend fun clear() = dao.clear()
+
+    suspend fun emitEvent(event: MediaEvent) = _event.emit(event)
+
 }

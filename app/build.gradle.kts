@@ -97,7 +97,10 @@ dependencies {
     // media loading
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
-    
+
+    // Requests
+    implementation(libs.okhttp)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

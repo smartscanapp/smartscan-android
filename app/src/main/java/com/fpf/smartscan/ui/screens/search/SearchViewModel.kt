@@ -15,10 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
-import com.fpf.smartscan.data.tags.Tag
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
@@ -29,15 +29,14 @@ import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.removeStaleMedia
-import com.fpf.smartscan.media.toMediaItem
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
-import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
 import com.fpf.smartscan.search.rerankItems
+import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
 import com.fpf.smartscan.ui.state.common.SelectionState
@@ -63,9 +62,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SearchViewModel(
     application: Application,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
@@ -95,8 +94,8 @@ class SearchViewModel(
     val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
-        imageStore.exists && !videoStore.exists -> MediaType.IMAGE
-        videoStore.exists && !imageStore.exists -> MediaType.VIDEO
+        imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE
+        videoEmbedStore.exists && !imageEmbedStore.exists -> MediaType.VIDEO
         else -> MediaType.IMAGE
     }
     private val _state = MutableStateFlow(SearchState(mediaType = defaultMediaType))
@@ -214,7 +213,7 @@ class SearchViewModel(
         val queryEmbed = embedding.toQInt8Embed()
         val filterIds = idsMatchingTag.toSet()
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, filterIds,  startDate = startDate, endDate = endDate, includeSims = true)
-        val clusterResult = clusterStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
+        val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
         val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
@@ -235,7 +234,7 @@ class SearchViewModel(
         val embedding = imageEmbedder.embed(bitmap)
         val queryEmbed= embedding.toQInt8Embed()
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, startDate = startDate, endDate = endDate, includeSims = true)
-        val clusterResult = clusterStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
+        val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
         val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
@@ -252,13 +251,17 @@ class SearchViewModel(
         cachedIds.addAll(finalResults)
         val totalCount = finalResults.size
         val initialBatch = finalResults.take(RESULTS_BATCH_SIZE) // initial results the rest loaded dynamically
-        val (validIds, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), initialBatch, _state.value.mediaType)
-        val filteredSearchResults = validIds.map { toMediaItem(it, _state.value.mediaType) }
+        val mediaIdToDateMap = when(_state.value.mediaType){
+            MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), initialBatch)
+            MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), initialBatch)
+        }
+        val (validIds, idsToPurge) = initialBatch.partition { it in mediaIdToDateMap }
+        val filteredSearchResults = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
 
-        _state.emit( _state.value.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults))
+        _state.update{ it.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults)}
 
         if (filteredSearchResults.isEmpty()) {
-            _state.emit(_state.value.copy(error = getApplication<Application>().getString(R.string.search_error_no_results)))
+            _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
         }
 
         if(idsToPurge.isNotEmpty()){
@@ -296,15 +299,21 @@ class SearchViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val batch = getPaginatedResult(currentItemsCount, RESULTS_BATCH_SIZE, cachedIds)
-                val (filteredResults, idsToPurge) = MediaStoreHelper.filterAccessibleMedia(getApplication(), batch, _state.value.mediaType)
+                val mediaIdToDateMap = when(_state.value.mediaType){
+                    MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), batch)
+                    MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), batch)
+                }
+                val (validIds, idsToPurge) = batch.partition { it in mediaIdToDateMap }
 
-                if (filteredResults.isNotEmpty()) {
-                    val filteredSearchResults = _state.value.searchResults + filteredResults.map { toMediaItem(it, _state.value.mediaType) }
-                    _state.emit(_state.value.copy(searchResults = filteredSearchResults))
+                if (validIds.isNotEmpty()) {
+                    val validResultsFromBatch = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
+                    val updatedResults = _state.value.searchResults + validResultsFromBatch
+                    _state.update{it.copy(searchResults = updatedResults)}
                 }
 
                 if (idsToPurge.isNotEmpty()) {
                     cachedIds.removeAll(idsToPurge) // PREVENTS duplicates
+                    _state.update{ it.copy(totalResults = cachedIds.size)}
                     purgeStaleItems(store, idsToPurge)
                 }
             }finally {
@@ -331,7 +340,7 @@ class SearchViewModel(
                 MediaType.VIDEO -> openVideoInGallery(context, item.uri)
             }
         }else{
-            _state.value = _state.value.copy(resultToView = item)
+            _state.update{it.copy(resultToView = item)}
         }
     }
 
@@ -385,8 +394,8 @@ class SearchViewModel(
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){
             onMediaLoadingError(error,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
+                imageEmbedStore = imageEmbedStore,
+                videoEmbedStore = videoEmbedStore,
                 mediaMetadataRepository =mediaMetadataRepository
             )
         }
@@ -399,7 +408,7 @@ class SearchViewModel(
     fun onSelectAutoCompleteResult(tag: String){
         searchFieldState.edit { replace(0, searchFieldState.text.length, "#$tag ") }
     }
-    private fun getStore() = if(_state.value.mediaType == MediaType.VIDEO) videoStore else imageStore
+    private fun getStore() = if(_state.value.mediaType == MediaType.VIDEO) videoEmbedStore else imageEmbedStore
 
     private fun toggleSelectedResult(item: MediaItem){
         _state.update { it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, it.totalResults)) }
@@ -414,17 +423,12 @@ class SearchViewModel(
     private suspend fun getAllResults(): MutableSet<MediaItem> {
         return withContext(Dispatchers.IO) {
             val mediaMetadataList = mediaMetadataRepository.getByIds(cachedIds, _state.value.mediaType)
-            mediaMetadataList.map {
-                MediaItem(
-                    id = it.id,
-                    uri = mediaIdToUri(it.id, it.type),
-                    type = it.type
-                )
-            }.toMutableSet()
+            mediaMetadataList.map { it.toItem() }.toMutableSet()
         }
     }
 
     private fun queryResultToMap(result: QueryResult): Map<Long, Float> = result.sims?.let(result.ids::zip)?.toMap() ?: emptyMap()
+
 
     override fun onCleared() {
         textEmbedder.closeSession()

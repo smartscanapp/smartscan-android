@@ -1,12 +1,11 @@
 package com.fpf.smartscan.constants
 
 object PrefsNames {
-    const val APP_PREFS = "AsyncStorage" // for backward compatibility
+    const val APP_PREFS = "AsyncStorage" // for backward compatibility, changing will break!
 }
 
 object PrefsKeys {
     const val UPDATES = "UPDATES_KEY"
-    const val EMBED_STORE_DATE_SYNC_COMPLETE = "EMBED_STORE_DATE_SYNC_COMPLETE_KEY"
-    const val MEDIA_METADATA_SYNC_COMPLETE = "MEDIA_METADATA_SYNC_COMPLETE_KEY"
-
+    const val ALLOWED_TAG_COLLECTIONS = "ALLOWED_TAG_COLLECTIONS"
+    const val ALLOWED_AUTO_COLLECTIONS = "ALLOWED_AUTO_COLLECTIONS"
 }

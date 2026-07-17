@@ -12,10 +12,13 @@ import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.DataSyncHelper
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.index.ImageIndexListener
+import com.fpf.smartscan.index.IndexJobType
 import com.fpf.smartscan.index.VideoIndexListener
 import com.fpf.smartscan.index.rebuildIndex
 import com.fpf.smartscan.index.refreshIndex
@@ -26,6 +29,8 @@ import com.fpf.smartscan.ui.permissions.getStorageAccess
 import com.fpf.smartscan.utils.isWorkScheduled
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.ml.models.ModelName
+import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +47,7 @@ class MainViewModel(
     private val clusterStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
+    private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -55,6 +61,13 @@ class MainViewModel(
     val imageIndexStatus = ImageIndexListener.indexingStatus
     val videoIndexProgress = VideoIndexListener.progress
     val videoIndexStatus = VideoIndexListener.indexingStatus
+
+    val modelDownloadProgress = modelRepository.modelDownloadProgress
+    val modelDownloadStatus = modelRepository.modelDownloadStatus
+    val installedModels = modelRepository.installedModels
+
+    val cloudImageIndexProgress = CloudImageIndexListener.progress
+    val cloudImageIndexStatus = CloudImageIndexListener.indexingStatus
 
     private val _hasIndexedImages = MutableStateFlow<Boolean?>(null)
     private val _hasIndexedVideos = MutableStateFlow<Boolean?>(null)
@@ -152,10 +165,35 @@ class MainViewModel(
         _runningMediaTypes.update { it - mediaType}
     }
 
+    fun onConceptIndexingFinished(mediaType: MediaType) {
+        resetConceptIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
+    }
+
+
+    fun startConceptIndexing(mediaTypes: List<MediaType>){
+        val storageAccess = getStorageAccess(getApplication())
+        if (storageAccess != StorageAccess.Denied) {
+            _runningMediaTypes.update { mediaTypes.toSet()}
+            refreshIndex(getApplication(), mediaTypes, IndexJobType.CLOUD)
+        }
+    }
+
+    fun resetModelProgress() = modelRepository.reset()
+
+    fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
+
     private fun resetIndexingState(mediaType: MediaType){
         when(mediaType){
             MediaType.IMAGE -> ImageIndexListener.reset()
             MediaType.VIDEO -> VideoIndexListener.reset()
+        }
+    }
+
+    private fun resetConceptIndexingState(mediaType: MediaType){
+        when(mediaType){
+            MediaType.IMAGE -> CloudImageIndexListener.reset()
+            MediaType.VIDEO -> {}
         }
     }
 

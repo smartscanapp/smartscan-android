@@ -1,13 +1,18 @@
 package com.fpf.smartscan.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Base64
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
+import com.fpf.smartscansdk.core.media.getScaledDimensions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -108,4 +113,21 @@ suspend fun hashFile(file: File, algorithm: String = "SHA-256"): String = withCo
     digest.digest().joinToString("") { "%02x".format(it) }
 }
 
+fun uriToBase64(context: Context, uri: Uri, maxSize: Int = 1024): String{
+    val source = ImageDecoder.createSource(context.contentResolver, uri)
+    val bitmap =  ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+        val (w, h) = getScaledDimensions(info.size.width, info.size.height, maxSize)
+        decoder.setTargetSize(w, h)
+    }
+    val outputStream = ByteArrayOutputStream()
+    val mime = context.contentResolver.getType(uri)?: "image/png"
 
+    val format = when (mime) {
+        "image/jpeg" -> Bitmap.CompressFormat.JPEG
+        "image/webp" -> Bitmap.CompressFormat.WEBP
+        else -> Bitmap.CompressFormat.PNG
+    }
+    bitmap.compress(format, 100, outputStream)
+    val byteArray = outputStream.toByteArray()
+    return "data:$mime;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
+}

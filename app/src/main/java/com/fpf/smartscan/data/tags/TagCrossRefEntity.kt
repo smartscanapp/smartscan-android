@@ -3,7 +3,7 @@ package com.fpf.smartscan.data.tags
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.fpf.smartscan.data.metadata.MediaMetadata
+import com.fpf.smartscan.data.metadata.MediaMetadataEntity
 import com.fpf.smartscan.media.MediaType
 
 @Entity(
@@ -11,13 +11,13 @@ import com.fpf.smartscan.media.MediaType
     primaryKeys = ["mediaId", "mediaType", "tagId"],
     foreignKeys = [
         ForeignKey(
-            entity = Tag::class,
+            entity = TagEntity::class,
             parentColumns = ["id"],
             childColumns = ["tagId"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = MediaMetadata::class,
+            entity = MediaMetadataEntity::class,
             parentColumns = ["id", "type"],
             childColumns = ["mediaId", "mediaType"],
             onDelete = ForeignKey.CASCADE
@@ -27,7 +27,7 @@ import com.fpf.smartscan.media.MediaType
         Index(value = ["tagId"]),
     ]
 )
-data class TagCrossRef(
+data class TagCrossRefEntity(
     val mediaId: Long,
     val mediaType: MediaType,
     val tagId: Long

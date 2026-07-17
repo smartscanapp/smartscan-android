@@ -8,10 +8,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
 import com.fpf.smartscan.events.ModelEvent
-import com.fpf.smartscan.events.ModelEventType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,22 +22,17 @@ import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeManager
 import com.fpf.smartscan.ui.theme.ThemeMode
 import com.fpf.smartscan.utils.BackupUtils
-import com.fpf.smartscansdk.core.SmartScanException
 import com.fpf.smartscansdk.ml.models.ModelInfo
-import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+class SettingsViewModel(application: Application, private val modelRepository: ModelRepository) : AndroidViewModel(application) {
     private val sharedPrefs = application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)
     private val _appSettings = MutableStateFlow(AppSettings())
     val appSettings: StateFlow<AppSettings> = _appSettings
-
-    private val _importedModels = MutableStateFlow(ModelManager.listModels(application))
-    val importedModels: StateFlow<List<ModelName>> = _importedModels
     private val _modelEvent = MutableSharedFlow<ModelEvent>()
     val modelEvent = _modelEvent.asSharedFlow()
 
@@ -50,6 +45,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _isRestoreLoading = MutableStateFlow(false)
     val isRestoreLoading: StateFlow<Boolean> = _isRestoreLoading
 
+    val installedModels = modelRepository.installedModels
+
+    val availableModelRegistry: Map<ModelName, ModelInfo>
+        get() = modelRepository.getAvailableModelRegistry()
 
 
     companion object {
@@ -70,29 +69,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val currentSettings = _appSettings.value
         _appSettings.value = currentSettings.copy(imageQueryStrictness = strictness)
         saveSettings(sharedPrefs, _appSettings.value)
-    }
-
-    fun onImportModel( uri: Uri, modelInfo: ModelInfo) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                ModelManager.importModel(getApplication(), modelInfo, uri)
-                _importedModels.value = ModelManager.listModels(getApplication())
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = true, "Model imported successfully"))
-            }catch (e: SmartScanException.InvalidModelFile){
-                Log.e(TAG, "${e.message}")
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = false, e.message?: "Model import failed"))
-            }
-            catch (e: Exception) {
-                Log.e(TAG, "${e.message}")
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = false,  "Model import failed"))
-            }
-        }
-    }
-
-    fun onDeleteModel(modelInfo: ModelInfo){
-        if(ModelManager.deleteModel(getApplication(), modelInfo)) {
-            _importedModels.value = ModelManager.listModels(getApplication())
-        }
     }
 
     fun addSearchableImageDirectory(dir: String) {
@@ -181,4 +157,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _appSettings.update{currentSettings -> currentSettings.copy(enableDedupe = enable)}
         saveSettings(sharedPrefs, _appSettings.value)
     }
+
+    fun updateOpenaiApiKey(apiKey: String){
+        val currentSettings = _appSettings.value
+        _appSettings.value = currentSettings.copy(openaiApiKey = apiKey)
+        saveSettings(sharedPrefs, _appSettings.value)
+    }
+
+    fun downloadModel(modelInfo: ModelInfo) = modelRepository.downloadModel(modelInfo)
+
+    fun deleteModel(modelInfo: ModelInfo) = modelRepository.deleteModel(modelInfo)
 }

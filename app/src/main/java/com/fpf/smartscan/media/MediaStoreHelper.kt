@@ -1,5 +1,6 @@
 package com.fpf.smartscan.media
 
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
@@ -49,29 +50,15 @@ object MediaStoreHelper {
 
     fun getVideoToDateMap(context: Context, ids: List<Long>): Map<Long, Long> = getMediaToDateMap(context, MediaType.VIDEO, ids)
 
-    fun filterAccessibleMedia(context: Context, ids: List<Long>, mediaType: MediaType): Pair<List<Long>, List<Long>> {
-        if (ids.isEmpty()) return emptyList<Long>() to emptyList()
 
-        val spec = mediaSpecFor(mediaType)
-        val selection = "${spec.idColumn} IN (${ids.joinToString(",") { "?" }})"
-        val selectionArgs = ids.map { it.toString() }.toTypedArray()
-        val existingIds = HashSet<Long>()
-
-        context.contentResolver.query(
-            spec.collection,
-            arrayOf(spec.idColumn),
-            selection,
-            selectionArgs,
-            null
-        )?.use { cursor ->
-            val idIndex = cursor.getColumnIndexOrThrow(spec.idColumn)
-            while (cursor.moveToNext()) {
-                existingIds.add(cursor.getLong(idIndex))
-            }
-        }
-
-        return ids.partition { it in existingIds }
+    fun mediaIdToUri(id: Long, mediaType: MediaType): Uri = when (mediaType) {
+            MediaType.IMAGE -> getImageUriFromId(id)
+            MediaType.VIDEO -> getVideoUriFromId(id)
     }
+
+    fun getImageUriFromId(id: Long): Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+
+    fun getVideoUriFromId(id: Long): Uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
     private fun queryMediaIdDateMap(
         context: Context,

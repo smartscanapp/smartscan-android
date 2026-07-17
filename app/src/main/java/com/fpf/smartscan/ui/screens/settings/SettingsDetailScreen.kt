@@ -37,7 +37,9 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.ui.components.common.CustomSlider
 import com.fpf.smartscan.navigation.SettingsRoutes
 import com.fpf.smartscan.navigation.TopBarState
+import com.fpf.smartscan.ui.components.common.TextInput
 import com.fpf.smartscan.ui.components.models.ModelsList
+import com.fpf.smartscansdk.ml.models.ModelInfo
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
 import com.fpf.smartscansdk.ml.models.ModelRegistry
@@ -52,9 +54,8 @@ fun SettingsDetailScreen(
     onBack: () -> Unit,
 ) {
     val appSettings by viewModel.appSettings.collectAsState()
-    val importedModelNames by viewModel.importedModels.collectAsState()
+    val installedModels by viewModel.installedModels.collectAsState()
     val context = LocalContext.current
-    val availableModels = ModelRegistry.filter {item -> item.key in listOf(ModelName.ALL_MINILM_L6_V2, ModelName.DINOV2_SMALL)}
 
     LaunchedEffect(Unit) {
         viewModel.modelEvent.collect { event ->
@@ -88,7 +89,9 @@ fun SettingsDetailScreen(
 
 
     Box(
-        modifier = Modifier.padding(16.dp).fillMaxSize()
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize()
     ) {
         Column {
             when (type) {
@@ -114,11 +117,10 @@ fun SettingsDetailScreen(
                 }
                 SettingsRoutes.MODELS -> {
                     ModelsList(
-                        importedModels = importedModelNames,
-                        availableModels = availableModels.values.toList(),
-                        onDownload = {url -> ModelManager.downloadModelExternal(context, url)},
-                        onDelete = viewModel::onDeleteModel,
-                        onImport=viewModel::onImportModel
+                        installedModels = installedModels,
+                        modelList = viewModel.availableModelRegistry.values.toList(),
+                        onDownload= { viewModel.downloadModel(it) },
+                        onDelete = viewModel::deleteModel,
                     )
                 }
 
@@ -211,6 +213,13 @@ fun SettingsDetailScreen(
                         )
                     }
 
+                }
+                SettingsRoutes.API-> {
+                    TextInput(
+                        label = "OpenAI API Key",
+                        value = appSettings.openaiApiKey?:"",
+                        onValueChange = viewModel::updateOpenaiApiKey
+                    )
                 }
                 else -> {}
             }

@@ -1,5 +1,6 @@
 package com.fpf.smartscan.ui.screens.collections
 
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -64,12 +65,13 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.components.collections.CollectionItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
+import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -81,6 +83,7 @@ fun CollectionItemsScreen(
     collection: MediaCollection?,
     onTopBarChange: (TopBarState) -> Unit,
     onBack: () -> Unit,
+    mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: CollectionItemsViewModel = koinViewModel(),
     ) {
     if(collection == null) return
@@ -270,7 +273,7 @@ fun CollectionItemsScreen(
                 onError = viewModel::onErrorAsyncImage
             )
 
-            EmptyCollectionItemsScreen(
+            EmptyItemsScreen(
                 isVisible = items.itemCount == 0
             )
         }
@@ -334,7 +337,12 @@ fun CollectionItemsScreen(
                     onClose = { viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))},
                     onUpdateSearchImage = null,
                     onLoadMore = { val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
-                        items[lastIndex]}
+                        items[lastIndex]},
+                    onSaveUpdatedItem = {
+                        mediaViewModel.saveUpdatedItem(it)
+                        items.refresh()
+                    }
+
                 )
             }
             }

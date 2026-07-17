@@ -19,6 +19,7 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.data.tags.TagPagingSource
 import com.fpf.smartscan.data.clusters.ClusterPagingSource
+import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
@@ -27,7 +28,6 @@ import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
@@ -56,9 +56,9 @@ import kotlin.collections.map
 
 class CollectionItemsViewModel(
     application: Application,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
@@ -76,9 +76,9 @@ class CollectionItemsViewModel(
     )
 
     val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterStore,
-        imageEmbedStore = imageStore,
-        videoEmbedStore = videoStore,
+        clusterEmbedStore = clusterEmbedStore,
+        imageEmbedStore = imageEmbedStore,
+        videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
         mediaMetadataRepository = mediaMetadataRepository,
@@ -107,7 +107,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -135,7 +134,6 @@ class CollectionItemsViewModel(
                             mediaType = mediaType,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -143,8 +141,7 @@ class CollectionItemsViewModel(
         }
         .cachedIn(viewModelScope)
 
-    val tagCollections: StateFlow<List<MediaCollection>> = tagCrossRefRepository.getTagsWithCounts()
-        .map (tagManager::toCollections)
+    val tagCollections: StateFlow<List<MediaCollection>> = tagRepository.getCollections()
         .flowOn(Dispatchers.IO)
         .stateIn(
         scope = viewModelScope,
@@ -152,8 +149,7 @@ class CollectionItemsViewModel(
         initialValue = emptyList()
     )
 
-    val clusterCollections: StateFlow<List<MediaCollection>> = clusterCrossRefRepository.getClustersWithCount()
-            .map(clusterManager::toCollections)
+    val clusterCollections: StateFlow<List<MediaCollection>> = clusterMetadataRepository.getCollections()
             .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,
@@ -317,24 +313,12 @@ class CollectionItemsViewModel(
         return when (currentCollection.type) {
             CollectionType.CLUSTER -> {
                 val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id)
-                itemsMatchingCluster.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                itemsMatchingCluster.map { it.toItem() }.toMutableSet()
             }
 
             CollectionType.TAG -> {
                 val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id)
-                itemsMatchingTag.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                itemsMatchingTag.map { it.toItem() }.toMutableSet()
             }
         }
     }
@@ -358,8 +342,8 @@ class CollectionItemsViewModel(
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){
             onMediaLoadingError(error,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
+                imageEmbedStore = imageEmbedStore,
+                videoEmbedStore = videoEmbedStore,
                 mediaMetadataRepository =mediaMetadataRepository
                 )
         }

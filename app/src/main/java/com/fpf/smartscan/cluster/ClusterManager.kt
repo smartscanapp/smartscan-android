@@ -1,19 +1,13 @@
 package com.fpf.smartscan.cluster
 
-import com.fpf.smartscan.data.clusters.ClusterCrossRef
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataWithCount
-import com.fpf.smartscan.data.clusters.MediaClusterMetadata
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaCollection.Companion.UNLABELLED_COLLECTION
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
 import com.fpf.smartscan.utils.reservoirSample
 import com.fpf.smartscansdk.core.cluster.Cluster
+import com.fpf.smartscansdk.core.cluster.ClusterMetadata
 import com.fpf.smartscansdk.core.cluster.ClusterResult
 import com.fpf.smartscansdk.core.cluster.IncrementalClusterer
 import com.fpf.smartscansdk.core.embeddings.Embedding
@@ -39,6 +33,9 @@ class ClusterManager(
 
         const val TAG = "ClusterManager"
     }
+
+    private var idCount: Long = 0L
+
 
     suspend fun cluster() {
         val unclusteredItemIdsMap = mediaMetadataRepository.getUnclusteredItemIds()
@@ -88,24 +85,9 @@ class ClusterManager(
     }
 
     suspend fun updateLabel(clusterId: Long, newLabel: String){
-        val cluster = clusterMetadataRepository.getMetadata(clusterId)
-        cluster?.let { clusterMetadataRepository.updateMetadata(it.copy(label = newLabel)) }
-    }
-
-    suspend fun toCollections(clusters: List<ClusterMetadataWithCount>): List<MediaCollection> {
-        return clusters.mapNotNull {
-            val meta = mediaMetadataRepository.getByCluster(it.clusterId, limit = 1, offset = 0).firstOrNull()
-            val uri = meta?.let { meta -> mediaIdToUri(meta.id, meta.type) }
-            uri?.let { uri ->
-                MediaCollection(
-                    id = it.clusterId,
-                    name = it.label?: UNLABELLED_COLLECTION,
-                    thumbNail = uri,
-                    size = it.count,
-                    type = CollectionType.CLUSTER
-                )
-            }
-        }
+        val (clusterId, metadata) = clusterMetadataRepository.getMetadata(clusterId)?: return
+        val updatedMeta = metadata.copy(label = newLabel)
+        clusterMetadataRepository.updateMetadata(Pair(clusterId, updatedMeta))
     }
 
     private suspend fun getAllClusters(): Map<Long, Cluster> {
@@ -124,22 +106,20 @@ class ClusterManager(
         val (existingClusters, newClusters) = clusterResult.clusters.values.partition { it.clusterId in existingClusterIds }
 
         val existingMetadata = existingClusters.map {
-            MediaClusterMetadata(
-                clusterId = it.clusterId,
+            Pair(it.clusterId, ClusterMetadata(
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
                 stdSimilarity = it.metadata.stdSimilarity,
-                label = it.metadata.label,
+                label = it.metadata.label)
             )
         }
 
         val newMetadata = newClusters.map {
-            MediaClusterMetadata(
-                clusterId = it.clusterId,
+            Pair( it.clusterId, ClusterMetadata(
                 prototypeSize = it.metadata.prototypeSize,
                 meanSimilarity = it.metadata.meanSimilarity,
                 stdSimilarity = it.metadata.stdSimilarity,
-                label = it.metadata.label,
+                label = it.metadata.label)
             )
         }
 
@@ -175,8 +155,7 @@ class ClusterManager(
     private suspend fun createNewCluster(itemEmbeds: List<StoredEmbedding>, clusterLabel: String, itemsMediaTypeMap: Map<Long, MediaType>): Long{
         val (metadata, prototype ) = if(itemEmbeds.size == 1) {
             val defaultThreshold = getDefaultThreshold(getAllClusters())
-            val meta = MediaClusterMetadata(
-                clusterId = System.currentTimeMillis(),
+            val meta = ClusterMetadata(
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = defaultThreshold,
                 stdSimilarity = 0f,
@@ -186,8 +165,8 @@ class ClusterManager(
             Pair(meta, prototypeEmbedding)
         }else{
             val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(itemEmbeds.map { it.embedding })
-            val meta = MediaClusterMetadata(
-                clusterId = System.currentTimeMillis(),
+
+            val meta = ClusterMetadata(
                 prototypeSize = itemEmbeds.size,
                 meanSimilarity = meanSim,
                 stdSimilarity = stdSim,
@@ -196,13 +175,14 @@ class ClusterManager(
             Pair(meta, prototypeEmbedding)
         }
 
+        val clusterId = generateId()
         val clusterEmbed =  StoredEmbedding(
-            id = metadata.clusterId,
+            id = clusterId,
             embedding = prototype.toQInt8Embed(),
             date = System.currentTimeMillis()
         )
         clusterEmbedStore.add(listOf(clusterEmbed))
-        clusterMetadataRepository.insertMetadata(metadata)
+        clusterMetadataRepository.insertMetadata(Pair(clusterId, metadata))
 
         val crossRefs = itemEmbeds.mapNotNull {
             val mediaType = itemsMediaTypeMap[it.id]?: return@mapNotNull null
@@ -258,10 +238,17 @@ class ClusterManager(
         val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(embeddings)
         val oldStoredEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()?: error("Cluster embedding not found")
         val updatedStoredEmbed = oldStoredEmbed.copy(embedding = prototypeEmbedding)
-        val clusterMetadata = clusterMetadataRepository.getMetadata(clusterId)?: return
+        val (id, clusterMetadata) = clusterMetadataRepository.getMetadata(clusterId)?: return
         val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = mediaIds.size)
         clusterEmbedStore.update(listOf(updatedStoredEmbed))
-        clusterMetadataRepository.updateMetadata(updatedMetadata)
+        clusterMetadataRepository.updateMetadata(Pair(id, updatedMetadata))
     }
+
+    private fun generateId(): Long {
+        val id = System.currentTimeMillis() + idCount
+        ++idCount
+        return id
+    }
+
 
 }

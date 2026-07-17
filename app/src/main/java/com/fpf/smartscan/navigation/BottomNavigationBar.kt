@@ -15,6 +15,7 @@ fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem(Routes.SEARCH, stringResource(R.string.title_search), Icons.Filled.ImageSearch),
         BottomNavItem(Routes.COLLECTIONS, stringResource(R.string.title_collections), Icons.Filled.PhotoLibrary),
+        BottomNavItem(Routes.CONCEPTS, stringResource(R.string.title_concepts), Icons.Filled.Lightbulb),
         BottomNavItem(Routes.SETTINGS, stringResource(R.string.title_settings), Icons.Filled.Settings)
     )
 
