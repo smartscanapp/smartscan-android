@@ -216,8 +216,7 @@ class SearchViewModel(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
-        val clusterToMediaMap = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == _state.value.mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
-        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterToMediaMap, strictness)
+        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
 
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.imageEmbedderLastUsage)) imageEmbedder.closeSession()
@@ -238,8 +237,7 @@ class SearchViewModel(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
-        val clusterToMediaMap = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == _state.value.mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
-        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterToMediaMap, strictness)
+        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterCrossRefRepository.getClusterToMediaIdsMap(), strictness)
 
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.textEmbedderLastUsage)) textEmbedder.closeSession()

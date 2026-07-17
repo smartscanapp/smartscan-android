@@ -22,11 +22,9 @@
     <string name="notif_title_media_index_service">Scanning media</string>
     <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
     <string name="notif_title_index_error_service">%1$s scan error</string>
-    <string name="notif_content_index_error_service">An error occurred during scan. Try re-scanning.</string>
-    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try re-scanning.</string>
-    <string name="notif_content_missing_api_key_error_service">Missing required API key. Add it in settings and re-scan.</string>
+    <string name="notif_content_index_error_service">An error occurred during scan. Try manually re-scanning.</string>
+    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try manually re-scanning.</string>
     <string name="notif_title_index_complete">Scan complete</string>
-
 
     <!--___Actions___-->
     <string name="share_action">Share</string>
@@ -57,8 +55,8 @@
     <string name="alert_space_not_allowed">Spaces are not allowed</string>
     <string name="alert_scan_refresh_description">Manually update the index with new media (auto-updates daily).</string>
     <string name="alert_scan_rebuild_description">Delete and re-create the entire index.</string>
-    <string name="alert_first_media_scan_content">Start the first %1$s scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
-    <string name="alert_first_scan_content">Start the first media scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
+    <string name="alert_first_media_scan_content">Start the first %1$s scan. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
+    <string name="alert_first_scan_content">Start the first media scan. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
     <string name="media_types_to_scan">Select media types</string>
     <string name="scan_in_progress_title">Scan In Progress</string>
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>

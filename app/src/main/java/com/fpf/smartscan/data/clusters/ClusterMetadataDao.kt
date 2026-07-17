@@ -8,8 +8,6 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
-// Crossref count used as prototypeSize to always use crossrefs as source of truth
-// and importantly so Flow automatically retriggers when crossrefs change
 @Dao
 interface ClusterMetadataDao {
     @Query("""

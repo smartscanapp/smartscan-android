@@ -3,6 +3,7 @@ package com.fpf.smartscan.ui.state
 import android.net.Uri
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.ui.state.common.Selectable
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class SearchState(
@@ -19,5 +20,5 @@ data class SearchState(
     val startDateFilter: Long? = null,
     val endDateFilter: Long? = null,
     val tagOnlySearch: Boolean = false,
-    val selection: SelectionState<MediaItem> = SelectionState()
-)
+    override val selection: SelectionState<MediaItem> = SelectionState()
+): Selectable<MediaItem>

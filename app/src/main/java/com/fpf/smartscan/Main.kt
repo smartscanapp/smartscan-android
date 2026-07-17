@@ -61,7 +61,6 @@ fun Main(
     val topBarState = remember { mutableStateOf(TopBarState()) }
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val mainRoute = Routes.SEARCH
     val mainViewModel: MainViewModel = koinViewModel()
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val mediaViewModel: MediaViewModel = koinViewModel()
@@ -123,7 +122,7 @@ fun Main(
         }
     }
 
-    if (currentRoute == mainRoute) {
+    if (currentRoute in listOf(Routes.SEARCH, Routes.COLLECTIONS)) {
         RequestPermissions { _, storageGranted -> hasStoragePermission = storageGranted }
     }
 
@@ -170,7 +169,7 @@ fun Main(
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = mainRoute,
+                    startDestination = Routes.SEARCH,
                     ) {
                     composable(Routes.SEARCH) {
                         SearchScreen(
@@ -189,7 +188,8 @@ fun Main(
                     }
                     composable(Routes.COLLECTIONS) {
                         CollectionsScreen(
-                            isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
+                            hasIndexedImages = hasIndexedImages,
+                            hasIndexedVideos = hasIndexedVideos,
                             hasStoragePermission = hasStoragePermission,
                             onIndex = { showFirstScanModal = true },
                             onTopBarChange = { topBarState.value = it },

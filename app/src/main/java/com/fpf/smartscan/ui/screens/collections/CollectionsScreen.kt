@@ -69,7 +69,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CollectionsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    isMainScanRequired: Boolean,
+    hasIndexedImages: Boolean?,
+    hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
     onIndex: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
@@ -161,6 +162,13 @@ fun CollectionsScreen(
         )
     }
 
+    LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
+        val firstIndexRequired =  hasIndexedImages == false && hasIndexedVideos == false
+        if( firstIndexRequired && hasStoragePermission){
+            onIndex()
+        }
+    }
+
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(CollectionAction.ResetSelection)
     }
@@ -193,7 +201,7 @@ fun CollectionsScreen(
             ) {
                 SelectionHeaderRow (
                     selectedCount = state.selection.selectedCount,
-                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalCollections),
+                    checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
                     onSelectAllChange = {viewModel.onAction(CollectionAction.SetSelectAll(it))}
                 )
             }
@@ -304,7 +312,7 @@ fun CollectionsScreen(
                 maxCollapsePx = maxCollapsablePx,
             )
 
-            EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired )
+            EmptyCollectionScreen(isVisible = !isCollectionVisible)
         }
 
 

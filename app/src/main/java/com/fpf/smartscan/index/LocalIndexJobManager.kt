@@ -12,7 +12,6 @@ import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.cluster.ClusterManager
-import com.fpf.smartscan.errors.AppException
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.settings.loadSettings
@@ -37,8 +36,7 @@ class LocalIndexJobManager(
     private val clusterEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val useListener: Boolean = true
+    private val clusterCrossRefRepository: ClusterCrossRefRepository
 ) {
     companion object {
         private const val TAG = "LocalIndexJobManager"
@@ -66,7 +64,7 @@ class LocalIndexJobManager(
                         val imageIndexer = ImageIndexer(
                             imageEmbedder,
                             context = application,
-                            listener = if(useListener) ImageIndexListener else null,
+                            listener = ImageIndexListener,
                             store = imageEmbedStore,
                             quantize = true
                         )
@@ -83,7 +81,7 @@ class LocalIndexJobManager(
                         val videoIndexer = VideoIndexer(
                             imageEmbedder,
                             context = application,
-                            listener = if(useListener) VideoIndexListener else null,
+                            listener = VideoIndexListener,
                             store = videoEmbedStore,
                             quantize = true,
                             width = IMAGE_SIZE_X,
@@ -103,20 +101,14 @@ class LocalIndexJobManager(
             try {
                 clusterManager.cluster()
             } catch (e: Exception) {
-                throw AppException.ClusterException(cause = e)
+                Log.e(TAG, "Clustering failed:", e)
+                val title = application.getString(R.string.notif_title_index_error_service, "Media")
+                val content = application.getString(R.string.notif_content_cluster_error_service)
+                showNotification(application, title, content, NOTIFICATION_ID + 1)
             }
-
-        }
-        catch (e: AppException.ClusterException)  {
-            Log.e(TAG, e.message, e)
-            val title = application.getString(R.string.notif_title_index_error_service, "Media")
-            val content = application.getString(R.string.notif_content_cluster_error_service)
-            showNotification(application, title, content, NOTIFICATION_ID + 1)
-        }
-        catch (e: CancellationException) {
+        } catch (e: CancellationException) {
             Log.w(TAG, "Indexing job cancelled:", e)
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             Log.e(TAG, "Indexing failed:", e)
             val title = application.getString(R.string.notif_title_index_error_service, "Media")
             val content = application.getString(R.string.notif_content_index_error_service)

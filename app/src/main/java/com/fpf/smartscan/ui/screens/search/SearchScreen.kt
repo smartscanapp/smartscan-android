@@ -244,7 +244,7 @@ fun SearchScreen(
                         if (state.selection.isSelecting) {
                             SelectionHeaderRow (
                                 selectedCount = state.selection.selectedCount,
-                                checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalResults),
+                                checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
                                 onSelectAllChange = {searchViewModel.onAction(SearchAction.SetSelectAll(it))}
                             )
                         }
