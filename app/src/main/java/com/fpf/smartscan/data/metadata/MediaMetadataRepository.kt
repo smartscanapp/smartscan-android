@@ -24,20 +24,24 @@ class MediaMetadataRepository(
     suspend fun getByType(type: MediaType): List<MediaMetadata> = dao.getByType(type).map{it.toDomain()}
     suspend fun getIdsByType(type: MediaType): List<Long> = dao.getIdsByType(type)
     suspend fun getByTag(tagId: Long): List<MediaMetadata> = dao.getByTag(tagId).map{it.toDomain()}
-    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, limit, offset).map{it.toDomain()}
-    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, type, limit, offset).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByTag(tagId, type, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByTag(tagId: Long, type: MediaType): List<MediaMetadata> = dao.getByTag(tagId, type).map{it.toDomain()}
     suspend fun getByTag(tagId: Long, type: MediaType, startDate: Long?, endDate: Long?): List<MediaMetadata> = dao.getByTag(tagId, type, startDate, endDate).map{it.toDomain()}
 
     suspend fun getByTagsWithoutDescription(tagIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByTagsWithoutDescription(tagIds, mediaType).map{it.toDomain()}
-    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, limit, offset).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByCluster(clusterId: Long): List<MediaMetadata> = dao.getByCluster(clusterId).map{it.toDomain()}
-    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type, limit, offset).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByCluster(clusterId, type,limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByClustersWithoutDescription(clusterIds, mediaType).map{it.toDomain()}
 
-    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, limit, offset).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConcept(conceptId: Long): List<MediaMetadata> = dao.getByConcept(conceptId).map{it.toDomain()}
-    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, type, limit, offset).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, type, limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByConceptSortedBySimilarity(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type, limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByConceptSortedBySimilarity(conceptId: Long, type: MediaType): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type).map{it.toDomain()}
+    suspend fun getByConceptWithMinimumSimilarity(conceptId: Long, type: MediaType, minSimilarity: Float, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptWithMinimumSimilarity(conceptId, type, minSimilarity=minSimilarity, limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByConceptWithMinimumSimilarity(conceptId: Long, type: MediaType): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type).map{it.toDomain()}
 
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 

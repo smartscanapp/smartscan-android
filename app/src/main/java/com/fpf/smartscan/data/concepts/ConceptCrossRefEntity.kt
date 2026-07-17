@@ -24,11 +24,12 @@ import com.fpf.smartscan.media.MediaType
         ),
     ],
     indices = [
-        Index(value = ["conceptId"])
+        Index(value = ["conceptId", "similarity"])
     ]
 )
 data class ConceptCrossRefEntity (
     val mediaId: Long,
     val conceptId: Long,
-    val mediaType: MediaType
+    val mediaType: MediaType,
+    val similarity: Float
 )
