@@ -11,6 +11,7 @@ import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.concepts.getAllowedClusters
 import com.fpf.smartscan.concepts.getAllowedTags
 import com.fpf.smartscan.constants.DEFAULT_SYSTEM_PROMPT
+import com.fpf.smartscan.errors.AppException
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.showNotification
@@ -40,7 +41,7 @@ class CloudIndexJobManager(
             val allowedTags= getAllowedTags(sharedPrefs)
             val allowedClusters = getAllowedClusters(sharedPrefs)
             val openaiClient = OpenaiClient(
-                apiKey = appSettings.openaiApiKey?: error("Missing OpenAI API key"),
+                apiKey = appSettings.openaiApiKey?: throw AppException.MissingApiKey("Missing OpenAI API key"),
                 config = LLMProviderConfig(model = "gpt-5.4-mini", systemPrompt = DEFAULT_SYSTEM_PROMPT, maxTokens = 500)
             )
             if(!textEmbedder.isInitialized()) textEmbedder.initialize()
@@ -71,9 +72,18 @@ class CloudIndexJobManager(
                     }
                 }
             }
-        } catch (e: CancellationException) {
+        }
+        catch (e: AppException.MissingApiKey) {
+            Log.e(TAG, e.message, e)
+            val title = application.getString(R.string.notif_title_index_error_service, "Media")
+            val content = application.getString(R.string.notif_content_missing_api_key_error_service)
+            showNotification(application, title, content, NOTIFICATION_ID + 1)
+        }
+
+        catch (e: CancellationException) {
             Log.w(TAG, "Indexing job cancelled:", e)
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Cloud Indexing failed:", e)
             val title = application.getString(R.string.notif_title_index_error_service, "Media")
             val content = application.getString(R.string.notif_content_index_error_service)

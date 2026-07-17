@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import com.fpf.smartscan.constants.EmbeddingStoresFilesQuant
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.errors.AppException
 import java.io.File
 
 object BackupUtils {
@@ -25,12 +26,16 @@ object BackupUtils {
         val filesToZip = listOf( hashFile, dbPath) + embedStoreFiles
 
         try {
-            if(embedStoreFiles.none{it.exists()}) error("Missing index file(s)")
+            if(embedStoreFiles.none{it.exists()}) throw AppException.BackupException("Missing index file(s)")
             val hashes: List<String> = filesToZip.filter { it.exists() && it != hashFile }.map{hashFile(it)}
             hashFile.writeText(hashes.joinToString("\n") )
             zipFiles(indexZipFile, filesToZip)
             copyToUri(context, outputUri, indexZipFile)
-        }finally {
+        }catch (e: Exception){
+            Log.e(TAG, "Unknow backup error", e)
+            throw AppException.BackupException(cause = e)
+        }
+        finally {
             indexZipFile.delete()
             hashFile.delete()
         }
@@ -46,9 +51,14 @@ object BackupUtils {
 
             if(!isValidBackupFile(extractedFiles)){
                 extractedFiles.forEach { it.delete() }
-                error("Invalid backup file")
+                throw AppException.RestoreException("Invalid backup file")
             }
-        }finally {
+        }
+        catch (e: Exception){
+            Log.e(TAG, "Unknow restore error", e)
+            throw AppException.RestoreException(cause = e)
+        }
+        finally {
             indexZipFile.delete()
         }
 

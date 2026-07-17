@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.errors.AppException
 import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
@@ -118,10 +119,8 @@ class SettingsViewModel(application: Application, private val modelRepository: M
             try {
                 BackupUtils.backup(getApplication(), uri)
                 _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = true, "Backup successful"))
-            }catch (e: Exception){
-                Log.e(TAG, "Error backing up: ${e.message}")
-                val appEventMessage = if(e.message == "Missing index file(s)")  "Missing index file(s)" else "Backup failed"
-                _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = false, appEventMessage))
+            }catch (e: AppException.BackupException){
+                _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = false, e.message))
             }finally {
                 _isBackupLoading.emit(false)
             }
@@ -135,10 +134,11 @@ class SettingsViewModel(application: Application, private val modelRepository: M
             try {
                 BackupUtils.restore(getApplication(), uri)
                 _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = true, "Restore successful"))
-            }catch (e: Exception){
-                Log.e(TAG, "Error restoring: ${e.message}")
-                _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = false, "Invalid backup file"))
-            }finally {
+            }
+            catch (e: AppException.RestoreException){
+                _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = false, e.message))
+            }
+            finally {
                 _isRestoreLoading.emit(false)
             }
         }
