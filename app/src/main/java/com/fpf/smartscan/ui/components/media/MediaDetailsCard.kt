@@ -129,7 +129,7 @@ fun MediaDetailsCard(
                         Text(
                             text = "Describe what this is about and or why it's important or useful.",
                             style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         )
                     }
@@ -140,7 +140,7 @@ fun MediaDetailsCard(
             Text(
                 text = description.orEmpty(),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
 
