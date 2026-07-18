@@ -99,7 +99,9 @@ val viewModelModule = module {
             conceptRepository = get(),
             mediaMetadataRepository= get(),
             conceptCrossRefRepository=get(),
-            modelRepository=get()
+            modelRepository=get(),
+            tagRepository = get(),
+            clusterMetadataRepository = get()
         )
     }
 }

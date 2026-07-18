@@ -185,13 +185,19 @@ fun Main(
                                 requiredMediaTypeToIndex = it
                                 showFirstScanModal = true
                             },
+                            onViewCollection = { collection ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(NavDataKeys.COLLECTION, collection)
+
+                                navController.navigate(Routes.COLLECTION_ITEMS)
+                            },
                             )
                     }
                     composable(Routes.COLLECTIONS) {
                         CollectionsScreen(
                             isMainScanRequired = hasIndexedImages==false && hasIndexedVideos==false,
                             hasStoragePermission = hasStoragePermission,
-                            onIndex = { showFirstScanModal = true },
                             onTopBarChange = { topBarState.value = it },
                             onViewCollection = { collection ->
                                 navController.currentBackStackEntry
@@ -215,7 +221,14 @@ fun Main(
                             onTopBarChange = { topBarState.value = it },
                             collection = collection,
                             appSettings = settingsViewModel.appSettings,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            onViewCollection = { collection ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(NavDataKeys.COLLECTION, collection)
+
+                                navController.navigate(Routes.COLLECTION_ITEMS)
+                            },
                         )
                     }
                     composable(Routes.CONCEPTS) {
@@ -248,7 +261,14 @@ fun Main(
                             mediaViewModel = mediaViewModel,
                             onTopBarChange = { topBarState.value = it },
                             concept = concept,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            onViewCollection = { collection ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(NavDataKeys.COLLECTION, collection)
+
+                                navController.navigate(Routes.COLLECTION_ITEMS)
+                            },
                         )
                     }
                     composable(Routes.SETTINGS) {

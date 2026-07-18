@@ -39,6 +39,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.constants.mediaTypeOptions
+import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.ui.action.ConceptItemsAction
@@ -56,6 +57,7 @@ fun ConceptItemsScreen(
     concept: Concept?,
     onTopBarChange: (TopBarState) -> Unit,
     onBack: () -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
     mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: ConceptItemsViewModel = koinViewModel(),
 ) {
@@ -180,6 +182,13 @@ fun ConceptItemsScreen(
                     onSaveUpdatedItem = {
                         mediaViewModel.saveUpdatedItem(it)
                         conceptItems.refresh()
+                    },
+                    onGetTags = mediaViewModel::getTagsMatchingMedia,
+                    onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                    onCollectionClick = { id, type ->
+                        mediaViewModel.viewCollection(id, type){
+                            onViewCollection(it)
+                        }
                     }
                 )
             }

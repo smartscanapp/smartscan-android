@@ -39,6 +39,7 @@ import androidx.compose.ui.zIndex
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
+import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchQuery
@@ -82,6 +83,7 @@ fun SearchScreen(
     hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
     onIndex: (mediaType: MediaType?) -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
     intentSearchQuery: SearchQuery? = null
 ) {
     val appSettings by appSettings.collectAsState()
@@ -405,6 +407,13 @@ fun SearchScreen(
                 onSaveUpdatedItem = {
                     mediaViewModel.saveUpdatedItem(it)
                     // TODO: switch to paging source and refresh items here
+                },
+                onGetTags = mediaViewModel::getTagsMatchingMedia,
+                onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                onCollectionClick = { id, type ->
+                    mediaViewModel.viewCollection(id, type){
+                        onViewCollection(it)
+                    }
                 }
             )
         }

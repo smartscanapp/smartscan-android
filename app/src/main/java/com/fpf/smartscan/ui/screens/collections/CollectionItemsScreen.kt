@@ -83,6 +83,7 @@ fun CollectionItemsScreen(
     appSettings: StateFlow<AppSettings>,
     collection: MediaCollection?,
     onTopBarChange: (TopBarState) -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
     onBack: () -> Unit,
     mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: CollectionItemsViewModel = koinViewModel(),
@@ -362,11 +363,17 @@ fun CollectionItemsScreen(
                     onSaveUpdatedItem = {
                         mediaViewModel.saveUpdatedItem(it)
                         items.refresh()
+                    },
+                    onGetTags = mediaViewModel::getTagsMatchingMedia,
+                    onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                    onCollectionClick = { id, type ->
+                        mediaViewModel.viewCollection(id, type){
+                            onViewCollection(it)
+                        }
                     }
-
                 )
             }
-            }
+        }
         AnimatedVisibility(
             visible = isMoving,
             enter = fadeIn(animationSpec = tween(500)) + scaleIn(
