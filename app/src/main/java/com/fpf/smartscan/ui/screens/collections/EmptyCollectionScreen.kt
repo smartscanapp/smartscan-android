@@ -28,7 +28,7 @@ fun EmptyCollectionScreen(
     if (!isVisible) return
 
     Box(
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
@@ -57,7 +57,6 @@ fun EmptyCollectionScreen(
 
             Text(
                 text = stringResource(R.string.collections_no_collections_description),
-                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
