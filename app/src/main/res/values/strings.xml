@@ -51,6 +51,8 @@
     <string name="view_description_action">View description</string>
     <string name="open_in_gallery_action">Open in gallery</string>
     <string name="download_model_action">Download model</string>
+    <string name="filter_action">Filter</string>
+    <string name="sort_action">Sort</string>
 
 
     <!--Alerts / Message-->

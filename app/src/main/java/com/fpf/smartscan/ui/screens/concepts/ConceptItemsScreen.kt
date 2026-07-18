@@ -74,14 +74,15 @@ fun ConceptItemsScreen(
     var showSortOptions by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = "Sort",
+            label = stringResource(R.string.sort_action),
             onClick = { showSortOptions = true },
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = "Filter",
+            label = stringResource(R.string.filter_action),
             onClick = { showFilters = true },
             enabled = !state.loading,
         ),

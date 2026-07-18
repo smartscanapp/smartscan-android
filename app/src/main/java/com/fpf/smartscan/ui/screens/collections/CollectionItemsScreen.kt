@@ -122,12 +122,12 @@ fun CollectionItemsScreen(
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = "Sort",
+            label = stringResource(R.string.sort_action),
             onClick = { showSortOptions = true },
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = "Filter",
+            label = stringResource(R.string.filter_action),
             onClick = { showFilters = true },
             enabled = !state.loading,
         ),
