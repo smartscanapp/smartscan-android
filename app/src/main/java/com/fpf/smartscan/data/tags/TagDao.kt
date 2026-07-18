@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.fpf.smartscan.media.MediaType
 import kotlinx.coroutines.flow.Flow
 
 
@@ -23,6 +24,19 @@ interface TagDao {
 
     @Query("SELECT * FROM media_tag WHERE id in (:ids)")
     suspend fun getByIds(ids: List<Long>): List<TagEntity>
+
+
+    @Query(
+        """
+        SELECT tag.*
+        FROM media_tag AS tag
+        INNER JOIN tag_crossref AS crossref
+            ON tag.id = crossref.tagId
+        WHERE crossref.mediaId = :mediaId
+          AND crossref.mediaType = :mediaType
+        """
+    )
+    suspend fun getTagsForMedia(mediaId: Long, mediaType: MediaType): List<TagEntity>
 
     // Crossref count used as size to always use crossrefs as source of truth
     // and importantly so Flow automatically retriggers when crossrefs change
@@ -97,7 +111,7 @@ interface TagDao {
     WHERE t.id IN (:tagIds)
     ORDER BY counts.size DESC
 """)
-    fun getCollections(tagIds: List<Long>): List<TagCollectionData>
+    suspend fun getCollections(tagIds: List<Long>): List<TagCollectionData>
 
 
     // MUST use ignore. Using replace will cause cascading deletes of cross refs
