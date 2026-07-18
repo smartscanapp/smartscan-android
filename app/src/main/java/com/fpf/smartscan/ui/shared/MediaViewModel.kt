@@ -4,12 +4,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.concepts.ConceptManager
+import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.data.mappers.toMetadata
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.events.MediaEvent
 import com.fpf.smartscan.events.MediaEventType
+import com.fpf.smartscan.media.CollectionType
+import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.models.ModelRepository
@@ -19,7 +23,9 @@ import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+//TODO: Need to invalidate cache when certain events occur e.g tag
 class MediaViewModel(
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
@@ -28,7 +34,10 @@ class MediaViewModel(
     private val conceptRepository: ConceptRepository,
     private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val modelRepository: ModelRepository,
-) : ViewModel() {
+    private val tagRepository: TagRepository,
+    private val clusterMetadataRepository: ClusterMetadataRepository,
+
+    ) : ViewModel() {
     companion object {
         private const val TAG = "MediaViewModel"
     }
@@ -43,6 +52,10 @@ class MediaViewModel(
             conceptManager.updateConceptLinks(jobData.updatedEmbed, jobData.mediaType)
         }
     )
+
+    private val cacheMediaTags: MutableMap<MediaItem, MutableMap<Long, String>> = mutableMapOf()
+    private val cacheMediaClusters: MutableMap<MediaItem, MutableMap<Long, String>> = mutableMapOf()
+
 
     val conceptManager by lazy {
         ConceptManager(
@@ -80,6 +93,51 @@ class MediaViewModel(
         Log.d(TAG, "Updated media description for: ${updatedMedia.id}")
     }
 
+    // Map is TagId -> Name
+    suspend fun getTagsMatchingMedia(media: MediaItem): MutableMap<Long, String> {
+        cacheMediaTags[media]?.let { return it }
+
+        val tags = tagRepository.getTagsForMedia(media.id, media.type)
+
+        val mediaTags = cacheMediaTags.getOrPut(media) { mutableMapOf() }
+        mediaTags.putAll(tags.associate { it.id to it.name })
+
+        return mediaTags
+    }
+
+    // Map is ClusterId -> Label
+    suspend fun getClustersMatchingMedia(media: MediaItem): MutableMap<Long, String> {
+        cacheMediaClusters[media]?.let { return it }
+
+        val clusters = clusterMetadataRepository.getClustersForMedia(media.id, media.type)
+
+        val mediaClusters = cacheMediaClusters.getOrPut(media) { mutableMapOf() }
+        mediaClusters.putAll(
+            clusters
+                .filter { !it.label.isNullOrBlank() }
+                .associate { it.clusterId to it.label!! }
+        )
+
+        return mediaClusters
+    }
+
+    fun viewCollection(collectionId: Long, type: CollectionType, onNavigate: (MediaCollection) -> Unit){
+        viewModelScope.launch(Dispatchers.IO) {
+            val collection = when (type) {
+                CollectionType.CLUSTER -> clusterMetadataRepository.getCollections(listOf(collectionId)).firstOrNull()
+                CollectionType.TAG -> tagRepository.getCollections(listOf(collectionId)).firstOrNull()
+            }
+            if(collection != null){
+                withContext(Dispatchers.Main){
+                    onNavigate(collection)
+                }
+            }else{
+                Log.e(TAG, "Collection not found: $collection")
+            }
+        }
+    }
+
+
     private suspend fun deleteStaleConceptEmbed(mediaStoreId: Long, type: MediaType) {
         conceptCrossRefRepository.delete(mediaStoreId, type)
         val mediaConceptEmbedStore = conceptManager.getMediaConceptEmbedStore(type)
@@ -93,7 +151,6 @@ class MediaViewModel(
 
         if (updatedMedia.description.isNullOrBlank()) return null
         val newRawEmbedding = textEmbedder.embed(updatedMedia.description)
-        //TODO: add `upsert` method to EmbeddingStore
         val existingMediaEmbed = mediaConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
         val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
                 ?: StoredEmbedding(updatedMedia.id, updatedMedia.dateAdded, newRawEmbedding.toQInt8Embed())
@@ -112,4 +169,6 @@ class MediaViewModel(
             }
         }
     }
+
+
 }

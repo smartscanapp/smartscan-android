@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import kotlin.math.abs
@@ -33,6 +35,9 @@ fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
+    onGetTags: suspend (MediaItem) -> Map<Long, String>,
+    onGetClusters: suspend (MediaItem) -> Map<Long, String>,
+    onCollectionClick: (itemId: Long, type: CollectionType) -> Unit,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
     onSaveUpdatedItem: (MediaItem) -> Unit,
@@ -45,6 +50,23 @@ fun MediaViewer(
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
     var showMenu by remember { mutableStateOf(false) }
+
+    var tags by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    var clusters by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    val collections = buildList {
+        tags.forEach { (id, name) ->
+            add(Triple(id, name, CollectionType.TAG))
+        }
+
+        clusters.forEach { (id, name) ->
+            add(Triple(id, name, CollectionType.CLUSTER))
+        }
+    }
+
+    LaunchedEffect(currentItem.id) {
+        tags = onGetTags(currentItem)
+        clusters = onGetClusters(currentItem)
+    }
 
     Dialog(
         onDismissRequest = {
@@ -102,9 +124,7 @@ fun MediaViewer(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(
-                            if (descriptionExpanded) 0.5f else 1f
-                        )
+                        .weight(1f)
                 ) {
 
                     when (currentItem.type) {
@@ -157,22 +177,21 @@ fun MediaViewer(
                 if (descriptionExpanded) {
 
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.5f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-
-                        key (currentItem.id, currentItem.type) {
-                            MediaViewerDescriptionView(
-                                modifier = Modifier.fillMaxSize(),
+                        key(currentItem.id, currentItem.type) {
+                            MediaDetailsCard(
+                                modifier = Modifier.fillMaxWidth(),
                                 description = currentItem.description,
+                                collections = collections,
+                                onCollectionClick = { id, type -> onCollectionClick(id, type) },
                                 onSave = { updated ->
                                     onSaveUpdatedItem(
                                         currentItem.copy(
                                             description = updated
                                         )
                                     )
-                                }
+                                },
                             )
                         }
                     }

@@ -48,7 +48,7 @@
     <string name="scan_action">Scan</string>
     <string name="scan_media_action">Scan %1$s</string>
     <string name="scan_rebuild_action">Scan (Rebuild)</string>
-    <string name="view_description_action">View description</string>
+    <string name="view_details_action">Details</string>
     <string name="open_in_gallery_action">Open in gallery</string>
     <string name="download_model_action">Download model</string>
     <string name="filter_action">Filter</string>
@@ -178,6 +178,8 @@
     <string name="placeholders_search_videos">Search videos</string>
     <string name="placeholders_search_by_tag">Search by tag: #tag</string>
     <string name="placeholders_search_by_tag_query">Search by tag: #tag query</string>
+    <string name="placeholders_media_detail_description">Describe what this is about and or why it\'s important or useful.</string>
+
 
     <!--Updates-->
     <string name="update_quantized_embeddings">Added support for quantized embeddings, reducing memory usage by 4x</string>

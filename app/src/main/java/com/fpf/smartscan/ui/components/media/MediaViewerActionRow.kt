@@ -44,7 +44,7 @@ fun MediaViewerActionRow(
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = stringResource(R.string.view_description_action),
+            label = stringResource(R.string.view_details_action),
             onClick = { onViewDescription() },
         ),
         MenuActionConfig.Button(

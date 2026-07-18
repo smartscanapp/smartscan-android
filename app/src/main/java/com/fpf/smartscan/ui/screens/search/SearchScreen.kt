@@ -39,6 +39,7 @@ import androidx.compose.ui.zIndex
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
+import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchQuery
@@ -82,6 +83,7 @@ fun SearchScreen(
     hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
     onIndex: (mediaType: MediaType?) -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
     intentSearchQuery: SearchQuery? = null
 ) {
     val appSettings by appSettings.collectAsState()
@@ -152,7 +154,7 @@ fun SearchScreen(
             hasIndexedVideos == true && hasIndexedImages==false -> searchViewModel.onAction(SearchAction.SetMediaTypeFilter(MediaType.VIDEO))
         }
         onDispose {
-            searchViewModel.onAction(SearchAction.Reset)
+//            searchViewModel.onAction(SearchAction.Reset)
         }
     }
 
@@ -221,7 +223,38 @@ fun SearchScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
+        when{
+            state.resultToView != null -> {
+                val item = state.resultToView!!
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
+                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
+                ) {
+                    MediaViewer(
+                        items = state.searchResults,
+                        initialIndex = state.searchResults.indexOf(item),
+                        onLoadMore = searchViewModel::onLoadMore,
+                        onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
+                        onUpdateSearchImage = {
+                            searchViewModel.onAction(SearchAction.ClearResultView)
+                            searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
+                        },
+                        onSaveUpdatedItem = {
+                            mediaViewModel.saveUpdatedItem(it)
+                            // TODO: switch to paging source and refresh items here
+                        },
+                        onGetTags = mediaViewModel::getTagsMatchingMedia,
+                        onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                        onCollectionClick = { id, type ->
+                            mediaViewModel.viewCollection(id, type){
+                                onViewCollection(it)
+                            }
+                        }
+                    )
+                }
+            }
+            else -> Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
@@ -365,6 +398,7 @@ fun SearchScreen(
 
             )
         }
+            }
         SlideRevealBox(
             isVisible = isActionBarVisible,
             offsetPx = offset,
@@ -383,29 +417,6 @@ fun SearchScreen(
             ActionBar(
                 modifier = Modifier.height(70.dp),
                 actions = actionBarActions
-            )
-        }
-    }
-
-    state.resultToView?.let { item ->
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
-            exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
-        ) {
-            MediaViewer(
-                items = state.searchResults,
-                initialIndex = state.searchResults.indexOf(item),
-                onLoadMore = searchViewModel::onLoadMore,
-                onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
-                onUpdateSearchImage = {
-                    searchViewModel.onAction(SearchAction.ClearResultView)
-                    searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
-                },
-                onSaveUpdatedItem = {
-                    mediaViewModel.saveUpdatedItem(it)
-                    // TODO: switch to paging source and refresh items here
-                }
             )
         }
     }

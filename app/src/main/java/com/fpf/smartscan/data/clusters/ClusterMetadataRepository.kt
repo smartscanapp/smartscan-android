@@ -4,6 +4,7 @@ import com.fpf.smartscan.cluster.StoredClusterMetadata
 import com.fpf.smartscan.data.mappers.toDomain
 import com.fpf.smartscan.data.mappers.toEntity
 import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscansdk.core.cluster.ClusterMetadata
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -15,6 +16,8 @@ class ClusterMetadataRepository(private val dao: ClusterMetadataDao) {
         }
 
     fun getCollections(): Flow<List<MediaCollection>> = dao.getCollections().map{collections -> collections.map{it.toDomain()}}
+
+    suspend fun getClustersForMedia(mediaId: Long, mediaType: MediaType): List<StoredClusterMetadata> = dao.getClustersForMedia(mediaId, mediaType).map{it.toDomain()}
     suspend fun getCollections(clusterIds: List<Long>): List<MediaCollection> = dao.getCollections(clusterIds).map{ it.toDomain()}
     suspend fun getMetadata(ids: List<Long>): List<StoredClusterMetadata> = dao.get(ids).map{it.toDomain()}
     suspend fun getMetadata(id: Long): StoredClusterMetadata? = dao.get(listOf(id)).firstOrNull()?.toDomain()

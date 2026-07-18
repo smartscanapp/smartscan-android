@@ -1,12 +1,16 @@
 package com.fpf.smartscan.ui.components.media
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,18 +26,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-
+import com.fpf.smartscan.R
+import com.fpf.smartscan.media.CollectionType
 
 @Composable
-fun MediaViewerDescriptionView(
+fun MediaDetailsCard(
     description: String?,
+    collections: List<Triple<Long, String, CollectionType>>,
     modifier: Modifier = Modifier,
+    onCollectionClick: (Long, CollectionType) -> Unit,
     onSave: (String) -> Unit
 ) {
-
     var editing by remember {
         mutableStateOf(description.isNullOrBlank())
     }
@@ -48,6 +55,7 @@ fun MediaViewerDescriptionView(
     }
 
     val focusRequester = remember { FocusRequester() }
+
     LaunchedEffect(editing) {
         if (editing && !description.isNullOrBlank()) {
             focusRequester.requestFocus()
@@ -73,13 +81,12 @@ fun MediaViewerDescriptionView(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(
-                modifier = Modifier.weight(1f)
-            )
+            Spacer(modifier = Modifier.weight(1f))
 
             if (editing) {
                 TextButton(
-                    enabled = editedDescription.text.isNotBlank() && description != editedDescription.text.trim(),
+                    enabled = editedDescription.text.isNotBlank() &&
+                            description != editedDescription.text.trim(),
                     onClick = {
                         onSave(editedDescription.text.trim())
                         editing = false
@@ -103,9 +110,7 @@ fun MediaViewerDescriptionView(
 
         HorizontalDivider()
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (editing) {
             BasicTextField(
@@ -113,7 +118,9 @@ fun MediaViewerDescriptionView(
                 onValueChange = {
                     editedDescription = it
                 },
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
                 minLines = 4,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
@@ -122,26 +129,61 @@ fun MediaViewerDescriptionView(
                 decorationBox = { innerTextField ->
                     if (editedDescription.text.isEmpty()) {
                         Text(
-                            text = "Describe what this is about and or why it's important or useful.",
+                            text = stringResource(R.string.placeholders_media_detail_description),
                             style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         )
                     }
                     innerTextField()
                 }
             )
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
         } else {
             Text(
                 text = description.orEmpty(),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
+        }
+
+        if (collections.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(20.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                collections.forEach { (id, name, type) ->
+
+                    AssistChip(
+                        onClick = {
+                            onCollectionClick(id, type)
+                        },
+                        label = {
+                            Text("#$name")
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = when (type) {
+                                CollectionType.CLUSTER ->
+                                    MaterialTheme.colorScheme.primaryContainer
+
+                                CollectionType.TAG ->
+                                    MaterialTheme.colorScheme.secondaryContainer
+                            }
+                        ),
+                        border = AssistChipDefaults.assistChipBorder(
+                            enabled = true,
+                            borderColor = when (type) {
+                                CollectionType.CLUSTER ->
+                                    MaterialTheme.colorScheme.primary
+
+                                CollectionType.TAG ->
+                                    MaterialTheme.colorScheme.secondary
+                            }
+                        )
+                    )
+                }
+            }
         }
     }
 }

@@ -8,10 +8,6 @@ import com.fpf.smartscan.media.MediaType
 
 @Dao
 interface TagCrossRefDao {
-
-    @Query("SELECT DISTINCT tagId FROM tag_crossref WHERE mediaId = :mediaId")
-    suspend fun getTagsForMedia(mediaId: Long): List<Long>
-
     @Query("SELECT * FROM tag_crossref")
     suspend fun getAllCrossRefs(): List<TagCrossRefEntity>
 
