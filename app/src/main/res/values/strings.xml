@@ -178,6 +178,8 @@
     <string name="placeholders_search_videos">Search videos</string>
     <string name="placeholders_search_by_tag">Search by tag: #tag</string>
     <string name="placeholders_search_by_tag_query">Search by tag: #tag query</string>
+    <string name="placeholders_media_detail_description">Describe what this is about and or why it\'s important or useful.</string>
+
 
     <!--Updates-->
     <string name="update_quantized_embeddings">Added support for quantized embeddings, reducing memory usage by 4x</string>

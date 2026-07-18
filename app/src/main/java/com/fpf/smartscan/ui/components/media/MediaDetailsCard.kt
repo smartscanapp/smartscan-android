@@ -26,9 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.fpf.smartscan.R
 import com.fpf.smartscan.media.CollectionType
 
 @Composable
@@ -127,7 +129,7 @@ fun MediaDetailsCard(
                 decorationBox = { innerTextField ->
                     if (editedDescription.text.isEmpty()) {
                         Text(
-                            text = "Describe what this is about and or why it's important or useful.",
+                            text = stringResource(R.string.placeholders_media_detail_description),
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
