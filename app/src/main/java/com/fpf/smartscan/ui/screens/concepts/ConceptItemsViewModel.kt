@@ -18,10 +18,10 @@ import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,7 +62,7 @@ class ConceptItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ConceptPagingSource(
-                            mediaType = mediaType,
+                            filter = SearchFilter(mediaType=mediaType),
                             conceptId = concept.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -129,7 +129,7 @@ class ConceptItemsViewModel(
     private suspend fun getAllItemsInConcept(): MutableSet<MediaItem> {
         val currentState = state.value
         val concept = currentState.concept ?: return mutableSetOf()
-        return mediaMetadataRepository.getByConcept(concept.id).map { it.toItem() }.toMutableSet()
+        return mediaMetadataRepository.getByConceptSortedByDate(concept.id).map { it.toItem() }.toMutableSet()
     }
 
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }

@@ -32,6 +32,7 @@ import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
@@ -104,7 +105,7 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         TagPagingSource(
-                            mediaType = mediaType,
+                            filter = SearchFilter(mediaType=mediaType),
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -131,7 +132,7 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ClusterPagingSource(
-                            mediaType = mediaType,
+                            filter = SearchFilter(mediaType=mediaType),
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
