@@ -3,9 +3,11 @@ package com.fpf.smartscan.ui.screens.collections
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.compose.ui.platform.Clipboard
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -13,7 +15,10 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import coil3.compose.AsyncImagePainter
+import com.fpf.smartscan.R
 import com.fpf.smartscan.cluster.ClusterManager
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.media.MediaCollection
@@ -32,6 +37,8 @@ import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
@@ -86,11 +93,13 @@ class CollectionItemsViewModel(
     private val _state = MutableStateFlow(CollectionItemsState())
     val state: StateFlow<CollectionItemsState> = _state
 
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val tagItems = _state
-        .map { it.mediaType to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
 
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
@@ -104,7 +113,8 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         TagPagingSource(
-                            mediaType = mediaType,
+                            filter = filters,
+                            sortBy=sortBy,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -116,9 +126,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val clusterItems = _state
-        .map { it.mediaType to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -131,7 +141,8 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ClusterPagingSource(
-                            mediaType = mediaType,
+                            filter = filters,
+                            sortBy=sortBy,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -160,6 +171,18 @@ class CollectionItemsViewModel(
     private val _event = MutableSharedFlow<CollectionItemEvent>()
     val event = _event.asSharedFlow()
 
+    val sortByOptions: Map<SortBy, String>
+        get()=  mapOf(
+            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
+            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
+//            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
+//            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
+        )
+
+    init {
+        load()
+    }
+
     fun onAction(action: CollectionItemAction){
         when(action){
             is CollectionItemAction.CopyMedia -> copyItem(action.clipboard, action.context)
@@ -175,8 +198,13 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ToggleSelectionMode -> toggleSelectionMode()
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
-            is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
-            }
+            is CollectionItemAction.SetFilter -> setFilters(action.filter)
+            is CollectionItemAction.SetSortBy -> setSortBy(action.sortBy)
+        }
+    }
+
+    private fun load(){
+        _state.update { it.copy(sortBy = getSortByPref()) }
     }
 
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
@@ -337,7 +365,23 @@ class CollectionItemsViewModel(
         }
     }
 
-    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+    private fun setFilters(filter: SearchFilter) = _state.update { it.copy(filter =filter) }
+    private fun setSortBy(sortBy: SortBy) {
+        _state.update { it.copy(sortBy = sortBy) }
+        saveSortByPref(sortBy)
+    }
+
+    private fun saveSortByPref(sortBy: SortBy){
+        val option =  sortByOptions.entries.find { it.key == sortBy }?.value?: sortByOptions.values.first()
+        sharedPrefs.edit{
+            putString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, option)
+        }
+    }
+
+    private fun getSortByPref(): SortBy{
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "")?: ""
+        return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    }
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

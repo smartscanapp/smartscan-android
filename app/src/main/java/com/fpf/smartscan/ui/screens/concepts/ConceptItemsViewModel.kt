@@ -4,24 +4,30 @@ package com.fpf.smartscan.ui.screens.concepts
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
+import android.util.Log
 import androidx.compose.ui.platform.Clipboard
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.concepts.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,12 +50,21 @@ class ConceptItemsViewModel(
     private val _state = MutableStateFlow(ConceptItemsState())
     val state: StateFlow<ConceptItemsState> = _state
 
+    val sortByOptions: Map<SortBy, String>
+        get()=  mapOf(
+            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
+            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
+            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
+            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
-        .map { it.mediaType to it.concept }
+        .map { Triple(it.filter, it.sortBy, it.concept) }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, concept) ->
+        .flatMapLatest { (filters, sortBy, concept) ->
 
+            Log.d(TAG, "Sort by: $sortBy")
             if (concept?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -62,7 +77,8 @@ class ConceptItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ConceptPagingSource(
-                            mediaType = mediaType,
+                            sortBy=sortBy,
+                            filter = filters,
                             conceptId = concept.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -71,7 +87,13 @@ class ConceptItemsViewModel(
             }
         }
         .cachedIn(viewModelScope)
-    
+
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
+
+
+    init {
+        load()
+    }
 
     fun onAction(action: ConceptItemsAction){
         when(action){
@@ -84,8 +106,13 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ToggleSelectionMode -> toggleSelectionMode()
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
-            is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is ConceptItemsAction.SetFilter -> setFilter(action.filter)
+            is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
         }
+    }
+
+    private fun load(){
+        _state.update { it.copy(sortBy = getSortByPref()) }
     }
 
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
@@ -129,13 +156,29 @@ class ConceptItemsViewModel(
     private suspend fun getAllItemsInConcept(): MutableSet<MediaItem> {
         val currentState = state.value
         val concept = currentState.concept ?: return mutableSetOf()
-        return mediaMetadataRepository.getByConcept(concept.id).map { it.toItem() }.toMutableSet()
+        return mediaMetadataRepository.getByConceptSortedByDate(concept.id).map { it.toItem() }.toMutableSet()
     }
 
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
-    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+    private fun setFilter(filter: SearchFilter) = _state.update { it.copy(filter = filter) }
+
+    private fun setSortBy(sortBy: SortBy) {
+        _state.update { it.copy(sortBy = sortBy) }
+        saveSortByPref(sortBy)
+    }
+    private fun saveSortByPref(sortBy: SortBy){
+        val option =  sortByOptions.entries.find { it.key == sortBy }?.value?: sortByOptions.values.first()
+        sharedPrefs.edit{
+            putString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, option)
+        }
+    }
+
+    private fun getSortByPref(): SortBy{
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, "")?: ""
+        return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    }
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){

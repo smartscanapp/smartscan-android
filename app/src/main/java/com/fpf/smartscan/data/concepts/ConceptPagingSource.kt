@@ -1,49 +1,74 @@
 package com.fpf.smartscan.data.concepts
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import com.fpf.smartscan.data.mappers.toItem
+import com.fpf.smartscan.data.MediaItemPagingSource
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.media.MediaMetadata
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 
 class ConceptPagingSource(
-    private val mediaType: MediaType? = null,
+    filter: SearchFilter = SearchFilter(),
+    sortBy: SortBy = SortBy.Date(),
     private val conceptId: Long,
     private val mediaMetadataRepository: MediaMetadataRepository,
-) : PagingSource<Int, MediaItem>() {
+) : MediaItemPagingSource(filter=filter, sortBy=sortBy) {
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItem> {
-        val page = params.key ?: 0
-        val pageSize = params.loadSize
-        val offset = page * pageSize
+    override suspend fun getMediaItems(filter: SearchFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata> = when (sortBy) {
+            is SortBy.Date ->
+                if (filter.mediaType != null) {
+                    mediaMetadataRepository.getByConceptSortedByDate(
+                        conceptId,
+                        mediaType=filter.mediaType,
+                        limit=pageSize + 1,
+                        offset=offset,
+                        ascending=sortBy.ascending,
+                        )
+                } else {
+                    mediaMetadataRepository.getByConceptSortedByDate(
+                        conceptId,
+                        limit=pageSize + 1,
+                        offset=offset,
+                        ascending=sortBy.ascending,
+                        )
+                }
 
-        // over-fetch by 1 item to detect end of data without using count()
-        return try {
-            val mediaMetadataList = if(mediaType != null){
-                mediaMetadataRepository.getByConcept(conceptId = conceptId, mediaType, limit = pageSize + 1, offset = offset)
-            }else{
-                mediaMetadataRepository.getByConcept(conceptId = conceptId, limit = pageSize + 1, offset = offset)
-            }
-            val hasMore = mediaMetadataList.size > pageSize
-            val pageItems = if (hasMore) mediaMetadataList.dropLast(1) else mediaMetadataList
-            val mediaItems = pageItems.map {it.toItem()}
+            is SortBy.Similarity ->
+                when {
+                    filter.mediaType != null && filter.similarity != null ->
+                        mediaMetadataRepository.getByConceptSortedBySimilarity(
+                            conceptId,
+                            mediaType = filter.mediaType,
+                            minSimilarity = filter.similarity,
+                            limit = pageSize + 1,
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
 
-            LoadResult.Page(
-                data = mediaItems,
-                prevKey = if (page == 0) null else page - 1,
-                nextKey = if (hasMore) page + 1 else null
-            )
+                    filter.mediaType != null ->
+                        mediaMetadataRepository.getByConceptSortedBySimilarity(
+                            conceptId,
+                            mediaType = filter.mediaType,
+                            limit = pageSize + 1,
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
 
-        } catch (e: Exception) {
-            LoadResult.Error(e)
+                    filter.similarity != null ->
+                        mediaMetadataRepository.getByConceptSortedBySimilarity(
+                            conceptId,
+                            minSimilarity = filter.similarity,
+                            limit = pageSize + 1,
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
+
+                    else ->
+                        mediaMetadataRepository.getByConceptSortedBySimilarity(
+                            conceptId,
+                            limit=pageSize + 1,
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
+                }
         }
-    }
-
-    override fun getRefreshKey(state: PagingState<Int, MediaItem>): Int? {
-        return state.anchorPosition?.let { pos ->
-            state.closestPageToPosition(pos)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(pos)?.nextKey?.minus(1)
-        }
-    }
 }

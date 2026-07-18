@@ -1,49 +1,35 @@
 package com.fpf.smartscan.data.clusters
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import com.fpf.smartscan.data.mappers.toItem
+import com.fpf.smartscan.data.MediaItemPagingSource
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.media.MediaMetadata
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 
+// TODO: add sort by similarity
 class ClusterPagingSource(
-    private val mediaType: MediaType? = null,
+    filter: SearchFilter = SearchFilter(),
+    sortBy: SortBy = SortBy.Date(),
     private val clusterId: Long,
     private val mediaMetadataRepository: MediaMetadataRepository,
-) : PagingSource<Int, MediaItem>() {
+) : MediaItemPagingSource(filter=filter, sortBy=sortBy) {
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItem> {
-        val page = params.key ?: 0
-        val pageSize = params.loadSize
-        val offset = page * pageSize
-
-        // over-fetch by 1 item to detect end of data without using count()
-        return try {
-            val mediaMetadataList = if(mediaType != null){
-                mediaMetadataRepository.getByCluster(clusterId = clusterId, mediaType, limit = pageSize + 1, offset = offset)
-            }else{
-                mediaMetadataRepository.getByCluster(clusterId = clusterId, limit = pageSize + 1, offset = offset)
-            }
-            val hasMore = mediaMetadataList.size > pageSize
-            val pageItems = if (hasMore) mediaMetadataList.dropLast(1) else mediaMetadataList
-            val mediaItems = pageItems.map { it.toItem() }
-
-            LoadResult.Page(
-                data = mediaItems,
-                prevKey = if (page == 0) null else page - 1,
-                nextKey = if (hasMore) page + 1 else null
-            )
-
-        } catch (e: Exception) {
-            LoadResult.Error(e)
+    override suspend fun getMediaItems(filter: SearchFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata> = when {
+        filter.mediaType != null -> {
+            mediaMetadataRepository.getByCluster(
+                clusterId,
+                type = filter.mediaType,
+                limit = pageSize + 1,
+                offset = offset,
+                ascending=sortBy.ascending,
+                )
         }
-    }
-
-    override fun getRefreshKey(state: PagingState<Int, MediaItem>): Int? {
-        return state.anchorPosition?.let { pos ->
-            state.closestPageToPosition(pos)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(pos)?.nextKey?.minus(1)
-        }
+        else ->
+            mediaMetadataRepository.getByCluster(
+                clusterId,
+                limit=pageSize + 1,
+                offset=offset,
+                ascending=sortBy.ascending,
+                )
     }
 }

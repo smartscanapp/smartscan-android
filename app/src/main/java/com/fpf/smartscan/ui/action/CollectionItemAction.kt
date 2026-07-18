@@ -5,6 +5,8 @@ import androidx.compose.ui.platform.Clipboard
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 
 sealed interface CollectionItemAction {
     data class MoveMedia(val destinationCollection: MediaCollection): CollectionItemAction
@@ -16,8 +18,8 @@ sealed interface CollectionItemAction {
     data class SetCollectionToView(val collection: MediaCollection): CollectionItemAction
     data class Tag(val tag: String): CollectionItemAction
     data class SetSelectAll(val selectAll: Boolean): CollectionItemAction
-    data class SetMediaTypeFilter(val mediaType: MediaType?): CollectionItemAction
-
+    data class SetFilter(val filter: SearchFilter): CollectionItemAction
+    data class SetSortBy(val sortBy: SortBy): CollectionItemAction
     data object RemoveMedia : CollectionItemAction
     data object ToggleSelectionMode: CollectionItemAction
     data object ClearSelection: CollectionItemAction
