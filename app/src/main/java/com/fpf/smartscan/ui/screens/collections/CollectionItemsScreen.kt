@@ -255,49 +255,119 @@ fun CollectionItemsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top
-        ) {
-            SlideRevealBox(
-                isVisible = state.selection.isSelecting,
-                reverse = true,
-                offsetPx = offset,
+        when {
+            state.mediaToView != null -> {
+                val mediaItems by remember {
+                    derivedStateOf {
+                        List(items.itemCount) { index -> items[index] }.filterNotNull()
+                    }
+                }
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                        initialScale = 0.8f,
+                        animationSpec = tween(500)
+                    ),
+                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(
+                        targetScale = 0.8f,
+                        animationSpec = tween(300)
+                    )
+                ) {
+                    MediaViewer(
+                        items = mediaItems,
+                        initialIndex = mediaItems.indexOf(state.mediaToView),
+                        onClose = {
+                            viewModel.onAction(
+                                CollectionItemAction.SetMediaToView(
+                                    context,
+                                    null
+                                )
+                            )
+                        },
+                        onUpdateSearchImage = null,
+                        onLoadMore = {
+                            val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
+                            items[lastIndex]
+                        },
+                        onSaveUpdatedItem = {
+                            mediaViewModel.saveUpdatedItem(it)
+                            items.refresh()
+                        },
+                        onGetTags = mediaViewModel::getTagsMatchingMedia,
+                        onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                        onCollectionClick = { id, type ->
+                            mediaViewModel.viewCollection(id, type) {
+                                onViewCollection(it)
+                            }
+                        }
+                    )
+                }
+            }
+
+            else -> Column(
                 modifier = Modifier
-                    .zIndex(1f)
-                    .heightIn(max = maxCollapsablePx.dp)
-                    .padding(bottom = 8.dp)
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Top
             ) {
-                SelectionHeaderRow (
-                    selectedCount = state.selection.selectedCount,
-                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.collection?.size),
-                    onSelectAllChange = {viewModel.onAction(CollectionItemAction.SetSelectAll(it))}
+                SlideRevealBox(
+                    isVisible = state.selection.isSelecting,
+                    reverse = true,
+                    offsetPx = offset,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .heightIn(max = maxCollapsablePx.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    SelectionHeaderRow(
+                        selectedCount = state.selection.selectedCount,
+                        checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.collection?.size),
+                        onSelectAllChange = {
+                            viewModel.onAction(
+                                CollectionItemAction.SetSelectAll(
+                                    it
+                                )
+                            )
+                        }
+                    )
+                }
+                CollectionItemsList(
+                    isVisible = items.itemCount > 0,
+                    numGridColumns = appSettings.resultsPerRow,
+                    items = items,
+                    isSelecting = state.selection.isSelecting,
+                    selectAll = state.selection.selectAll,
+                    excludedItems = state.selection.excludedItems,
+                    selectedItems = state.selection.selectedItems,
+                    onViewItem = { uri ->
+                        viewModel.onAction(
+                            CollectionItemAction.SetMediaToView(
+                                context,
+                                uri,
+                                appSettings.enableDirectGalleryOpen
+                            )
+                        )
+                    },
+                    onToggleSelected = {
+                        viewModel.onAction(
+                            CollectionItemAction.ToggleSelectedMedia(
+                                it
+                            )
+                        )
+                    },
+                    onToggleSelectionMode = {
+                        viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                        offset = 0
+                    },
+                    onOffsetChange = { offset = it },
+                    maxCollapsePx = maxCollapsablePx,
+                    onError = viewModel::onErrorAsyncImage
+                )
+
+                EmptyItemsScreen(
+                    isVisible = items.itemCount == 0
                 )
             }
-            CollectionItemsList(
-                isVisible = items.itemCount > 0,
-                numGridColumns = appSettings.resultsPerRow,
-                items = items,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                excludedItems = state.selection.excludedItems,
-                selectedItems = state.selection.selectedItems,
-                onViewItem = { uri -> viewModel.onAction(CollectionItemAction.SetMediaToView(context, uri, appSettings.enableDirectGalleryOpen)) },
-                onToggleSelected = { viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it)) },
-                onToggleSelectionMode = {
-                    viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
-                    offset = 0
-                },
-                onOffsetChange = {  offset = it },
-                maxCollapsePx = maxCollapsablePx,
-                onError = viewModel::onErrorAsyncImage
-            )
-
-            EmptyItemsScreen(
-                isVisible = items.itemCount == 0
-            )
         }
 
         SlideRevealBox(
@@ -335,45 +405,6 @@ fun CollectionItemsScreen(
             }
         }
 
-
-        state.mediaToView?.let { item ->
-            val mediaItems by remember {
-                derivedStateOf {
-                    List(items.itemCount) { index -> items[index] }.filterNotNull()
-                }
-            }
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(500)) + scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = tween(500)
-                ),
-                exit = fadeOut(animationSpec = tween(300)) + scaleOut(
-                    targetScale = 0.8f,
-                    animationSpec = tween(300)
-                )
-            ) {
-                MediaViewer(
-                    items = mediaItems,
-                    initialIndex = mediaItems.indexOf(item),
-                    onClose = { viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))},
-                    onUpdateSearchImage = null,
-                    onLoadMore = { val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
-                        items[lastIndex]},
-                    onSaveUpdatedItem = {
-                        mediaViewModel.saveUpdatedItem(it)
-                        items.refresh()
-                    },
-                    onGetTags = mediaViewModel::getTagsMatchingMedia,
-                    onGetClusters = mediaViewModel::getClustersMatchingMedia,
-                    onCollectionClick = { id, type ->
-                        mediaViewModel.viewCollection(id, type){
-                            onViewCollection(it)
-                        }
-                    }
-                )
-            }
-        }
         AnimatedVisibility(
             visible = isMoving,
             enter = fadeIn(animationSpec = tween(500)) + scaleIn(
