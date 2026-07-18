@@ -89,9 +89,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val tagItems = _state
-        .map { it.mediaType to it.collection }
+        .map { it.filter to it.collection }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, collection) ->
 
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
@@ -105,7 +105,7 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         TagPagingSource(
-                            filter = SearchFilter(mediaType=mediaType),
+                            filter = filters,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -117,9 +117,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val clusterItems = _state
-        .map { it.mediaType to it.collection }
+        .map { it.filter to it.collection }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, collection) ->
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -132,7 +132,7 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ClusterPagingSource(
-                            filter = SearchFilter(mediaType=mediaType),
+                            filter = filters,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -176,7 +176,7 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ToggleSelectionMode -> toggleSelectionMode()
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
-            is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is CollectionItemAction.SetFilter -> setFilters(action.filter)
             }
     }
 
@@ -338,7 +338,7 @@ class CollectionItemsViewModel(
         }
     }
 
-    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+    private fun setFilters(filter: SearchFilter) = _state.update { it.copy(filter =filter) }
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

@@ -16,7 +16,6 @@ import com.fpf.smartscan.data.concepts.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.ui.action.ConceptItemsAction
@@ -46,9 +45,9 @@ class ConceptItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
-        .map { it.mediaType to it.concept }
+        .map { it.filter to it.concept }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, concept) ->
+        .flatMapLatest { (filters, concept) ->
 
             if (concept?.id == null) {
                 flowOf(PagingData.empty())
@@ -62,7 +61,7 @@ class ConceptItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ConceptPagingSource(
-                            filter = SearchFilter(mediaType=mediaType),
+                            filter = filters,
                             conceptId = concept.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -84,7 +83,7 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ToggleSelectionMode -> toggleSelectionMode()
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
-            is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is ConceptItemsAction.SetFilter -> setFilter(action.filter)
         }
     }
 
@@ -135,7 +134,8 @@ class ConceptItemsViewModel(
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
-    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+    private fun setFilter(filter: SearchFilter) = _state.update { it.copy(filter = filter) }
+
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){

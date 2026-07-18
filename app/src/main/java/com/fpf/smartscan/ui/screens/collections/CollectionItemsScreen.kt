@@ -56,6 +56,7 @@ import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
+import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
@@ -408,10 +409,10 @@ fun CollectionItemsScreen(
         isVisible = showMediaTypeFilter,
         title = stringResource(R.string.media_type_title),
         options =  listOf("All") + mediaTypeOptions.values.toList(),
-        selectedOption  = mediaTypeOptions[state.mediaType]?: "All",
+        selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
         onSelect = { selected ->
             val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(mediaType))
+            viewModel.onAction(CollectionItemAction.SetFilter(SearchFilter(mediaType=mediaType)))
             showMediaTypeFilter = false
         },
         onClose = {showMediaTypeFilter = false}
