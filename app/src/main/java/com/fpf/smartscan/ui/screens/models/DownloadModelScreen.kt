@@ -27,14 +27,14 @@ fun DownloadModelScreen(
     onDownload: () -> Unit,
 ) {
     Box(
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp)
     ) {
 
         Column(
-            horizontalAlignment = Alignment.Start,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = Icons.Filled.CloudDownload,
@@ -44,23 +44,23 @@ fun DownloadModelScreen(
             )
             Text(
                 text = stringResource(R.string.download_model_action),
-                textAlign = TextAlign.Left,
                 style = MaterialTheme.typography.displayMedium,
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier.padding(bottom = 16.dp).align(Alignment.Start),
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
                 text = message,
-                textAlign = TextAlign.Left,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = onDownload
-            ) {
+                onClick = onDownload,
+                modifier = Modifier.align(Alignment.Start),
+
+                ) {
                 Text(
                     text = stringResource(R.string.download_model_action)
                 )
