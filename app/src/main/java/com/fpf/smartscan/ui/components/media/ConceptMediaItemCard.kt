@@ -45,12 +45,14 @@ fun ConceptMediaItemCard(
     item: MediaItem,
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,
+    playbackPosition: Long? = null,
     isSelecting: Boolean = false,
     onItemLongClick: ((MediaItem) -> Unit)? = null,
     isChecked: (() -> Boolean)? = null,
     onToggleSelected: ((MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
-) {
+    onSavePlaybackPosition: ((Long) -> Unit)? = null,
+    ) {
     val description = remember(item.description) {
         item.description?.trim()?.replaceFirstChar { it.uppercase() }.orEmpty()
     }
@@ -147,6 +149,8 @@ fun ConceptMediaItemCard(
                         onError = onError
                     ) }else{
                         VideoDisplay(uri = item.uri,
+                            onPlaybackPositionChanged = onSavePlaybackPosition ,
+                            playbackPosition=playbackPosition?: 0L,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
