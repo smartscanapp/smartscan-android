@@ -4,8 +4,10 @@ package com.fpf.smartscan.ui.screens.concepts
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.compose.ui.platform.Clipboard
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -14,6 +16,8 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.concepts.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
@@ -83,7 +87,13 @@ class ConceptItemsViewModel(
             }
         }
         .cachedIn(viewModelScope)
-    
+
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
+
+
+    init {
+        load()
+    }
 
     fun onAction(action: ConceptItemsAction){
         when(action){
@@ -99,6 +109,10 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.SetFilter -> setFilter(action.filter)
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
         }
+    }
+
+    private fun load(){
+        _state.update { it.copy(sortBy = getSortByPref()) }
     }
 
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
@@ -150,7 +164,21 @@ class ConceptItemsViewModel(
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setFilter(filter: SearchFilter) = _state.update { it.copy(filter = filter) }
 
-    private fun setSortBy(sortBy: SortBy) = _state.update { it.copy(sortBy = sortBy) }
+    private fun setSortBy(sortBy: SortBy) {
+        _state.update { it.copy(sortBy = sortBy) }
+        saveSortByPref(sortBy)
+    }
+    private fun saveSortByPref(sortBy: SortBy){
+        val option =  sortByOptions.entries.find { it.key == sortBy }?.value?: sortByOptions.values.first()
+        sharedPrefs.edit{
+            putString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, option)
+        }
+    }
+
+    private fun getSortByPref(): SortBy{
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, "")?: ""
+        return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    }
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
