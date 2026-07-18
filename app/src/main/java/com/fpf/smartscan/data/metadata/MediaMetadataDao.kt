@@ -223,6 +223,24 @@ interface MediaMetadataDao {
     """)
     suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadataEntity>
 
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref crossref
+        ON crossref.mediaId = m.id
+        AND crossref.mediaType = m.type
+    WHERE crossref.conceptId = :conceptId
+    ORDER BY crossref.similarity DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedBySimilarity(
+        conceptId: Long,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+
     @Query("""
     SELECT m.*
     FROM media_metadata m
@@ -255,6 +273,25 @@ interface MediaMetadataDao {
     suspend fun getByConceptSortedBySimilarity(
         conceptId: Long,
         type: MediaType
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref crossref
+        ON crossref.mediaId = m.id
+        AND crossref.mediaType = m.type
+    WHERE crossref.conceptId = :conceptId
+      AND crossref.similarity >= :minSimilarity
+    ORDER BY crossref.similarity DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptWithMinimumSimilarity(
+        conceptId: Long,
+        minSimilarity: Float,
+        limit: Int,
+        offset: Int
     ): List<MediaMetadataEntity>
 
 

@@ -38,8 +38,10 @@ class MediaMetadataRepository(
     suspend fun getByConcept(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConcept(conceptId: Long): List<MediaMetadata> = dao.getByConcept(conceptId).map{it.toDomain()}
     suspend fun getByConcept(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConcept(conceptId, type, limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByConceptSortedBySimilarity(conceptId: Long, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConceptSortedBySimilarity(conceptId: Long, type: MediaType, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConceptSortedBySimilarity(conceptId: Long, type: MediaType): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type).map{it.toDomain()}
+    suspend fun getByConceptWithMinimumSimilarity(conceptId: Long, minSimilarity: Float, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptWithMinimumSimilarity(conceptId, minSimilarity=minSimilarity, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConceptWithMinimumSimilarity(conceptId: Long, type: MediaType, minSimilarity: Float, limit: Int, offset: Int): List<MediaMetadata> = dao.getByConceptWithMinimumSimilarity(conceptId, type, minSimilarity=minSimilarity, limit=limit, offset=offset).map{it.toDomain()}
     suspend fun getByConceptWithMinimumSimilarity(conceptId: Long, type: MediaType): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, type).map{it.toDomain()}
 
