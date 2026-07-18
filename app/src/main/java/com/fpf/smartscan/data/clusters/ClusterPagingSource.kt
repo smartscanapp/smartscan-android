@@ -20,14 +20,16 @@ class ClusterPagingSource(
                 clusterId,
                 type = filter.mediaType,
                 limit = pageSize + 1,
-                offset = offset
-            )
+                offset = offset,
+                ascending=sortBy.ascending,
+                )
         }
         else ->
             mediaMetadataRepository.getByCluster(
                 clusterId,
                 limit=pageSize + 1,
-                offset=offset
-            )
+                offset=offset,
+                ascending=sortBy.ascending,
+                )
     }
 }

@@ -63,8 +63,15 @@
     <string name="scan_in_progress_title">Scan In Progress</string>
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>
     <string name="media_type_title">Media type</string>
+    <string name="sort_title">Sort by</string>
     <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your library first.</string>
     <string name="download_model_message">A new model is required to use the app. Download it now to continue.</string>
+
+    <!--Sort Options-->
+    <string name="sort_date_asc_option">Sort by date (ascending)</string>
+    <string name="sort_date_desc_option">Sort by date (descending)</string>
+    <string name="sort_similarity_asc_option">Sort by similarity (ascending)</string>
+    <string name="sort_similarity_desc_option">Sort by similarity (descending)</string>
 
     <!-- Search screen -->
     <string name="search_storage_permissions">Storage permission required to search.</string>

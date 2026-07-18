@@ -13,6 +13,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import coil3.compose.AsyncImagePainter
+import com.fpf.smartscan.R
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
@@ -33,6 +34,7 @@ import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
@@ -89,9 +91,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val tagItems = _state
-        .map { it.filter to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (filters, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
 
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
@@ -106,6 +108,7 @@ class CollectionItemsViewModel(
                     pagingSourceFactory = {
                         TagPagingSource(
                             filter = filters,
+                            sortBy=sortBy,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -117,9 +120,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val clusterItems = _state
-        .map { it.filter to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (filters, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -133,6 +136,7 @@ class CollectionItemsViewModel(
                     pagingSourceFactory = {
                         ClusterPagingSource(
                             filter = filters,
+                            sortBy=sortBy,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
                         )
@@ -161,6 +165,15 @@ class CollectionItemsViewModel(
     private val _event = MutableSharedFlow<CollectionItemEvent>()
     val event = _event.asSharedFlow()
 
+    val sortByOptions: Map<SortBy, String>
+        get()=  mapOf(
+            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
+            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
+//            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
+//            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
+        )
+
+
     fun onAction(action: CollectionItemAction){
         when(action){
             is CollectionItemAction.CopyMedia -> copyItem(action.clipboard, action.context)
@@ -177,7 +190,8 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
             is CollectionItemAction.SetFilter -> setFilters(action.filter)
-            }
+            is CollectionItemAction.SetSortBy -> setSortBy(action.sortBy)
+        }
     }
 
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
@@ -339,6 +353,7 @@ class CollectionItemsViewModel(
     }
 
     private fun setFilters(filter: SearchFilter) = _state.update { it.copy(filter =filter) }
+    private fun setSortBy(sortBy: SortBy) = _state.update { it.copy(sortBy = sortBy) }
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

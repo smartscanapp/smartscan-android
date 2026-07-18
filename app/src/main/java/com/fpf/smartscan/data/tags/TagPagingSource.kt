@@ -19,14 +19,17 @@ class TagPagingSource(
                 tagId,
                 mediaType = filter.mediaType,
                 limit = pageSize + 1,
-                offset = offset
+                offset = offset,
+                ascending = sortBy.ascending
+
             )
         }
         else ->
             mediaMetadataRepository.getByTag(
                 tagId,
                 limit=pageSize + 1,
-                offset=offset
+                offset=offset,
+                ascending = sortBy.ascending
             )
     }
 }

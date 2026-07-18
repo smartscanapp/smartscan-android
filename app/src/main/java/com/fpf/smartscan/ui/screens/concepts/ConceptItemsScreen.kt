@@ -11,10 +11,14 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -38,6 +42,8 @@ import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.ui.action.ConceptItemsAction
+import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
@@ -64,7 +70,22 @@ fun ConceptItemsScreen(
     val density = LocalDensity.current
     val maxCollapsablePx = with(density) { 70.dp.toPx() }.toInt()
     val screenTitle = ""
+
+    var showSortOptions by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = "Sort",
+            onClick = { showSortOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = "Filter",
+            onClick = { showFilters = true },
+            enabled = !state.loading,
+        ),
+    )
 
     LaunchedEffect(concept) {
         viewModel.onAction(ConceptItemsAction.SetConceptToView(concept))
@@ -82,13 +103,18 @@ fun ConceptItemsScreen(
                         )
                     }
                 },
-                actions =  {
-                    IconButton(
-                        onClick = {showFilters = true}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = null
+                actions = {
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
                         )
                     }
                 }
@@ -156,6 +182,21 @@ fun ConceptItemsScreen(
             }
         }
     }
+
+    OptionPicker(
+        isVisible = showSortOptions,
+        title = stringResource(R.string.sort_title),
+        options =  viewModel.sortByOptions.values.toList(),
+        selectedOption  = viewModel.sortByOptions[state.sortBy]?: viewModel.sortByOptions.values.first(),
+        onSelect = { selected ->
+            val sortBy =  viewModel.sortByOptions.entries.find { it.value == selected }?.key
+            sortBy?.let{
+                viewModel.onAction(ConceptItemsAction.SetSortBy(it))
+            }
+            showSortOptions = false
+        },
+        onClose = {showSortOptions = false}
+    )
 
     OptionPicker(
         isVisible = showFilters,

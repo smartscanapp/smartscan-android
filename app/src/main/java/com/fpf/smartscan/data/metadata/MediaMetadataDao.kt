@@ -57,7 +57,29 @@ interface MediaMetadataDao {
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
-    suspend fun getByTag(
+    suspend fun getByTagDesc(
+        tagId: Long,
+        mediaType: MediaType?,
+        startDate: Long?,
+        endDate: Long?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByTagAsc(
         tagId: Long,
         mediaType: MediaType?,
         startDate: Long?,
@@ -115,12 +137,31 @@ interface MediaMetadataDao {
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
-    suspend fun getByCluster(
+    suspend fun getByClusterDesc(
         clusterId: Long,
         mediaType: MediaType?,
         limit: Int,
         offset: Int
     ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId = :clusterId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByClusterAsc(
+        clusterId: Long,
+        mediaType: MediaType?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
 
 
     @Query("""
@@ -167,7 +208,27 @@ interface MediaMetadataDao {
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
-    suspend fun getByConceptSortedByDate(
+    suspend fun getByConceptSortedByDateDesc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedByDateAsc(
         conceptId: Long,
         mediaType: MediaType?,
         minSimilarity: Float?,
@@ -206,7 +267,27 @@ interface MediaMetadataDao {
     ORDER BY c.similarity DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
-    suspend fun getByConceptSortedBySimilarity(
+    suspend fun getByConceptSortedBySimilarityDesc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY c.similarity ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedBySimilarityAsc(
         conceptId: Long,
         mediaType: MediaType?,
         minSimilarity: Float?,

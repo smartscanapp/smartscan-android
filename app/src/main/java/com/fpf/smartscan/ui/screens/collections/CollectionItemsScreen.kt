@@ -111,12 +111,27 @@ fun CollectionItemsScreen(
     }
 
     // actions
+    var showMenu by remember { mutableStateOf(false) }
+    var showSortOptions by remember { mutableStateOf(false) }
+    var showFilters by remember { mutableStateOf(false) }
     var isMoving by remember { mutableStateOf(false) }
     var isCreatingCollectionAndMoving by remember { mutableStateOf(false) }
     var isAddingTag by remember { mutableStateOf(false) }
     var showMoreActions by remember { mutableStateOf(false) }
-    var showMediaTypeFilter by remember { mutableStateOf(false) }
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = "Sort",
+            onClick = { showSortOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = "Filter",
+            onClick = { showFilters = true },
+            enabled = !state.loading,
+        ),
+    )
 
     val mainActions: List<ActionConfig> = listOf(
         ActionConfig(
@@ -179,12 +194,17 @@ fun CollectionItemsScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {showMediaTypeFilter = true}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = null
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
                         )
                     }
                 }
@@ -406,16 +426,31 @@ fun CollectionItemsScreen(
     )
 
     OptionPicker(
-        isVisible = showMediaTypeFilter,
+        isVisible = showSortOptions,
+        title = stringResource(R.string.sort_title),
+        options =  viewModel.sortByOptions.values.toList(),
+        selectedOption  = viewModel.sortByOptions[state.sortBy]?: viewModel.sortByOptions.values.first(),
+        onSelect = { selected ->
+            val sortBy =  viewModel.sortByOptions.entries.find { it.value == selected }?.key
+            sortBy?.let{
+                viewModel.onAction(CollectionItemAction.SetSortBy(it))
+            }
+            showSortOptions = false
+        },
+        onClose = {showSortOptions = false}
+    )
+
+    OptionPicker(
+        isVisible = showFilters,
         title = stringResource(R.string.media_type_title),
         options =  listOf("All") + mediaTypeOptions.values.toList(),
         selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
         onSelect = { selected ->
             val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
             viewModel.onAction(CollectionItemAction.SetFilter(SearchFilter(mediaType=mediaType)))
-            showMediaTypeFilter = false
+            showFilters = false
         },
-        onClose = {showMediaTypeFilter = false}
+        onClose = {showFilters = false}
     )
 
 }

@@ -4,6 +4,7 @@ package com.fpf.smartscan.ui.screens.concepts
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.util.Log
 import androidx.compose.ui.platform.Clipboard
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.data.concepts.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
@@ -18,6 +20,7 @@ import com.fpf.smartscan.data.metadata.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
@@ -43,12 +46,21 @@ class ConceptItemsViewModel(
     private val _state = MutableStateFlow(ConceptItemsState())
     val state: StateFlow<ConceptItemsState> = _state
 
+    val sortByOptions: Map<SortBy, String>
+        get()=  mapOf(
+            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
+            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
+            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
+            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
-        .map { it.filter to it.concept }
+        .map { Triple(it.filter, it.sortBy, it.concept) }
         .distinctUntilChanged()
-        .flatMapLatest { (filters, concept) ->
+        .flatMapLatest { (filters, sortBy, concept) ->
 
+            Log.d(TAG, "Sort by: $sortBy")
             if (concept?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -61,6 +73,7 @@ class ConceptItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ConceptPagingSource(
+                            sortBy=sortBy,
                             filter = filters,
                             conceptId = concept.id,
                             mediaMetadataRepository = mediaMetadataRepository,
@@ -84,6 +97,7 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
             is ConceptItemsAction.SetFilter -> setFilter(action.filter)
+            is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
         }
     }
 
@@ -136,6 +150,7 @@ class ConceptItemsViewModel(
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setFilter(filter: SearchFilter) = _state.update { it.copy(filter = filter) }
 
+    private fun setSortBy(sortBy: SortBy) = _state.update { it.copy(sortBy = sortBy) }
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){

@@ -20,14 +20,16 @@ class ConceptPagingSource(
                         conceptId,
                         mediaType=filter.mediaType,
                         limit=pageSize + 1,
-                        offset=offset
-                    )
+                        offset=offset,
+                        ascending=sortBy.ascending,
+                        )
                 } else {
                     mediaMetadataRepository.getByConceptSortedByDate(
                         conceptId,
                         limit=pageSize + 1,
-                        offset=offset
-                    )
+                        offset=offset,
+                        ascending=sortBy.ascending,
+                        )
                 }
 
             is SortBy.Similarity ->
@@ -38,31 +40,35 @@ class ConceptPagingSource(
                             mediaType = filter.mediaType,
                             minSimilarity = filter.similarity,
                             limit = pageSize + 1,
-                            offset=offset
-                        )
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
 
                     filter.mediaType != null ->
                         mediaMetadataRepository.getByConceptSortedBySimilarity(
                             conceptId,
                             mediaType = filter.mediaType,
                             limit = pageSize + 1,
-                            offset=offset
-                        )
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
 
                     filter.similarity != null ->
                         mediaMetadataRepository.getByConceptSortedBySimilarity(
                             conceptId,
                             minSimilarity = filter.similarity,
                             limit = pageSize + 1,
-                            offset=offset
-                        )
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
 
                     else ->
                         mediaMetadataRepository.getByConceptSortedBySimilarity(
                             conceptId,
                             limit=pageSize + 1,
-                            offset=offset
-                        )
+                            offset=offset,
+                            ascending=sortBy.ascending,
+                            )
                 }
         }
 }
