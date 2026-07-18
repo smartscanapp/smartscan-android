@@ -154,7 +154,7 @@ fun SearchScreen(
             hasIndexedVideos == true && hasIndexedImages==false -> searchViewModel.onAction(SearchAction.SetMediaTypeFilter(MediaType.VIDEO))
         }
         onDispose {
-            searchViewModel.onAction(SearchAction.Reset)
+//            searchViewModel.onAction(SearchAction.Reset)
         }
     }
 
