@@ -71,7 +71,6 @@ fun CollectionsScreen(
     onViewCollection: (MediaCollection) -> Unit,
     isMainScanRequired: Boolean,
     hasStoragePermission: Boolean,
-    onIndex: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
 
