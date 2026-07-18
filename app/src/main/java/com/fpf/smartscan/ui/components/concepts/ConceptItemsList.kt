@@ -44,6 +44,8 @@ fun ConceptItemsList(
     items: LazyPagingItems<MediaItem>,
     onItemClick: (MediaItem?) -> Unit,
     onOffsetChange: (Int) -> Unit,
+    onGetPlaybackPosition: (Long) -> Long,
+    onSavePlaybackPosition: (itemId: Long, pos: Long) -> Unit,
     maxCollapsePx: Int = 0,
     isSelecting: Boolean = false,
     selectAll: Boolean = false,
@@ -129,7 +131,9 @@ fun ConceptItemsList(
                         onToggleSelected = onToggleSelected,
                         isSelecting = isSelecting,
                         isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
-                        onError=onError
+                        onError=onError,
+                        onSavePlaybackPosition= { onSavePlaybackPosition(item.id, it) },
+                        playbackPosition = onGetPlaybackPosition(item.id)
                     )
                 }
             }

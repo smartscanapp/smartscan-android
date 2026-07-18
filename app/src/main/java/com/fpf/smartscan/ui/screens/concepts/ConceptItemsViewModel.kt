@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -58,6 +59,8 @@ class ConceptItemsViewModel(
             SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
         )
 
+    private val playbackPositions = mutableStateMapOf<Long, Long>()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
         .map { Triple(it.filter, it.sortBy, it.concept) }
@@ -109,6 +112,12 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.SetFilter -> setFilter(action.filter)
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
         }
+    }
+
+    fun getPlaybackPosition(id: Long): Long = playbackPositions[id] ?: 0L
+
+    fun savePlaybackPosition(id: Long, position: Long) {
+        playbackPositions[id] = position
     }
 
     private fun load(){
@@ -179,6 +188,7 @@ class ConceptItemsViewModel(
         val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, "")?: ""
         return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
     }
+
 
     // TODO: update this to be event based
 //    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){

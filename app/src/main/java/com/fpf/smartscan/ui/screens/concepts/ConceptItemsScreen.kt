@@ -138,6 +138,8 @@ fun ConceptItemsScreen(
             verticalArrangement = Arrangement.Top
         ) {
             ConceptItemsList(
+                onSavePlaybackPosition = viewModel::savePlaybackPosition,
+                onGetPlaybackPosition = viewModel::getPlaybackPosition,
                 isVisible = conceptItems.itemCount > 0,
                 items = conceptItems,
                 onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView( it)) },

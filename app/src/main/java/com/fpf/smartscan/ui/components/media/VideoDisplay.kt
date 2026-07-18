@@ -19,6 +19,8 @@ import androidx.media3.exoplayer.ExoPlayer
 fun VideoDisplay(
     uri: Uri,
     modifier: Modifier = Modifier,
+    playbackPosition: Long = 0L,
+    onPlaybackPositionChanged: ((Long) -> Unit)? = null,
     onTap: () -> Unit = {},
     onSwipeLeft: () -> Unit = {},
     onSwipeRight: () -> Unit = {},
@@ -32,14 +34,16 @@ fun VideoDisplay(
     }
 
     LaunchedEffect(uri) {
-        exoPlayer.setMediaItem(MediaItem.fromUri(uri), true)
+        exoPlayer.setMediaItem(MediaItem.fromUri(uri))
         exoPlayer.prepare()
+        exoPlayer.seekTo(playbackPosition)
         exoPlayer.playWhenReady = true
     }
 
     DisposableEffect(Unit) {
         onDispose {
             exoPlayer.release()
+            onPlaybackPositionChanged?.invoke(exoPlayer.currentPosition)
         }
     }
 
