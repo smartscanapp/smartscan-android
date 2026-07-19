@@ -24,7 +24,6 @@ class ClusterManager(
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository,
 ) {
     companion object {
         private const val LARGE_DATASET_SIZE: Int = 10000
@@ -37,9 +36,8 @@ class ClusterManager(
     private var idCount: Long = 0L
 
 
-    suspend fun cluster() {
-        val unclusteredItemIdsMap = mediaMetadataRepository.getUnclusteredItemIds()
-        val (unclusteredImages, unclusteredVideos) = unclusteredItemIdsMap.keys.partition { unclusteredItemIdsMap[it] == MediaType.IMAGE }
+    suspend fun cluster(unclusterItems: Map<Long, MediaType> ) {
+        val (unclusteredImages, unclusteredVideos) = unclusterItems.keys.partition { unclusterItems[it] == MediaType.IMAGE }
         val unclusterItemEmbeds = mutableListOf<StoredEmbedding>()
         unclusterItemEmbeds.addAll(imageEmbedStore.get(unclusteredImages))
         unclusterItemEmbeds.addAll(videoEmbedStore.get(unclusteredVideos))
@@ -54,7 +52,7 @@ class ClusterManager(
         }
         val clusterer = IncrementalClusterer(existingClusters = existingClusters, defaultThreshold = defaultThreshold)
         val result = clusterer.cluster(unclusterItemEmbeds.associate { it.id to it.embedding})
-        updateClustersAndAssign(result, existingClusters.keys, unclusteredItemIdsMap)
+        updateClustersAndAssign(result, existingClusters.keys, unclusterItems)
     }
 
     suspend fun mergeClusters(primaryClusterId: Long, otherClusters: List<Long>){

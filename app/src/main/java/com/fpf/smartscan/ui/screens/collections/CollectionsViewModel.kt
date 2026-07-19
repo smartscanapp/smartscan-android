@@ -41,7 +41,6 @@ class CollectionsViewModel(
     private val tagCrossRefRepository: TagCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
@@ -61,7 +60,6 @@ class CollectionsViewModel(
         videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
     )
 
     private val _state = MutableStateFlow(CollectionsState())

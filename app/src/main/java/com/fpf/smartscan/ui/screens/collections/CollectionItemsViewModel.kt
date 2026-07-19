@@ -87,7 +87,6 @@ class CollectionItemsViewModel(
         videoEmbedStore = videoEmbedStore,
         clusterCrossRefRepository = clusterCrossRefRepository,
         clusterMetadataRepository = clusterMetadataRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
     )
     private val _state = MutableStateFlow(CollectionItemsState())
     val state: StateFlow<CollectionItemsState> = _state
