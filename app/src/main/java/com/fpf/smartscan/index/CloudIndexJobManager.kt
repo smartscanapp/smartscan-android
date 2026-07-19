@@ -102,15 +102,14 @@ class CloudIndexJobManager(
         allowedClusters: List<Long>,
     ){
         val mediaProcess = mutableSetOf<MediaMetadata>()
-        when{
-            allowedTags.isNotEmpty() -> {
-                val existingMediaMatchingTags = metadataRepo.getByTagsWithoutDescription(allowedTags, mediaType)
-                mediaProcess.addAll(existingMediaMatchingTags)
-            }
-            allowedClusters.isNotEmpty() -> {
-                val existingMediaMatchingClusters = metadataRepo.getByClustersWithoutDescription(allowedClusters, mediaType)
-                mediaProcess.addAll(existingMediaMatchingClusters)
-            }
+
+        if(allowedTags.isNotEmpty()) {
+            val existingMediaMatchingTags = metadataRepo.getByTagsWithoutDescription(allowedTags, mediaType)
+            mediaProcess.addAll(existingMediaMatchingTags)
+        }
+        if(allowedClusters.isNotEmpty()) {
+            val existingMediaMatchingClusters = metadataRepo.getByClustersWithoutDescription(allowedClusters, mediaType)
+            mediaProcess.addAll(existingMediaMatchingClusters)
         }
         indexer.run(mediaProcess.toList())
     }
