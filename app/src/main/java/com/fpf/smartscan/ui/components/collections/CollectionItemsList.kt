@@ -45,7 +45,7 @@ fun CollectionItemsList(
     selectedItems: Set<MediaItem>,
     excludedItems: Set<MediaItem>,
     selectAll: Boolean,
-    onViewItem: (item: MediaItem?) -> Unit,
+    onItemClick: (item: MediaItem) -> Unit,
     onToggleSelected: (MediaItem) -> Unit,
     onToggleSelectionMode: () -> Unit,
     onOffsetChange: (Int) -> Unit,
@@ -125,7 +125,7 @@ fun CollectionItemsList(
                 if (item != null) {
                     MediaItemCard(
                         item=item,
-                        onItemClick=onViewItem,
+                        onItemClick=onItemClick,
                         onToggleSelected = onToggleSelected,
                         onToggleSelectionMode = onToggleSelectionMode,
                         isSelecting = isSelecting,

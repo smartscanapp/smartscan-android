@@ -338,11 +338,11 @@ fun CollectionItemsScreen(
                     selectAll = state.selection.selectAll,
                     excludedItems = state.selection.excludedItems,
                     selectedItems = state.selection.selectedItems,
-                    onViewItem = { uri ->
+                    onItemClick = { item ->
                         viewModel.onAction(
                             CollectionItemAction.SetMediaToView(
                                 context,
-                                uri,
+                                item,
                                 appSettings.enableDirectGalleryOpen
                             )
                         )
