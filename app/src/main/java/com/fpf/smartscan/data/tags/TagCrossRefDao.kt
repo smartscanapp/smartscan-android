@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.fpf.smartscan.media.MediaType
 
 @Dao
@@ -13,6 +14,15 @@ interface TagCrossRefDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(tags: List<TagCrossRefEntity>)
+
+    @Transaction
+    @Query("""
+    INSERT OR IGNORE INTO tag_crossref(mediaId, mediaType, tagId)
+    SELECT mediaId, mediaType, :primaryTagId
+    FROM tag_crossref
+    WHERE tagId IN (:tagIds)
+""")
+    suspend fun moveCrossRefs(primaryTagId: Long, tagIds: List<Long>)
 
     @Query(""" DELETE FROM tag_crossref WHERE mediaId IN (:mediaIds) AND mediaType = :mediaType AND tagId = :tagId """)
     suspend fun deleteMediaMatchingTag(mediaIds: List<Long>, mediaType: MediaType, tagId: Long)

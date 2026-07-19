@@ -66,15 +66,9 @@ class TagManager(
         }
     }
 
-    suspend fun mergeTags(primaryTagName: String, otherTags: List<String>){
-        val primaryTag = tagRepository.getTagsByName(listOf(primaryTagName)).firstOrNull()
-        val tagsToMerge = tagRepository.getTagsByName(otherTags)
-        val mediaToUpdate = tagsToMerge.flatMap { mediaMetadataRepository.getByTag(it.id) }
-        if(primaryTag != null && mediaToUpdate.isNotEmpty()){
-            val updated = mediaToUpdate.map{ TagCrossRef(mediaId = it.id, tagId = primaryTag.id, mediaType = it.type) }
-            tagCrossRefRepository.insertTagCrossRefs(updated)
-            tagRepository.deleteTags(tagsToMerge)
-        }
+    suspend fun mergeTags(primaryTagId: Long, otherTags: List<Long>){
+        tagCrossRefRepository.moveTagCrossRefs(primaryTagId, otherTags)
+        tagRepository.deleteTagsById(otherTags)
     }
 
     suspend fun moveItems(items: Set<MediaItem>, currentTagName: String, destinationTagName: String){
