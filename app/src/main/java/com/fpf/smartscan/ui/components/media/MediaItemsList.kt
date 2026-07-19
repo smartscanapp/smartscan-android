@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.components.collections
+package com.fpf.smartscan.ui.components.media
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -42,12 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.ui.components.media.MediaItemCard
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun CollectionItemsList(
+fun MediaItemsList(
     isVisible: Boolean,
     items: LazyPagingItems<MediaItem>,
     selectedItems: Set<MediaItem>,

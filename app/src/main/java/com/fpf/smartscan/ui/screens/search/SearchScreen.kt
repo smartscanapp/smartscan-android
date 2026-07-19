@@ -58,7 +58,7 @@ import com.fpf.smartscan.ui.components.search.SearchBar
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.components.collections.CollectionItemsList
+import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.formatDate
@@ -380,7 +380,7 @@ fun SearchScreen(
 
             SearchPlaceholderDisplay(isVisible = state.resultIds.isEmpty())
 
-            CollectionItemsList(
+            MediaItemsList(
                 headerTitle = "${state.totalResults} Results",
                 isVisible = searchResults.itemCount > 0,
                 numGridColumns = appSettings.resultsPerRow,
