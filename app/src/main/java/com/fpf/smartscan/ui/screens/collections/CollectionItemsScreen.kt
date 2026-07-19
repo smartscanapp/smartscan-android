@@ -290,11 +290,10 @@ fun CollectionItemsScreen(
                             items[lastIndex]
                         },
                         onSaveUpdatedItem = {
-                            mediaViewModel.saveUpdatedItem(it)
+                            mediaViewModel.updateDescription(it)
                             items.refresh()
                         },
-                        onGetTags = mediaViewModel::getTagsMatchingMedia,
-                        onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
                         onCollectionClick = { id, type ->
                             mediaViewModel.viewCollection(id, type) {
                                 onViewCollection(it)

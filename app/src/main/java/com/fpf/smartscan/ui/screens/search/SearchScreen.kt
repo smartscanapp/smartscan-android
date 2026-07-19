@@ -241,11 +241,10 @@ fun SearchScreen(
                             searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
                         },
                         onSaveUpdatedItem = {
-                            mediaViewModel.saveUpdatedItem(it)
+                            mediaViewModel.updateDescription(it)
                             // TODO: switch to paging source and refresh items here
                         },
-                        onGetTags = mediaViewModel::getTagsMatchingMedia,
-                        onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
                         onCollectionClick = { id, type ->
                             mediaViewModel.viewCollection(id, type){
                                 onViewCollection(it)
