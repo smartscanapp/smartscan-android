@@ -9,6 +9,9 @@ class TagManager(
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
 ) {
+
+    val allTagsFlow = tagRepository.allTags
+    val allCollectionsFlow = tagRepository.getCollections()
     suspend fun tagItems( tagName: String, items: Set<MediaItem>){
         val existing = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
         var id = existing?.id
@@ -40,6 +43,9 @@ class TagManager(
         tagRepository.updateTags(listOf(Tag(tag.id, tag.name, System.currentTimeMillis())))
     }
 
+    suspend fun getTagByName(name: String): Tag? = tagRepository.getTagsByName(listOf(name)).firstOrNull()
+
+
     suspend fun renameTag(tagName: String, newName: String){
         val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
         tag?.let { tagRepository.updateTags(listOf((it).copy(name = newName))) }
@@ -51,6 +57,9 @@ class TagManager(
             tagCrossRefRepository.deleteMediaMatchTag(items.map{it.id}, tag.id, type)
         }
     }
+
+    suspend fun deleteTagsByName(names: List<String>) = tagRepository.deleteTagsByName(names)
+    suspend fun deleteTags(ids: List<Long>) = tagRepository.deleteTagsById(ids)
 
     suspend fun mergeTags(primaryTagId: Long, otherTags: List<Long>){
         tagCrossRefRepository.moveTagCrossRefs(primaryTagId, otherTags)

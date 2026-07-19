@@ -35,6 +35,7 @@ class ClusterManager(
 
     private var idCount: Long = 0L
 
+    val allCollectionsFlow = clusterMetadataRepository.getCollections()
 
     suspend fun cluster(unclusterItems: Map<Long, MediaType> ) {
         val (unclusteredImages, unclusteredVideos) = unclusterItems.keys.partition { unclusterItems[it] == MediaType.IMAGE }

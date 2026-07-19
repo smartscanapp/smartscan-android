@@ -31,6 +31,8 @@ class ConceptManager(
 
     private var idCount: Long = 0L
 
+    val allConceptsFlow = conceptRepository.getConceptsFlow()
+
     suspend fun createConcept(description: String, descriptionEmbed: Embedding){
         val concept = Concept(id = generateId(), description = description, size = 0)
         conceptRepository.insertConcept(concept)

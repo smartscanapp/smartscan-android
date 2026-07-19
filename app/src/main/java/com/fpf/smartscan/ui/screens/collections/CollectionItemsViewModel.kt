@@ -61,33 +61,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.map
 
+//TODO: move imageEmbedStore, videoEmbedStore out
 class CollectionItemsViewModel(
     application: Application,
+    private val tagManager: TagManager,
+    private val clusterManager: ClusterManager,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
-    private val clusterEmbedStore: FileEmbeddingStore,
-    private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "CollectionItemsViewModel"
     }
 
-    val tagManager = TagManager(
-        tagRepository=tagRepository,
-        tagCrossRefRepository=tagCrossRefRepository,
-    )
-
-    val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterEmbedStore,
-        imageEmbedStore = imageEmbedStore,
-        videoEmbedStore = videoEmbedStore,
-        clusterCrossRefRepository = clusterCrossRefRepository,
-        clusterMetadataRepository = clusterMetadataRepository,
-    )
     private val _state = MutableStateFlow(CollectionItemsState())
     val state: StateFlow<CollectionItemsState> = _state
 
@@ -150,7 +136,7 @@ class CollectionItemsViewModel(
         }
         .cachedIn(viewModelScope)
 
-    val tagCollections: StateFlow<List<MediaCollection>> = tagRepository.getCollections()
+    val tagCollections: StateFlow<List<MediaCollection>> = tagManager.allCollectionsFlow
         .flowOn(Dispatchers.IO)
         .stateIn(
         scope = viewModelScope,
@@ -158,7 +144,7 @@ class CollectionItemsViewModel(
         initialValue = emptyList()
     )
 
-    val clusterCollections: StateFlow<List<MediaCollection>> = clusterMetadataRepository.getCollections()
+    val clusterCollections: StateFlow<List<MediaCollection>> = clusterManager.allCollectionsFlow
             .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,

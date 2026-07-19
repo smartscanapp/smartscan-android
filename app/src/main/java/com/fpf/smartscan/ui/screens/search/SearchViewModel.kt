@@ -65,10 +65,8 @@ class SearchViewModel(
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
-    private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
+    private val tagManager: TagManager,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
     private val mediaMetadataRepository: MediaMetadataRepository
 ) : AndroidViewModel(application) {
     companion object {
@@ -85,12 +83,7 @@ class SearchViewModel(
 
     private val imageEmbedder = ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))
 
-    val tagManager = TagManager(
-        tagRepository=tagRepository,
-        tagCrossRefRepository=tagCrossRefRepository,
-        )
-
-    val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val allTags: StateFlow<List<Tag>> = tagManager.allTagsFlow.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
         imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE
@@ -432,7 +425,7 @@ class SearchViewModel(
 
     private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
         tagName?: return emptyList()
-        val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
+        val tag = tagManager.getTagByName(tagName)
         return if(endDateFilter != null || startDateFilter != null){
             tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType,startDateFilter, endDateFilter).map{it.id}  }?: emptyList()
         }else{
