@@ -20,6 +20,10 @@ class MediaJobManager(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val modelRepository: ModelRepository,
 ) {
+
+    companion object {
+        private const val TAG = "MediaJobManager"
+    }
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
