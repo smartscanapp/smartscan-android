@@ -90,6 +90,12 @@ class ConceptManager(
         )
     }
 
+    suspend fun deleteConceptLinks(mediaStoreId: Long, type: MediaType) {
+        conceptCrossRefRepository.delete(mediaStoreId, type)
+        val mediaConceptEmbedStore = getMediaConceptEmbedStore(type)
+        mediaConceptEmbedStore.remove(listOf(mediaStoreId))
+    }
+
     private suspend fun findMediaMatchingConcept(concept: Concept): Map<Pair<Long, MediaType>, Float>{
         val mediaItemSimsMap:  MutableMap<Pair<Long, MediaType>, Float> = mutableMapOf()
 
