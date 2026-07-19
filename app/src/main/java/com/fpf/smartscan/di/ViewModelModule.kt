@@ -32,10 +32,8 @@ val viewModelModule = module {
             videoEmbedStore = get(VIDEO_EMBED_STORE),
             clusterEmbedStore = get(CLUSTER_EMBED_STORE),
             mediaMetadataRepository = get(),
-            tagRepository = get(),
-            tagCrossRefRepository = get(),
+            tagManager = get(),
             clusterCrossRefRepository = get(),
-            clusterMetadataRepository = get()
         )
     }
     viewModel {
@@ -44,25 +42,16 @@ val viewModelModule = module {
             imageEmbedStore = get(IMAGE_EMBED_STORE),
             videoEmbedStore = get(VIDEO_EMBED_STORE),
             mediaMetadataRepository = get(),
-            tagRepository = get(),
-            tagCrossRefRepository = get(),
-            clusterCrossRefRepository = get(),
-            clusterMetadataRepository = get(),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE)
+            clusterManager = get(),
+            tagManager = get()
         )
     }
 
     viewModel {
         CollectionsViewModel(
             application = get(),
-            mediaMetadataRepository = get(),
-            tagRepository = get(),
-            tagCrossRefRepository = get(),
-            clusterCrossRefRepository = get(),
-            clusterMetadataRepository = get(),
-            imageEmbedStore = get(IMAGE_EMBED_STORE),
-            videoEmbedStore = get(VIDEO_EMBED_STORE),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE)
+            clusterManager = get(),
+            tagManager = get()
         )
     }
     viewModel {
@@ -70,12 +59,8 @@ val viewModelModule = module {
             application = get(),
             tagRepository = get(),
             clusterMetadataRepository = get(),
-            conceptRepository = get(),
-            conceptCrossRefRepository = get(),
+            conceptManager = get(),
             modelRepository = get(),
-            conceptEmbedStore = get(CONCEPT_EMBED_STORE),
-            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
-            videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
             )
     }
     viewModel {
@@ -93,13 +78,7 @@ val viewModelModule = module {
 
     viewModel {
         MediaViewModel(
-            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
-            videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
-            conceptEmbedStore = get(CONCEPT_EMBED_STORE),
-            conceptRepository = get(),
-            mediaMetadataRepository= get(),
-            conceptCrossRefRepository=get(),
-            modelRepository=get(),
+            mediaJobManager = get(),
             tagRepository = get(),
             clusterMetadataRepository = get()
         )

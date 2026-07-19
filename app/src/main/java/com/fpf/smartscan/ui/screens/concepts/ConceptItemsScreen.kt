@@ -161,11 +161,10 @@ fun ConceptItemsScreen(
                             conceptItems[lastIndex]
                         },
                         onSaveUpdatedItem = {
-                            mediaViewModel.saveUpdatedItem(it)
+                            mediaViewModel.updateDescription(it)
                             conceptItems.refresh()
                         },
-                        onGetTags = mediaViewModel::getTagsMatchingMedia,
-                        onGetClusters = mediaViewModel::getClustersMatchingMedia,
+                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
                         onCollectionClick = { id, type ->
                             mediaViewModel.viewCollection(id, type) {
                                 onViewCollection(it)

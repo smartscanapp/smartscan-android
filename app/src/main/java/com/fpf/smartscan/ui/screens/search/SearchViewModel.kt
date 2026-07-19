@@ -65,10 +65,8 @@ class SearchViewModel(
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
-    private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
+    private val tagManager: TagManager,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
     private val mediaMetadataRepository: MediaMetadataRepository
 ) : AndroidViewModel(application) {
     companion object {
@@ -85,13 +83,7 @@ class SearchViewModel(
 
     private val imageEmbedder = ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))
 
-    val tagManager = TagManager(
-        tagRepository=tagRepository,
-        tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-        )
-
-    val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val allTags: StateFlow<List<Tag>> = tagManager.allTagsFlow.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val defaultMediaType = when{
         imageEmbedStore.exists && !videoEmbedStore.exists -> MediaType.IMAGE
@@ -196,7 +188,7 @@ class SearchViewModel(
             _state.update { currentState -> currentState.copy(tagFilter = tag) }
             tagManager.updateLastUsage(tag)
         }
-        val idsMatchingTag: List<Long> = tagManager.getMediaMatchingTag(tag, _state.value.mediaType)
+        val idsMatchingTag: List<Long> = getMediaMatchingTag(tag, _state.value.mediaType)
         val tagOnlySearch = idsMatchingTag.isNotEmpty() && actualQuery.isBlank()
 
         if(tagOnlySearch){
@@ -431,6 +423,15 @@ class SearchViewModel(
 
     private fun queryResultToMap(result: QueryResult): Map<Long, Float> = result.sims?.let(result.ids::zip)?.toMap() ?: emptyMap()
 
+    private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
+        tagName?: return emptyList()
+        val tag = tagManager.getTagByName(tagName)
+        return if(endDateFilter != null || startDateFilter != null){
+            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType,startDateFilter, endDateFilter).map{it.id}  }?: emptyList()
+        }else{
+            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
+        }
+    }
 
     override fun onCleared() {
         textEmbedder.closeSession()

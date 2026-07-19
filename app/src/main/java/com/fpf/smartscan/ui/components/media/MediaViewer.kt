@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,8 +36,7 @@ fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
-    onGetTags: suspend (MediaItem) -> Map<Long, String>,
-    onGetClusters: suspend (MediaItem) -> Map<Long, String>,
+    onGetCollections: suspend (MediaItem, type: CollectionType) -> Map<Long, String>,
     onCollectionClick: (itemId: Long, type: CollectionType) -> Unit,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
@@ -51,21 +51,33 @@ fun MediaViewer(
     val currentItem = items[currentIndex]
     var showMenu by remember { mutableStateOf(false) }
 
+    val collectionCache = remember {
+        mutableStateMapOf<Pair<Long, CollectionType>, Map<Long, String>>()
+    }
+
     var tags by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var clusters by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+
     val collections = buildList {
         tags.forEach { (id, name) ->
             add(Triple(id, name, CollectionType.TAG))
         }
-
         clusters.forEach { (id, name) ->
             add(Triple(id, name, CollectionType.CLUSTER))
         }
     }
 
     LaunchedEffect(currentItem.id) {
-        tags = onGetTags(currentItem)
-        clusters = onGetClusters(currentItem)
+        val tagKey = currentItem.id to CollectionType.TAG
+        val clusterKey = currentItem.id to CollectionType.CLUSTER
+
+        tags = collectionCache.getOrPut(tagKey) {
+            onGetCollections(currentItem, CollectionType.TAG)
+        }
+
+        clusters = collectionCache.getOrPut(clusterKey) {
+            onGetCollections(currentItem, CollectionType.CLUSTER)
+        }
     }
 
     Dialog(

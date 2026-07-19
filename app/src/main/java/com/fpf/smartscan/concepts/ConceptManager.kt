@@ -31,6 +31,8 @@ class ConceptManager(
 
     private var idCount: Long = 0L
 
+    val allConceptsFlow = conceptRepository.getConceptsFlow()
+
     suspend fun createConcept(description: String, descriptionEmbed: Embedding){
         val concept = Concept(id = generateId(), description = description, size = 0)
         conceptRepository.insertConcept(concept)
@@ -88,6 +90,12 @@ class ConceptManager(
             removed = crossRefsToDelete.size,
             added = crossRefsToAdd.size
         )
+    }
+
+    suspend fun deleteConceptLinks(mediaStoreId: Long, type: MediaType) {
+        conceptCrossRefRepository.delete(mediaStoreId, type)
+        val mediaConceptEmbedStore = getMediaConceptEmbedStore(type)
+        mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
     private suspend fun findMediaMatchingConcept(concept: Concept): Map<Pair<Long, MediaType>, Float>{

@@ -57,7 +57,6 @@ class LocalIndexJobManager(
                 videoEmbedStore = videoEmbedStore,
                 clusterCrossRefRepository = clusterCrossRefRepository,
                 clusterMetadataRepository = clusterMetadataRepository,
-                mediaMetadataRepository = mediaMetadataRepository,
             )
 
             mediaTypes.forEach { mediaType ->
@@ -101,7 +100,8 @@ class LocalIndexJobManager(
             }
 
             try {
-                clusterManager.cluster()
+                val unclusteredItemIdsMap = mediaMetadataRepository.getUnclusteredItemIds()
+                clusterManager.cluster(unclusteredItemIdsMap)
             } catch (e: Exception) {
                 throw AppException.ClusterException(cause = e)
             }

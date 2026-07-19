@@ -17,6 +17,7 @@ import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import kotlinx.coroutines.CancellationException
@@ -95,23 +96,21 @@ class CloudIndexJobManager(
     // But this would involve architectural changes
     private suspend fun indexMediaCloud(
         mediaType: MediaType,
-        indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>?>,
+        indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>,
         metadataRepo: MediaMetadataRepository,
         allowedTags: List<Long>,
         allowedClusters: List<Long>,
     ){
         val mediaProcess = mutableSetOf<MediaMetadata>()
-        when{
-            allowedTags.isNotEmpty() -> {
-                val existingMediaMatchingTags = metadataRepo.getByTagsWithoutDescription(allowedTags, mediaType)
-                mediaProcess.addAll(existingMediaMatchingTags)
-            }
-            allowedClusters.isNotEmpty() -> {
-                val existingMediaMatchingClusters = metadataRepo.getByClustersWithoutDescription(allowedClusters, mediaType)
-                mediaProcess.addAll(existingMediaMatchingClusters)
-            }
+
+        if(allowedTags.isNotEmpty()) {
+            val existingMediaMatchingTags = metadataRepo.getByTagsWithoutDescription(allowedTags, mediaType)
+            mediaProcess.addAll(existingMediaMatchingTags)
         }
-        if(mediaProcess.isEmpty()) return
+        if(allowedClusters.isNotEmpty()) {
+            val existingMediaMatchingClusters = metadataRepo.getByClustersWithoutDescription(allowedClusters, mediaType)
+            mediaProcess.addAll(existingMediaMatchingClusters)
+        }
         indexer.run(mediaProcess.toList())
     }
 

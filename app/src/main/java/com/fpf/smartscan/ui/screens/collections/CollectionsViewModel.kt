@@ -37,39 +37,19 @@ import kotlinx.coroutines.launch
 
 class CollectionsViewModel(
     application: Application,
-    private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository,
-    private val imageEmbedStore: FileEmbeddingStore,
-    private val videoEmbedStore: FileEmbeddingStore,
-    private val clusterEmbedStore: FileEmbeddingStore,
+    private val tagManager: TagManager,
+    private val clusterManager: ClusterManager,
     ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "CollectionsViewModel"
         const val TOP_N = 6
     }
 
-    val tagManager = TagManager(
-        tagRepository=tagRepository,
-        tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
-    val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterEmbedStore,
-        imageEmbedStore = imageEmbedStore,
-        videoEmbedStore = videoEmbedStore,
-        clusterCrossRefRepository = clusterCrossRefRepository,
-        clusterMetadataRepository = clusterMetadataRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
-
     private val _state = MutableStateFlow(CollectionsState())
     val state: StateFlow<CollectionsState> = _state
 
     val clusterCollections: StateFlow<List<MediaCollection>> = combine(
-        clusterMetadataRepository.getCollections(),
+        clusterManager.allCollectionsFlow,
         _state.map {  it.showAllCollections to  it.collectionType }.distinctUntilChanged()
     ) { collections, ( showAllCollections, collectionType) ->
         if(collectionType == CollectionType.CLUSTER){
@@ -85,7 +65,7 @@ class CollectionsViewModel(
         )
 
     val tagCollections: StateFlow<List<MediaCollection>> = combine(
-        tagRepository.getCollections(),
+        tagManager.allCollectionsFlow,
         _state.map {  it.showAllCollections to  it.collectionType }.distinctUntilChanged()
     ) { collections, ( showAllCollections, collectionType) ->
         if(collectionType == CollectionType.TAG){
@@ -148,7 +128,7 @@ class CollectionsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val selectedCollections = getSelectedCollections()
-                tagRepository.deleteTagsByName(selectedCollections.map{it.name})
+                tagManager.deleteTags(selectedCollections.map{it.id})
                 resetSelection()
                 val message = if(selectedCollections.size == 1 ) "Deleted ${selectedCollections.size} collection" else "Deleted ${selectedCollections.size} collections"
                 _event.emit(CollectionEvent(CollectionEventType.DELETE, success = true, message = message))
@@ -183,7 +163,7 @@ class CollectionsViewModel(
                 val otherCollections = selectedCollections.filter { selectedCollection -> selectedCollection.id != newMergedCollection.id }
                 when (newMergedCollection.type) {
                     CollectionType.CLUSTER -> clusterManager.mergeClusters(newMergedCollection.id, otherCollections.map { it.id })
-                    CollectionType.TAG -> tagManager.mergeTags(primaryCollectionName, otherCollections.map { it.name })
+                    CollectionType.TAG -> tagManager.mergeTags(newMergedCollection.id, otherCollections.map { it.id })
                 }
 
                 resetSelection()
@@ -226,14 +206,14 @@ class CollectionsViewModel(
                 if(currentState.showAllCollections) {
                     clusterCollections.value
                 } else {
-                    clusterMetadataRepository.getCollections().first()
+                    clusterManager.allCollectionsFlow.first()
                 }
             }
             CollectionType.TAG -> {
                 if(currentState.showAllCollections) {
                     tagCollections.value
                 } else {
-                    tagRepository.getCollections().first()
+                    tagManager.allCollectionsFlow.first()
                 }
             }
         }.toMutableSet()

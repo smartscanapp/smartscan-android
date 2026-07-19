@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -41,37 +42,22 @@ class ConceptsViewModel(
     application: Application,
     private val tagRepository: TagRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val conceptRepository: ConceptRepository,
-    private val conceptCrossRefRepository: ConceptCrossRefRepository,
-    private val conceptEmbedStore: FileEmbeddingStore,
-    private val imageConceptEmbedStore: FileEmbeddingStore,
-    private val videoConceptEmbedStore: FileEmbeddingStore,
+    private val conceptManager: ConceptManager,
     private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
+
     companion object {
         private const val TAG = "ConceptsViewModel"
-        private const val SIMILARITY_THRESHOLD = 0.25f
     }
 
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
-    val conceptManager by lazy {
-        ConceptManager(
-            similarityThreshold = SIMILARITY_THRESHOLD,
-            conceptRepository = conceptRepository,
-            conceptCrossRefRepository = conceptCrossRefRepository,
-            conceptEmbedStore = conceptEmbedStore,
-            imageConceptEmbedStore = imageConceptEmbedStore,
-            videoConceptEmbedStore=videoConceptEmbedStore
-        )
-    }
-
     private val _state = MutableStateFlow(ConceptsState())
     val state: StateFlow<ConceptsState> = _state
 
-    val concepts: StateFlow<List<Concept>> = conceptRepository.getConceptsFlow()
+    val concepts: StateFlow<List<Concept>> = conceptManager.allConceptsFlow
             .onEach { concepts -> _state.update { it.copy(totalConcepts = concepts.size) } }
             .flowOn(Dispatchers.IO)
             .stateIn(
@@ -250,17 +236,18 @@ class ConceptsViewModel(
         val currentState = _state.value
         val selectedCollections = currentState.collectionsSelection.selectedItems
         when(currentState.selectedCollectionType){
-            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.map{it.id}.toSet())
-            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
+            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
             else -> {}
         }
         setCollectionType(null)
     }
 
+
     private suspend fun getSelectedConcepts(): Set<Concept> = SelectionUtils.getSelectedItems(_state.value.selection) { getAllConcepts() }
 
     private suspend fun getAllConcepts(): MutableSet<Concept> {
-        return conceptRepository.getConcepts().toMutableSet()
+        return conceptManager.allConceptsFlow.first().toMutableSet()
     }
 
 }

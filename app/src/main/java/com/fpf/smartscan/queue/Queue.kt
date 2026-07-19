@@ -1,4 +1,4 @@
-package com.fpf.smartscan.utils
+package com.fpf.smartscan.queue
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -23,8 +23,8 @@ class Queue<JobData>(
         }
     }
 
-    suspend fun submit(jobData: JobData) {
-        queue.send(jobData)
+    fun submit(jobData: JobData) {
+        queue.trySend(jobData)
     }
 
     private suspend fun processTask(jobData: JobData, workerId: Int) {

@@ -8,11 +8,8 @@ import com.fpf.smartscan.api.ImageSummary
 import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
 import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.events.MediaEvent
-import com.fpf.smartscan.events.MediaEventType
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.utils.uriToBase64
-import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.EmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
@@ -32,25 +29,20 @@ class CloudImageIndexer(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean,
     private val maxImageSize: Int = 720,
-    listener: ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>?>? = null,
+    listener: ProcessorListener<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>? = null,
     memoryOptions: MemoryOptions = MemoryOptions(),
     batchSize: Int = 10,
-): BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>?>(context, listener, memoryOptions, batchSize){
+): BatchProcessor<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>(context, listener, memoryOptions, batchSize){
 
 
-    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, Embedding>?>) {
+    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
         val filteredBatch = batch.filterNotNull()
-        val metadataList = filteredBatch.map{it.first}
-        val embedsToStore = filteredBatch.map{
-            StoredEmbedding(it.first.id, it.first.dateAdded, it.second)
-        }
-        store.add(embedsToStore)
-        mediaMetadataRepository.update(metadataList)
+        store.add(filteredBatch.map{it.second})
+        mediaMetadataRepository.update(filteredBatch.map { it.first })
         listener?.onBatchComplete(context, batch)
-        embedsToStore.forEachIndexed { index, embed -> mediaMetadataRepository.emitEvent(MediaEvent(eventType = MediaEventType.EMBED_UPDATE, updatedEmbed = embed, mediaType =metadataList[index].type ))}
     }
 
-    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding>? {
+    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, StoredEmbedding>? {
         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, item.id)
         val base64 = uriToBase64(context, contentUri, maxImageSize)
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
@@ -58,8 +50,9 @@ class CloudImageIndexer(
         val formatted = formatOutput(result)
         val rawEmbedding = withContext(NonCancellable) { embedder.embed(formatted) }
         val embed = if(quantize) rawEmbedding.toQInt8Embed() else rawEmbedding.toF32Embed()
+        val storedEmbedding = StoredEmbedding(item.id, item.dateAdded, embed)
         val updatedMetadata = item.copy(description = result.summary)
-        return Pair(updatedMetadata, embed)
+        return Pair(updatedMetadata, storedEmbedding)
     }
 
     private fun formatOutput(output: ImageSummary): String {

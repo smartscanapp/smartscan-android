@@ -10,9 +10,13 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
+import com.fpf.smartscan.di.clusterModule
+import com.fpf.smartscan.di.conceptModule
 import com.fpf.smartscan.di.dbModule
 import com.fpf.smartscan.di.embedStoreModule
+import com.fpf.smartscan.di.mediaModule
 import com.fpf.smartscan.di.modelsModule
+import com.fpf.smartscan.di.tagModule
 import com.fpf.smartscan.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -28,7 +32,16 @@ class App : Application() {
 
             startKoin {
                 androidContext(app)
-                modules(embedStoreModule, dbModule, viewModelModule, modelsModule)
+                modules(
+                    embedStoreModule,
+                    dbModule,
+                    viewModelModule,
+                    modelsModule,
+                    conceptModule,
+                    clusterModule,
+                    tagModule,
+                    mediaModule
+                )
             }
         }
     }
@@ -37,7 +50,16 @@ class App : Application() {
 
         startKoin {
             androidContext(this@App)
-            modules(embedStoreModule, dbModule, viewModelModule, modelsModule)
+            modules(
+                embedStoreModule,
+                dbModule,
+                viewModelModule,
+                modelsModule,
+                conceptModule,
+                clusterModule,
+                tagModule,
+                mediaModule
+            )
         }
 
         SingletonImageLoader.setSafe {
