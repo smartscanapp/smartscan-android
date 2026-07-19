@@ -27,7 +27,7 @@ class MediaViewModel(
         mediaJobManager.updateDescription(updatedMedia)
     }
 
-    fun viewCollection(collectionId: Long, type: CollectionType, onNavigate: (MediaCollection) -> Unit){
+    fun viewCollection(collectionId: Long, type: CollectionType, onViewCollection: (MediaCollection) -> Unit){
         viewModelScope.launch(Dispatchers.IO) {
             val collection = when (type) {
                 CollectionType.CLUSTER -> clusterMetadataRepository.getCollections(listOf(collectionId)).firstOrNull()
@@ -35,7 +35,7 @@ class MediaViewModel(
             }
             if(collection != null){
                 withContext(Dispatchers.Main){
-                    onNavigate(collection)
+                    onViewCollection(collection)
                 }
             }else{
                 Log.e(TAG, "Collection not found: $collection")
