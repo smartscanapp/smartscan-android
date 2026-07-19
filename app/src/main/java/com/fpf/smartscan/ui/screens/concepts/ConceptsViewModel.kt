@@ -250,12 +250,13 @@ class ConceptsViewModel(
         val currentState = _state.value
         val selectedCollections = currentState.collectionsSelection.selectedItems
         when(currentState.selectedCollectionType){
-            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.map{it.id}.toSet())
-            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.map{it.id}.toSet())
+            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
+            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
             else -> {}
         }
         setCollectionType(null)
     }
+
 
     private suspend fun getSelectedConcepts(): Set<Concept> = SelectionUtils.getSelectedItems(_state.value.selection) { getAllConcepts() }
 
