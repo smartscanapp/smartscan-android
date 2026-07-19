@@ -112,7 +112,6 @@ class CloudIndexJobManager(
                 mediaProcess.addAll(existingMediaMatchingClusters)
             }
         }
-        if(mediaProcess.isEmpty()) return
         indexer.run(mediaProcess.toList())
     }
 
