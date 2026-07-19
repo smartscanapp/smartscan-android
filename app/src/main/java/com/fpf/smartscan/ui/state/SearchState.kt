@@ -3,21 +3,24 @@ package com.fpf.smartscan.ui.state
 import android.net.Uri
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.search.SearchFilter
+import com.fpf.smartscan.search.SortBy
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class SearchState(
-    val searchResults: List<MediaItem> = emptyList(),
+    val resultIds: Set<Long> = emptySet(),
     val totalResults: Int = 0,
-    val mediaType: MediaType = MediaType.IMAGE,
     val queryImage: Uri? = null,
     val loading: Boolean = false,
     val error: String? = null,
     val resultToView: MediaItem? = null,
     val imageEmbedderLastUsage: Long? = null,
     val textEmbedderLastUsage: Long? = null,
-    val tagFilter: String? = null,
-    val startDateFilter: Long? = null,
-    val endDateFilter: Long? = null,
     val tagOnlySearch: Boolean = false,
-    val selection: SelectionState<MediaItem> = SelectionState()
-)
+    val selection: SelectionState<MediaItem> = SelectionState(),
+    val filter: SearchFilter = SearchFilter(mediaType = MediaType.IMAGE),
+    val sortBy: SortBy = SortBy.Date()
+){
+    val mediaType: MediaType
+        get()=filter.mediaType?: MediaType.IMAGE
+}

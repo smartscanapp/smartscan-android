@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
@@ -54,12 +55,11 @@ import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.search.AutoCompleter
 import com.fpf.smartscan.ui.components.search.ImageSearcher
 import com.fpf.smartscan.ui.components.search.SearchBar
-import com.fpf.smartscan.ui.components.search.SearchResults
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.components.collections.CollectionItemsList
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
-import com.fpf.smartscan.ui.screens.search.SearchViewModel.Companion.RESULTS_BATCH_SIZE
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.formatDate
 import com.fpf.smartscan.utils.toEpochSeconds
@@ -91,6 +91,7 @@ fun SearchScreen(
     val clipboard = LocalClipboard.current
 
     // Search state
+    val searchResults = searchViewModel.searchResults.collectAsLazyPagingItems()
     val state by searchViewModel.state.collectAsState()
     val tags by searchViewModel.allTags.collectAsState()
     val searchBarPlaceholders = listOf(
@@ -101,6 +102,7 @@ fun SearchScreen(
        stringResource(R.string.placeholders_search_by_tag),
         stringResource(R.string.placeholders_search_by_tag_query),
     )
+
 
     var isAddingTag by remember { mutableStateOf(false) }
     var tagAutoCompleteTagResults by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -171,8 +173,8 @@ fun SearchScreen(
         }
     }
 
-    LaunchedEffect(state.searchResults) {
-        if(state.searchResults.isEmpty()) offset = 0
+    LaunchedEffect(state.resultIds) {
+        if(state.resultIds.isEmpty()) offset = 0
     }
 
     LaunchedEffect(Unit) {
@@ -226,15 +228,19 @@ fun SearchScreen(
         when{
             state.resultToView != null -> {
                 val item = state.resultToView!!
+                val mediaItems by remember {
+                    derivedStateOf {
+                        List(searchResults.itemCount) { index -> searchResults[index] }.filterNotNull()
+                    }
+                }
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
                     exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
                 ) {
                     MediaViewer(
-                        items = state.searchResults,
-                        initialIndex = state.searchResults.indexOf(item),
-                        onLoadMore = searchViewModel::onLoadMore,
+                        items = mediaItems,
+                        initialIndex = mediaItems.indexOf(state.resultToView),
                         onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
                         onUpdateSearchImage = {
                             searchViewModel.onAction(SearchAction.ClearResultView)
@@ -242,7 +248,7 @@ fun SearchScreen(
                         },
                         onSaveUpdatedItem = {
                             mediaViewModel.updateDescription(it)
-                            // TODO: switch to paging source and refresh items here
+                            searchResults.refresh()
                         },
                         onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
                         onCollectionClick = { id, type ->
@@ -345,7 +351,7 @@ fun SearchScreen(
                                 }
                             )
                         }
-                        if(state.startDateFilter != null || state.endDateFilter != null){
+                        if(state.filter.startDate != null || state.filter.endDate != null){
                             TextButton(
                                 onClick = { searchViewModel.onAction(SearchAction.ClearDateFilters) },
                                 modifier = Modifier.align(Alignment.End)
@@ -372,29 +378,40 @@ fun SearchScreen(
                 Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
             }
 
-            SearchPlaceholderDisplay(isVisible = state.searchResults.isEmpty())
+            SearchPlaceholderDisplay(isVisible = state.resultIds.isEmpty())
 
-            SearchResults(
-                isVisible = !state.loading && state.searchResults.isNotEmpty(),
+            CollectionItemsList(
+                headerTitle = "${state.totalResults} Results",
+                isVisible = searchResults.itemCount > 0,
                 numGridColumns = appSettings.resultsPerRow,
-                searchResults = state.searchResults,
-                totalResults=state.totalResults,
+                items = searchResults,
                 isSelecting = state.selection.isSelecting,
                 selectAll = state.selection.selectAll,
-                selectedResults = state.selection.selectedItems,
-                excludedResults = state.selection.excludedItems,
-                loadMoreBuffer = (RESULTS_BATCH_SIZE * 0.4).toInt(),
-                onItemClick = { uri -> searchViewModel.onAction(SearchAction.ViewResult(context, uri, autoOpenInGallery = appSettings.enableDirectGalleryOpen )) },
-                onLoadMore = searchViewModel::onLoadMore,
-                onToggleSelected = { searchViewModel.onAction(SearchAction.ToggleSelectedResult(it)) },
+                excludedItems = state.selection.excludedItems,
+                selectedItems = state.selection.selectedItems,
+                onItemClick = { item ->
+                    searchViewModel.onAction(
+                        SearchAction.ViewResult(
+                            context,
+                            item,
+                            appSettings.enableDirectGalleryOpen
+                        )
+                    )
+                },
+                onToggleSelected = {
+                    searchViewModel.onAction(
+                        SearchAction.ToggleSelectedResult(
+                            it
+                        )
+                    )
+                },
                 onToggleSelectionMode = {
                     searchViewModel.onAction(SearchAction.ToggleSelectionMode)
                     offset = 0
-                                        },
-                onOffsetChange = {  offset = it },
+                },
+                onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsePx,
-                onError = searchViewModel::onErrorAsyncImage,
-
+                onError = searchViewModel::onErrorAsyncImage
             )
         }
             }
@@ -428,7 +445,7 @@ fun SearchScreen(
             searchViewModel.onAction(SearchAction.SetStartDateFilter(startDate))
             showStartDatePicker = false
         },
-        initialDateMillis = state.startDateFilter?.times(1000)
+        initialDateMillis = state.filter.startDate?.times(1000)
 
     )
 
@@ -440,7 +457,7 @@ fun SearchScreen(
             searchViewModel.onAction(SearchAction.SetEndDateFilter(endDate))
             showEndDatePicker = false
         },
-        initialDateMillis = state.endDateFilter?.times(1000)
+        initialDateMillis = state.filter.endDate?.times(1000)
     )
 
     BottomSheet(
@@ -459,7 +476,7 @@ fun SearchScreen(
             ) {
                 Text("Start date")
                 TextButton(onClick = { showStartDatePicker = true }) {
-                    Text(state.startDateFilter?.let { formatDate(it) } ?: "Any time")
+                    Text(state.filter.startDate?.let { formatDate(it) } ?: "Any time")
                 }
             }
 
@@ -469,7 +486,7 @@ fun SearchScreen(
             ) {
                 Text("End date")
                 TextButton(onClick = { showEndDatePicker = true }) {
-                    Text(state.endDateFilter?.let { formatDate(it) } ?: "Any time")
+                    Text(state.filter.endDate?.let { formatDate(it) } ?: "Any time")
                 }
             }
         }
