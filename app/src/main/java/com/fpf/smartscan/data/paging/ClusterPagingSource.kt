@@ -1,6 +1,5 @@
-package com.fpf.smartscan.data.clusters
+package com.fpf.smartscan.data.paging
 
-import com.fpf.smartscan.data.MediaItemPagingSource
 import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.search.SearchFilter

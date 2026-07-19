@@ -19,7 +19,7 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.concepts.Concept
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.concepts.ConceptPagingSource
+import com.fpf.smartscan.data.paging.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem

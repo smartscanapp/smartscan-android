@@ -20,8 +20,8 @@ import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.data.tags.TagPagingSource
-import com.fpf.smartscan.data.clusters.ClusterPagingSource
+import com.fpf.smartscan.data.paging.TagPagingSource
+import com.fpf.smartscan.data.paging.ClusterPagingSource
 import com.fpf.smartscan.data.mappers.toItem
 import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionItemEvent

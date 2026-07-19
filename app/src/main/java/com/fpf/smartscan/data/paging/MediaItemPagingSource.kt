@@ -1,4 +1,4 @@
-package com.fpf.smartscan.data
+package com.fpf.smartscan.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
