@@ -6,13 +6,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.fpf.smartscan.R
 import com.fpf.smartscan.media.MediaMetadata
+import com.fpf.smartscan.queue.jobs.MediaProcessingJob
 import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.utils.showNotification
-import com.fpf.smartscansdk.core.embeddings.Embedding
+import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.processors.Metrics
 import com.fpf.smartscansdk.core.processors.ProcessorListener
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
-abstract class BaseCloudIndexListener(private val notificationId: Int, private val tag: String) : ProcessorListener<MediaMetadata, Pair<MediaMetadata, Embedding>?> {
+abstract class BaseCloudIndexListener(private val notificationId: Int, private val tag: String) : ProcessorListener<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?> {
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress
 
@@ -20,6 +23,13 @@ abstract class BaseCloudIndexListener(private val notificationId: Int, private v
     val indexingStatus: StateFlow<IndexingStatus> = _indexingStatus
 
     abstract val itemName: String
+
+    private val _jobs = MutableSharedFlow<MediaProcessingJob>()
+    val jobs = _jobs.asSharedFlow()
+
+    protected suspend fun emitJob(job: MediaProcessingJob) {
+        _jobs.emit(job)
+    }
 
     override suspend fun onProgress(context: Context, progress: Float) {
         _progress.value = progress
@@ -44,6 +54,13 @@ abstract class BaseCloudIndexListener(private val notificationId: Int, private v
             )
         } catch (e: Exception) {
             Log.e(tag, "Error in onComplete: ${e.message}", e)
+        }
+    }
+
+    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
+        val filteredBatch = batch.filterNotNull()
+        filteredBatch.forEach { (metadata, embed) ->
+            emitJob(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
         }
     }
 
