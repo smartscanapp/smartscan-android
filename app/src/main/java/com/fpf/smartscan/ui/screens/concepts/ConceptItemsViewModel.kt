@@ -21,7 +21,7 @@ import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.concepts.ConceptPagingSource
 import com.fpf.smartscan.data.mappers.toItem
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.SearchFilter

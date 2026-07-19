@@ -13,8 +13,8 @@ import com.fpf.smartscan.data.concepts.ConceptCrossRefDao
 import com.fpf.smartscan.data.concepts.ConceptCrossRefEntity
 import com.fpf.smartscan.data.concepts.ConceptDao
 import com.fpf.smartscan.data.concepts.ConceptEntity
-import com.fpf.smartscan.data.metadata.MediaMetadataEntity
-import com.fpf.smartscan.data.metadata.MediaMetadataDao
+import com.fpf.smartscan.data.media.MediaMetadataEntity
+import com.fpf.smartscan.data.media.MediaMetadataDao
 import com.fpf.smartscan.data.migrations.MIGRATION_1_2
 import com.fpf.smartscan.data.migrations.MIGRATION_2_3
 import com.fpf.smartscan.data.migrations.MIGRATION_3_4

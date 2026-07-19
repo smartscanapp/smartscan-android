@@ -7,7 +7,7 @@ import android.provider.MediaStore
 import com.fpf.smartscan.api.ImageSummary
 import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.utils.uriToBase64
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding

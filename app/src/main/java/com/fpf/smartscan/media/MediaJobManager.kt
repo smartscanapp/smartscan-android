@@ -3,7 +3,7 @@ package com.fpf.smartscan.media
 import android.util.Log
 import com.fpf.smartscan.concepts.ConceptManager
 import com.fpf.smartscan.data.mappers.toMetadata
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.queue.Queue

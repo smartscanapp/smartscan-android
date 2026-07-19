@@ -14,11 +14,8 @@ import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.mappers.toItem
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.data.tags.TagCrossRefRepository
-import com.fpf.smartscan.data.tags.TagRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem

@@ -3,7 +3,7 @@ package com.fpf.smartscan.data.clusters
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.fpf.smartscan.data.metadata.MediaMetadataEntity
+import com.fpf.smartscan.data.media.MediaMetadataEntity
 import com.fpf.smartscan.media.MediaType
 
 @Entity(

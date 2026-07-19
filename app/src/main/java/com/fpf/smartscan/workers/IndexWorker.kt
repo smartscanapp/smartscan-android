@@ -9,7 +9,7 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE

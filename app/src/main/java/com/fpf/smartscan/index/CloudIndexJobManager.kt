@@ -6,7 +6,7 @@ import android.util.Log
 import com.fpf.smartscan.R
 import com.fpf.smartscan.api.llm.LLMProviderConfig
 import com.fpf.smartscan.api.llm.OpenaiClient
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.concepts.getAllowedClusters
 import com.fpf.smartscan.concepts.getAllowedTags
@@ -15,7 +15,6 @@ import com.fpf.smartscan.errors.AppException
 import com.fpf.smartscan.media.MediaMetadata
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.showNotification
-import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider

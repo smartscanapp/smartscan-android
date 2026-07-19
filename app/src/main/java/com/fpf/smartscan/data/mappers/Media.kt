@@ -1,6 +1,6 @@
 package com.fpf.smartscan.data.mappers
 
-import com.fpf.smartscan.data.metadata.MediaMetadataEntity
+import com.fpf.smartscan.data.media.MediaMetadataEntity
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaMetadata
 

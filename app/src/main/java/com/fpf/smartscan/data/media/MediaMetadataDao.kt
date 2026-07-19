@@ -1,4 +1,4 @@
-package com.fpf.smartscan.data.metadata
+package com.fpf.smartscan.data.media
 
 import androidx.room.Dao
 import androidx.room.Insert

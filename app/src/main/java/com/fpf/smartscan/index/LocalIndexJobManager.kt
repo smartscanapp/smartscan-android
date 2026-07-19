@@ -9,7 +9,7 @@ import androidx.core.net.toUri
 import com.fpf.smartscan.R
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.errors.AppException

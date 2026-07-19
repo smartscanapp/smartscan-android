@@ -3,7 +3,7 @@ package com.fpf.smartscan.data
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.removeStaleMedia

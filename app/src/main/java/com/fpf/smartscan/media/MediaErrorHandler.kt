@@ -6,7 +6,7 @@ import android.provider.MediaStore
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import android.util.Log
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
+import com.fpf.smartscan.data.media.MediaMetadataRepository
 import java.io.FileNotFoundException
 import java.lang.SecurityException
 
