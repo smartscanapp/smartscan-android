@@ -79,7 +79,6 @@ class CollectionItemsViewModel(
     val tagManager = TagManager(
         tagRepository=tagRepository,
         tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
     )
 
     val clusterManager = ClusterManager(

@@ -88,7 +88,6 @@ class SearchViewModel(
     val tagManager = TagManager(
         tagRepository=tagRepository,
         tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
         )
 
     val allTags: StateFlow<List<Tag>> = tagRepository.allTags.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -196,7 +195,7 @@ class SearchViewModel(
             _state.update { currentState -> currentState.copy(tagFilter = tag) }
             tagManager.updateLastUsage(tag)
         }
-        val idsMatchingTag: List<Long> = tagManager.getMediaMatchingTag(tag, _state.value.mediaType)
+        val idsMatchingTag: List<Long> = getMediaMatchingTag(tag, _state.value.mediaType)
         val tagOnlySearch = idsMatchingTag.isNotEmpty() && actualQuery.isBlank()
 
         if(tagOnlySearch){
@@ -431,6 +430,15 @@ class SearchViewModel(
 
     private fun queryResultToMap(result: QueryResult): Map<Long, Float> = result.sims?.let(result.ids::zip)?.toMap() ?: emptyMap()
 
+    private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
+        tagName?: return emptyList()
+        val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
+        return if(endDateFilter != null || startDateFilter != null){
+            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType,startDateFilter, endDateFilter).map{it.id}  }?: emptyList()
+        }else{
+            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
+        }
+    }
 
     override fun onCleared() {
         textEmbedder.closeSession()

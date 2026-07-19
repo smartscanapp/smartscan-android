@@ -54,7 +54,6 @@ class CollectionsViewModel(
     val tagManager = TagManager(
         tagRepository=tagRepository,
         tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
     )
     val clusterManager = ClusterManager(
         clusterEmbedStore = clusterEmbedStore,
@@ -183,7 +182,7 @@ class CollectionsViewModel(
                 val otherCollections = selectedCollections.filter { selectedCollection -> selectedCollection.id != newMergedCollection.id }
                 when (newMergedCollection.type) {
                     CollectionType.CLUSTER -> clusterManager.mergeClusters(newMergedCollection.id, otherCollections.map { it.id })
-                    CollectionType.TAG -> tagManager.mergeTags(primaryCollectionName, otherCollections.map { it.name })
+                    CollectionType.TAG -> tagManager.mergeTags(newMergedCollection.id, otherCollections.map { it.id })
                 }
 
                 resetSelection()

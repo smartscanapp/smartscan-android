@@ -1,17 +1,13 @@
 package com.fpf.smartscan.tag
 
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.data.tags.TagEntity
-import com.fpf.smartscan.data.tags.TagCrossRefEntity
+
 import com.fpf.smartscan.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
 
 class TagManager(
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository
 ) {
     suspend fun tagItems( tagName: String, items: Set<MediaItem>){
         val existing = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
@@ -36,16 +32,6 @@ class TagManager(
             tags .filter { it.startsWith(partialTag, ignoreCase = true) }
         } else {
             emptyList()
-        }
-    }
-
-    suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
-        tagName?: return emptyList()
-        val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
-        return if(endDateFilter != null || startDateFilter != null){
-            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType,startDateFilter, endDateFilter).map{it.id}  }?: emptyList()
-        }else{
-            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
         }
     }
 
