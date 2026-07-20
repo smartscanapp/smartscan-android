@@ -218,8 +218,8 @@ fun SearchScreen(
         }
     }
 
-    BackHandler(enabled = state.selection.isSelecting) {
-        searchViewModel.onAction(SearchAction.ResetSelection)
+    BackHandler(enabled = state.selection.isSelecting || state.resultIds.isNotEmpty()) {
+        searchViewModel.onAction(SearchAction.Reset)
     }
 
     Box(
