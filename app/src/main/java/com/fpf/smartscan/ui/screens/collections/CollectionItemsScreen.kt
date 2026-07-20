@@ -253,55 +253,7 @@ fun CollectionItemsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        when {
-            state.mediaToView != null -> {
-                val mediaItems by remember {
-                    derivedStateOf {
-                        List(items.itemCount) { index -> items[index] }.filterNotNull()
-                    }
-                }
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(500)) + scaleIn(
-                        initialScale = 0.8f,
-                        animationSpec = tween(500)
-                    ),
-                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(
-                        targetScale = 0.8f,
-                        animationSpec = tween(300)
-                    )
-                ) {
-                    MediaViewer(
-                        items = mediaItems,
-                        initialIndex = mediaItems.indexOf(state.mediaToView),
-                        onClose = {
-                            viewModel.onAction(
-                                CollectionItemAction.SetMediaToView(
-                                    context,
-                                    null
-                                )
-                            )
-                        },
-                        onUpdateSearchImage = null,
-                        onLoadMore = {
-                            val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
-                            items[lastIndex]
-                        },
-                        onSaveUpdatedItem = {
-                            mediaViewModel.updateDescription(it)
-                            items.refresh()
-                        },
-                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
-                        onCollectionClick = { id, type ->
-                            mediaViewModel.viewCollection(id, type) {
-                                onViewCollection(it)
-                            }
-                        }
-                    )
-                }
-            }
-
-            else -> Column(
+       Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
@@ -365,7 +317,49 @@ fun CollectionItemsScreen(
                     isVisible = items.itemCount == 0
                 )
             }
+
+        state.mediaToView?.let { item ->
+            val mediaItems by remember {
+                derivedStateOf {
+                    List(items.itemCount) { index -> items[index] }.filterNotNull()
+                }
+            }
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(500)
+                ),
+                exit = fadeOut(animationSpec = tween(300)) + scaleOut(
+                    targetScale = 0.8f,
+                    animationSpec = tween(300)
+                )
+            ) {
+                MediaViewer(
+                    items = mediaItems,
+                    initialIndex = mediaItems.indexOf(item),
+                    onClose = {
+                        viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))
+                    },
+                    onUpdateSearchImage = null,
+                    onLoadMore = {
+                        val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
+                        items[lastIndex]
+                    },
+                    onSaveUpdatedItem = { updatedMedia->
+                        mediaViewModel.updateDescription(updatedMedia)
+                        items.refresh()
+                    },
+                    onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
+                    onCollectionClick = { id, type ->
+                        mediaViewModel.viewCollection(id, type) { collection ->
+                            onViewCollection(collection)
+                        }
+                    }
+                )
+            }
         }
+
 
         SlideRevealBox(
             isVisible = state.selection.isSelecting && state.selection.selectedCount > 0,

@@ -225,41 +225,7 @@ fun SearchScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        when{
-            state.resultToView != null -> {
-                val item = state.resultToView!!
-                val mediaItems by remember {
-                    derivedStateOf {
-                        List(searchResults.itemCount) { index -> searchResults[index] }.filterNotNull()
-                    }
-                }
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
-                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
-                ) {
-                    MediaViewer(
-                        items = mediaItems,
-                        initialIndex = mediaItems.indexOf(state.resultToView),
-                        onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
-                        onUpdateSearchImage = {
-                            searchViewModel.onAction(SearchAction.ClearResultView)
-                            searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
-                        },
-                        onSaveUpdatedItem = {
-                            mediaViewModel.updateDescription(it)
-                            searchResults.refresh()
-                        },
-                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
-                        onCollectionClick = { id, type ->
-                            mediaViewModel.viewCollection(id, type){
-                                onViewCollection(it)
-                            }
-                        }
-                    )
-                }
-            }
-            else -> Column(
+     Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
@@ -414,7 +380,40 @@ fun SearchScreen(
                 onError = searchViewModel::onErrorAsyncImage
             )
         }
+
+        state.resultToView?.let { item ->
+            val mediaItems by remember {
+                derivedStateOf {
+                    List(searchResults.itemCount) { index -> searchResults[index] }.filterNotNull()
+                }
             }
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
+                exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
+            ) {
+                MediaViewer(
+                    items = mediaItems,
+                    initialIndex = mediaItems.indexOf(item),
+                    onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
+                    onUpdateSearchImage = {
+                        searchViewModel.onAction(SearchAction.ClearResultView)
+                        searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, appSettings.imageQueryStrictness, appSettings.enableDedupe))
+                    },
+                    onSaveUpdatedItem = { updatedMedia ->
+                        mediaViewModel.updateDescription(updatedMedia)
+                        searchResults.refresh()
+                    },
+                    onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
+                    onCollectionClick = { id, type ->
+                        mediaViewModel.viewCollection(id, type){ collection->
+                            onViewCollection(collection)
+                        }
+                    }
+                )
+            }
+        }
+
         SlideRevealBox(
             isVisible = isActionBarVisible,
             offsetPx = offset,
@@ -436,7 +435,6 @@ fun SearchScreen(
             )
         }
     }
-
     DatePickerModal(
         show = showStartDatePicker,
         onDismiss = { showStartDatePicker = false },

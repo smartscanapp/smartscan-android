@@ -63,7 +63,6 @@ fun ConceptItemsScreen(
 ) {
     if(concept == null) return
 
-    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val conceptItems = viewModel.conceptItems.collectAsLazyPagingItems()
 
@@ -133,68 +132,68 @@ fun ConceptItemsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        when {
-            state.mediaToView != null -> {
-                val mediaItems by remember {
-                    derivedStateOf {
-                        List(conceptItems.itemCount) { index -> conceptItems[index] }.filterNotNull()
-                    }
-                }
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(500)) + scaleIn(
-                        initialScale = 0.8f,
-                        animationSpec = tween(500)
-                    ),
-                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(
-                        targetScale = 0.8f,
-                        animationSpec = tween(300)
-                    )
-                ) {
-                    MediaViewer(
-                        items = mediaItems,
-                        initialIndex = mediaItems.indexOf(state.mediaToView),
-                        onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView(null)) },
-                        onUpdateSearchImage = null,
-                        onLoadMore = {
-                            val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
-                            conceptItems[lastIndex]
-                        },
-                        onSaveUpdatedItem = {
-                            mediaViewModel.updateDescription(it)
-                            conceptItems.refresh()
-                        },
-                        onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
-                        onCollectionClick = { id, type ->
-                            mediaViewModel.viewCollection(id, type) {
-                                onViewCollection(it)
-                            }
-                        }
-                    )
-                }
-            }
-
-            else -> Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Top
-            ) {
-                ConceptItemsList(
-                    onSavePlaybackPosition = viewModel::savePlaybackPosition,
-                    onGetPlaybackPosition = viewModel::getPlaybackPosition,
-                    isVisible = conceptItems.itemCount > 0,
-                    items = conceptItems,
-                    onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
-                    onOffsetChange = { offset = it },
-                    maxCollapsePx = maxCollapsablePx,
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Top
+        ) {
+            ConceptItemsList(
+                onSavePlaybackPosition = viewModel::savePlaybackPosition,
+                onGetPlaybackPosition = viewModel::getPlaybackPosition,
+                isVisible = conceptItems.itemCount > 0,
+                items = conceptItems,
+                onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
+                onOffsetChange = { offset = it },
+                maxCollapsePx = maxCollapsablePx,
 //                onError = viewModel::onErrorAsyncImage
-                )
+            )
 
-                EmptyItemsScreen(
-                    isVisible = conceptItems.itemCount == 0
-                )
-            }
+            EmptyItemsScreen(
+                isVisible = conceptItems.itemCount == 0
+            )
         }
     }
+
+
+    state.mediaToView?.let { item ->
+        val mediaItems by remember {
+            derivedStateOf {
+                List(conceptItems.itemCount) { index -> conceptItems[index] }.filterNotNull()
+            }
+        }
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                initialScale = 0.8f,
+                animationSpec = tween(500)
+            ),
+            exit = fadeOut(animationSpec = tween(300)) + scaleOut(
+                targetScale = 0.8f,
+                animationSpec = tween(300)
+            )
+        ) {
+            MediaViewer(
+                items = mediaItems,
+                initialIndex = mediaItems.indexOf(item),
+                onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView(null)) },
+                onUpdateSearchImage = null,
+                onLoadMore = {
+                    val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
+                    conceptItems[lastIndex]
+                },
+                onSaveUpdatedItem = { updatedMedia ->
+                    mediaViewModel.updateDescription(updatedMedia)
+                    conceptItems.refresh()
+                },
+                onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
+                onCollectionClick = { id, type ->
+                    mediaViewModel.viewCollection(id, type) { collection->
+                        onViewCollection(collection)
+                    }
+                }
+            )
+        }
+    }
+
 
     OptionPicker(
         isVisible = showSortOptions,
