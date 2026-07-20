@@ -1,5 +1,6 @@
 package com.fpf.smartscan.ui.screens.search
 
+import com.fpf.smartscan.data.paging.SearchPagingSource
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
@@ -10,6 +11,10 @@ import androidx.compose.ui.platform.Clipboard
 import kotlinx.coroutines.launch
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
@@ -19,18 +24,16 @@ import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.SearchEvent
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.utils.canOpenUri
 import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.removeStaleMedia
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.dedupe
-import com.fpf.smartscan.search.getPaginatedResult
 import com.fpf.smartscan.search.parseQuery
 import com.fpf.smartscan.search.rerankItems
 import com.fpf.smartscan.tag.Tag
@@ -46,15 +49,19 @@ import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipTextEmbedder
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 
 
 class SearchViewModel(
@@ -68,7 +75,6 @@ class SearchViewModel(
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "SearchViewModel"
-        const val RESULTS_BATCH_SIZE = 36
         private const val MODEL_SHUTDOWN_DURATION_THRESHOLD = 60_000L
         private const val DEDUPE_THRESHOLD = 0.95f
         private const val TEXT_QUERY_THRESHOLD = 0.2f
@@ -87,17 +93,43 @@ class SearchViewModel(
         videoEmbedStore.exists && !imageEmbedStore.exists -> MediaType.VIDEO
         else -> MediaType.IMAGE
     }
-    private val _state = MutableStateFlow(SearchState(mediaType = defaultMediaType))
+    private val _state = MutableStateFlow(SearchState(filter = SearchFilter(mediaType = defaultMediaType)))
     val state: StateFlow<SearchState> = _state
     val searchFieldState: TextFieldState = TextFieldState()
-    private val isLoadingMoreSearchResults = AtomicBoolean(false)
-
     private var hasHandledExternalSearch = false
-
-    private var cachedIds= mutableListOf<Long>()
 
     private val _event = MutableSharedFlow<SearchEvent>()
     val event = _event.asSharedFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val searchResults = _state
+        .map { Triple(it.filter, it.sortBy, it.resultIds) }
+        .distinctUntilChanged()
+        .flatMapLatest { (filters, sortBy, resultIds) ->
+
+            if (resultIds.isEmpty()) {
+                flowOf(PagingData.empty())
+            } else {
+                Pager(
+                    config = PagingConfig(
+                        pageSize = 50,
+                        initialLoadSize = 50,
+                        prefetchDistance = 25,
+                        enablePlaceholders = false
+                    ),
+                    pagingSourceFactory = {
+                        SearchPagingSource(
+                            filter = filters,
+                            sortBy=sortBy,
+                            resultIds = _state.value.resultIds.toList(),
+                            mediaMetadataRepository = mediaMetadataRepository,
+                        )
+                    }
+                ).flow
+            }
+        }
+        .cachedIn(viewModelScope)
+
 
     fun onAction(action: SearchAction){
         when(action){
@@ -130,19 +162,18 @@ class SearchViewModel(
     private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
 
     private fun setMediaType(type: MediaType) {
-        _state.update { it.copy(mediaType = type) }
+        _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
         reset()
     }
 
     private fun reset(){
-        cachedIds = mutableListOf() // clear on new search
         _state.update{ it.copy(
             totalResults = 0,
-            searchResults = emptyList(),
+            resultIds = emptySet(),
             selection = SelectionState(),
             resultToView = null,
             error = null,
-            tagFilter = null,
+            filter = it.filter.copy(tag = null),
             tagOnlySearch = false
         ) }
     }
@@ -160,9 +191,9 @@ class SearchViewModel(
             try {
                 val state = _state.value
                 val queryResults = if (state.queryImage != null) {
-                   imageSearch(store, strictness, startDate = state.startDateFilter, endDate = state.endDateFilter)
+                   imageSearch(store, strictness, startDate = state.filter.startDate, endDate = state.filter.endDate)
                 } else {
-                    textSearch(store, strictness, startDate = state.startDateFilter, endDate = state.endDateFilter)
+                    textSearch(store, strictness, startDate = state.filter.startDate, endDate = state.filter.endDate)
                 }
                 handleSearchResult(queryResults, store, dedupeEnabled)
             }catch (e: Exception) {
@@ -182,10 +213,10 @@ class SearchViewModel(
         }
         val (tag, actualQuery) = parseQuery(query)
         tag?.let{ tag ->
-            _state.update { currentState -> currentState.copy(tagFilter = tag) }
+            _state.update { it.copy(filter = it.filter.copy(tag=tag)) }
             tagManager.updateLastUsage(tag)
         }
-        val idsMatchingTag: List<Long> = getMediaMatchingTag(tag, _state.value.mediaType)
+        val idsMatchingTag: List<Long> = getMediaMatchingTag(tag, _state.value.mediaType, startDate, endDate)
         val tagOnlySearch = idsMatchingTag.isNotEmpty() && actualQuery.isBlank()
 
         if(tagOnlySearch){
@@ -239,25 +270,10 @@ class SearchViewModel(
 
     private suspend fun handleSearchResult(queryResults: List<Long>, store: FileEmbeddingStore, dedupeEnabled: Boolean = false) {
         val finalResults =  if (dedupeEnabled) dedupe(store, queryResults, DEDUPE_THRESHOLD) else queryResults
-        cachedIds.addAll(finalResults)
-        val totalCount = finalResults.size
-        val initialBatch = finalResults.take(RESULTS_BATCH_SIZE) // initial results the rest loaded dynamically
-        val mediaIdToDateMap = when(_state.value.mediaType){
-            MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), initialBatch)
-            MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), initialBatch)
-        }
-        val (validIds, idsToPurge) = initialBatch.partition { it in mediaIdToDateMap }
-        val filteredSearchResults = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
-
-        _state.update{ it.copy(totalResults = totalCount - idsToPurge.size, searchResults = filteredSearchResults)}
-
-        if (filteredSearchResults.isEmpty()) {
+        if (finalResults.isEmpty()) {
             _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
-        }
-
-        if(idsToPurge.isNotEmpty()){
-            cachedIds.removeAll(idsToPurge) // PREVENTS duplicates
-            purgeStaleItems(store, idsToPurge)
+        }else{
+            _state.update{ it.copy(totalResults = finalResults.size, resultIds = finalResults.toSet())}
         }
     }
 
@@ -281,47 +297,9 @@ class SearchViewModel(
         }
     }
 
-    fun onLoadMore() {
-        if (isLoadingMoreSearchResults.getAndSet(true)) return
-        val store = getStore()
-        val currentItemsCount = _state.value.searchResults.size
-        if (currentItemsCount >= _state.value.totalResults) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val batch = getPaginatedResult(currentItemsCount, RESULTS_BATCH_SIZE, cachedIds)
-                val mediaIdToDateMap = when(_state.value.mediaType){
-                    MediaType.IMAGE -> MediaStoreHelper.getImageToDateMap(getApplication(), batch)
-                    MediaType.VIDEO -> MediaStoreHelper.getVideoToDateMap(getApplication(), batch)
-                }
-                val (validIds, idsToPurge) = batch.partition { it in mediaIdToDateMap }
-
-                if (validIds.isNotEmpty()) {
-                    val validResultsFromBatch = validIds.map { MediaItem(it, dateAdded = mediaIdToDateMap[it]!!, type = _state.value.mediaType) }
-                    val updatedResults = _state.value.searchResults + validResultsFromBatch
-                    _state.update{it.copy(searchResults = updatedResults)}
-                }
-
-                if (idsToPurge.isNotEmpty()) {
-                    cachedIds.removeAll(idsToPurge) // PREVENTS duplicates
-                    _state.update{ it.copy(totalResults = cachedIds.size)}
-                    purgeStaleItems(store, idsToPurge)
-                }
-            }finally {
-                isLoadingMoreSearchResults.set(false)
-            }
-        }
-    }
-
-    private fun purgeStaleItems(store: FileEmbeddingStore, idsToPurge: List<Long>){
-        viewModelScope.launch(Dispatchers.IO) {
-            removeStaleMedia(idsToPurge, _state.value.mediaType, store, mediaMetadataRepository)
-        }
-    }
-
     private fun viewResult(context: Context, item: MediaItem, autoOpenInGallery: Boolean? = null){
         if(!canOpenUri(context, item.uri)){
-            _state.update { currentState -> currentState.copy(searchResults = currentState.searchResults - item) }
+            _state.update { currentState -> currentState.copy(resultIds = currentState.resultIds.filter{it != item.id}.toSet()) }
             return
         }
 
@@ -339,11 +317,11 @@ class SearchViewModel(
 
     private fun setQueryImage(uri: Uri?) = _state.update{it.copy(queryImage = uri)}
 
-    private fun setStartDateFilter(date: Long?) = _state.update {it.copy(startDateFilter = date)}
+    private fun setStartDateFilter(date: Long?) = _state.update {it.copy(filter = it.filter.copy(startDate = date))}
 
-    private fun setEndDateFilter(date: Long?) = _state.update {it.copy(endDateFilter = date)}
+    private fun setEndDateFilter(date: Long?) = _state.update {it.copy(filter = it.filter.copy(endDate = date))}
 
-    private fun clearDateFilters() = _state.update {it.copy(endDateFilter = null, startDateFilter = null)}
+    private fun clearDateFilters() = _state.update {it.copy(filter = it.filter.copy(endDate = null, startDate = null))}
 
     private fun removeUploadedImage(){
         reset()
@@ -413,7 +391,7 @@ class SearchViewModel(
 
     private suspend fun getAllResults(): MutableSet<MediaItem> {
         return withContext(Dispatchers.IO) {
-            val mediaMetadataList = mediaMetadataRepository.getByIds(cachedIds, _state.value.mediaType)
+            val mediaMetadataList = mediaMetadataRepository.getByIds(_state.value.resultIds.toList(), _state.value.mediaType)
             mediaMetadataList.map { it.toItem() }.toMutableSet()
         }
     }

@@ -68,8 +68,8 @@ fun ScanLoadingView(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }

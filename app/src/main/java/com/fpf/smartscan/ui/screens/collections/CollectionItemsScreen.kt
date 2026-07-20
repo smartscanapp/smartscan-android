@@ -1,6 +1,5 @@
 package com.fpf.smartscan.ui.screens.collections
 
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DriveFileMoveRtl
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
@@ -66,7 +64,7 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.components.collections.CollectionItemsList
+import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
@@ -330,7 +328,7 @@ fun CollectionItemsScreen(
                         }
                     )
                 }
-                CollectionItemsList(
+                MediaItemsList(
                     isVisible = items.itemCount > 0,
                     numGridColumns = appSettings.resultsPerRow,
                     items = items,
@@ -338,11 +336,11 @@ fun CollectionItemsScreen(
                     selectAll = state.selection.selectAll,
                     excludedItems = state.selection.excludedItems,
                     selectedItems = state.selection.selectedItems,
-                    onViewItem = { uri ->
+                    onItemClick = { item ->
                         viewModel.onAction(
                             CollectionItemAction.SetMediaToView(
                                 context,
-                                uri,
+                                item,
                                 appSettings.enableDirectGalleryOpen
                             )
                         )

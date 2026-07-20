@@ -1,20 +1,28 @@
-package com.fpf.smartscan.ui.components.collections
+package com.fpf.smartscan.ui.components.media
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,24 +42,24 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.ui.components.media.MediaItemCard
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun CollectionItemsList(
+fun MediaItemsList(
     isVisible: Boolean,
     items: LazyPagingItems<MediaItem>,
     selectedItems: Set<MediaItem>,
     excludedItems: Set<MediaItem>,
     selectAll: Boolean,
-    onViewItem: (item: MediaItem?) -> Unit,
+    onItemClick: (item: MediaItem) -> Unit,
     onToggleSelected: (MediaItem) -> Unit,
     onToggleSelectionMode: () -> Unit,
     onOffsetChange: (Int) -> Unit,
     numGridColumns: Int = 3,
     maxCollapsePx: Int = 0,
     isSelecting: Boolean = false,
+    headerTitle: String? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null
 ) {
     if (!isVisible) return
@@ -115,6 +123,39 @@ fun CollectionItemsList(
                 .nestedScroll(connection),
             contentPadding = PaddingValues(0.dp)
         ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                headerTitle?.let {
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(0.5.dp)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                        )
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(0.5.dp)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                        )
+                    }
+                }
+            }
 
             items(
                 count = items.itemCount,
@@ -125,7 +166,7 @@ fun CollectionItemsList(
                 if (item != null) {
                     MediaItemCard(
                         item=item,
-                        onItemClick=onViewItem,
+                        onItemClick=onItemClick,
                         onToggleSelected = onToggleSelected,
                         onToggleSelectionMode = onToggleSelectionMode,
                         isSelecting = isSelecting,
