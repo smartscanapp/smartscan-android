@@ -32,10 +32,11 @@ import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.search.RerankSignal
+import com.fpf.smartscan.search.Reranker
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.dedupe
 import com.fpf.smartscan.search.parseQuery
-import com.fpf.smartscan.search.rerankItems
 import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
@@ -236,8 +237,8 @@ class SearchViewModel(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, TEXT_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
-        val clusterToMediaMap = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == _state.value.mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
-        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterToMediaMap, strictness)
+        val signals = getSearchSignals(itemToSimMap, clusterToSimMap)
+        val reranked = Reranker.rerank(itemToSimMap, signals, strictness)
 
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.imageEmbedderLastUsage)) imageEmbedder.closeSession()
@@ -258,8 +259,8 @@ class SearchViewModel(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, IMAGE_QUERY_THRESHOLD, includeSims = true)
         val itemToSimMap = queryResultToMap(queryResult)
         val clusterToSimMap = queryResultToMap(clusterResult)
-        val clusterToMediaMap = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == _state.value.mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
-        val reranked = rerankItems(itemToSimMap, clusterToSimMap, clusterToMediaMap, strictness)
+        val signals = getSearchSignals(itemToSimMap, clusterToSimMap)
+        val reranked = Reranker.rerank(itemToSimMap, signals, strictness)
 
         // prevent keeping both models open
         if(shouldShutdownModel(_state.value.textEmbedderLastUsage)) textEmbedder.closeSession()
@@ -406,6 +407,25 @@ class SearchViewModel(
         }else{
             tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
         }
+    }
+
+    private suspend fun getSearchSignals(itemToSimMap: Map<Long, Float>, clusterToSimMap: Map<Long, Float>, conceptToSimMap: Map<Long, Float>? = null): List<RerankSignal>{
+        val clusterToMediaMap = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == _state.value.mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
+        val itemToCluster = buildMap {
+            clusterToMediaMap.forEach { (clusterId, items) ->
+                items.forEach { itemId -> put(itemId, clusterId) }
+            }
+        }
+
+        val clusterSignal = RerankSignal(
+            scores = itemToSimMap.keys.associateWith { itemId -> itemToCluster[itemId]?.let(clusterToSimMap::get) ?: 0f }
+        )
+
+        val signals = mutableListOf<RerankSignal>()
+        signals.add(clusterSignal)
+
+        conceptToSimMap?.let{ signals.add( RerankSignal(scores = conceptToSimMap))}
+        return signals
     }
 
     override fun onCleared() {
