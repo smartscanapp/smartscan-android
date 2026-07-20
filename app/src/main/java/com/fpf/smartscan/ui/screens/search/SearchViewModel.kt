@@ -270,7 +270,7 @@ class SearchViewModel(
     }
 
     private suspend fun handleSearchResult(queryResults: List<Long>, store: FileEmbeddingStore, dedupeEnabled: Boolean = false) {
-        val finalResults =  if (dedupeEnabled) dedupe(store, queryResults, DEDUPE_THRESHOLD) else queryResults
+        val finalResults =  if (dedupeEnabled) dedupe(store.get(queryResults), DEDUPE_THRESHOLD) else queryResults
         if (finalResults.isEmpty()) {
             _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
         }else{

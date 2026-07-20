@@ -1,14 +1,12 @@
 package com.fpf.smartscan.search
 
 import com.fpf.smartscansdk.core.embeddings.Embedding
-import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.dot
 
-suspend fun dedupe(store: FileEmbeddingStore, searchResults: List<Long>, duplicateThreshold: Float): List<Long>{
+fun dedupe(resultEmbeds: List<StoredEmbedding>, duplicateThreshold: Float): List<Long>{
     val validEmbeds = mutableListOf<Embedding>()
     val validIds = mutableListOf<Long>()
-
-    val resultEmbeds = store.get(searchResults)
 
     for (res in resultEmbeds){
         var isDuplicate = false
