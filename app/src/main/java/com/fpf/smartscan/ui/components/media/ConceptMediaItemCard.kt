@@ -45,6 +45,7 @@ fun ConceptMediaItemCard(
     item: MediaItem,
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,
+    pausePlayback: Boolean = false,
     playbackPosition: Long? = null,
     isSelecting: Boolean = false,
     onItemLongClick: ((MediaItem) -> Unit)? = null,
@@ -61,8 +62,6 @@ fun ConceptMediaItemCard(
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
             .format(Date(item.dateAdded * 1000L))
     }
-
-    val shape = RoundedCornerShape(12.dp)
 
     Box(
         modifier = modifier
@@ -148,7 +147,9 @@ fun ConceptMediaItemCard(
                             .aspectRatio(1.25f),
                         onError = onError
                     ) }else{
-                        VideoDisplay(uri = item.uri,
+                        VideoDisplay(
+                            uri = item.uri,
+                            pause = pausePlayback,
                             onPlaybackPositionChanged = onSavePlaybackPosition ,
                             playbackPosition=playbackPosition?: 0L,
                             modifier = Modifier

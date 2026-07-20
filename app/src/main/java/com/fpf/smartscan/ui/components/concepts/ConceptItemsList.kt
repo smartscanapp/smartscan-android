@@ -42,11 +42,12 @@ import kotlin.math.roundToInt
 fun ConceptItemsList(
     isVisible: Boolean,
     items: LazyPagingItems<MediaItem>,
-    onItemClick: (MediaItem?) -> Unit,
+    onItemClick: (MediaItem) -> Unit,
     onOffsetChange: (Int) -> Unit,
     onGetPlaybackPosition: (Long) -> Long,
     onSavePlaybackPosition: (itemId: Long, pos: Long) -> Unit,
     maxCollapsePx: Int = 0,
+    expandedMedia: MediaItem? = null,
     isSelecting: Boolean = false,
     selectAll: Boolean = false,
     selectedItems: Set<MediaItem> = emptySet(),
@@ -126,14 +127,15 @@ fun ConceptItemsList(
                 if (item != null) {
                     ConceptMediaItemCard(
                         item=item,
-                        onItemClick=onItemClick,
+                        onItemClick= onItemClick,
                         onItemLongClick = onItemLongClick,
                         onToggleSelected = onToggleSelected,
                         isSelecting = isSelecting,
                         isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
                         onError=onError,
                         onSavePlaybackPosition= { onSavePlaybackPosition(item.id, it) },
-                        playbackPosition = onGetPlaybackPosition(item.id)
+                        playbackPosition = onGetPlaybackPosition(item.id),
+                        pausePlayback=expandedMedia == item
                     )
                 }
             }

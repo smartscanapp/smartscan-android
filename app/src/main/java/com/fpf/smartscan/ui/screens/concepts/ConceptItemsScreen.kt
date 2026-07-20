@@ -141,6 +141,7 @@ fun ConceptItemsScreen(
                 onGetPlaybackPosition = viewModel::getPlaybackPosition,
                 isVisible = conceptItems.itemCount > 0,
                 items = conceptItems,
+                expandedMedia = state.mediaToView,
                 onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,

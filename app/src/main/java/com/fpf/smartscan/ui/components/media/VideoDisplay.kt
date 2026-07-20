@@ -20,6 +20,7 @@ fun VideoDisplay(
     uri: Uri,
     modifier: Modifier = Modifier,
     playbackPosition: Long = 0L,
+    pause: Boolean = false,
     onPlaybackPositionChanged: ((Long) -> Unit)? = null,
     onTap: () -> Unit = {},
     onSwipeLeft: () -> Unit = {},
@@ -38,6 +39,13 @@ fun VideoDisplay(
         exoPlayer.prepare()
         exoPlayer.seekTo(playbackPosition)
         exoPlayer.playWhenReady = true
+    }
+
+    LaunchedEffect(pause) {
+        exoPlayer.playWhenReady = !pause
+        if (pause) {
+            exoPlayer.pause()
+        }
     }
 
     DisposableEffect(Unit) {
