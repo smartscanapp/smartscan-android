@@ -4,6 +4,7 @@ import android.util.Log
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.search.Reranker
 import com.fpf.smartscan.search.toSimsMap
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -101,19 +102,22 @@ class ConceptManager(
 
     private suspend fun findMediaMatchingConcept(concept: Concept): Map<Pair<Long, MediaType>, Float>{
         val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
-        val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore, MediaType.IMAGE)
-        val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore, MediaType.VIDEO)
-        val mediaItemSimsMap =  imageResult + videoResult
+        val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore)
+        val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore)
+        val mediaItemSimsMap =  buildMap {
+            imageResult.forEach { put(Pair(it.key, MediaType.IMAGE), it.value)  }
+            videoResult.forEach { put(Pair(it.key, MediaType.VIDEO), it.value)  }
+        }
         return mediaItemSimsMap
     }
 
-    private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore, mediaType: MediaType): Map<Pair<Long, MediaType>, Float>{
-        val imageResults = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
-        val imagesSimsMap = imageResults.toSimsMap()
-       return buildMap {
-           imagesSimsMap.map { put(Pair(it.key, mediaType), it.value)}
-       }
+    private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore): Map<Long, Float>{
+        val result = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
+        val simsMap = result.toSimsMap()
+        val cutOff = Reranker.calculateRelevanceCutoff(simsMap, baseCutOffPercent = 0.5f)
+        return simsMap.filter { it.value >= cutOff }
     }
+
 
     private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
