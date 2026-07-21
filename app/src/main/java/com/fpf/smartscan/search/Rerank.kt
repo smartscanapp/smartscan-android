@@ -68,6 +68,17 @@ object Reranker {
         return minAllowedScore
     }
 
+    fun calculateRelevanceCutoff(
+        scoredItems: Map<Long, Float>,
+        strictness: Float = 0f,
+        baseCutOffPercent: Float = 0.6f,
+        maxCutOffPercent: Float = 0.85f
+    ): Double
+    {
+        val scoredItems = buildMap{scoredItems.forEach{put(it.key, it.value.toDouble())}}
+        return calculateRelevanceCutoff(scoredItems, strictness, baseCutOffPercent, maxCutOffPercent)
+    }
+
     fun calculateSpread(values: List<Double>): Double {
         if (values.isEmpty()) return 0.0
 
