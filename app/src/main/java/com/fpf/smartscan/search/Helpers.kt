@@ -10,11 +10,4 @@ fun parseQuery(query: String): Pair<String?, String>{
     val actualQuery = query.substring(actualQueryStart).trim()
     return Pair(tag, actualQuery)
 }
-
-fun getPaginatedResult(currentItemsCount: Int, batchSize: Int, cachedIds:  MutableList<Long>): List<Long>{
-    val end = (currentItemsCount + batchSize).coerceAtMost(cachedIds.size)
-    if (currentItemsCount >= end) return emptyList()
-    return cachedIds.subList(currentItemsCount, end)
-}
-
 fun QueryResult.toSimsMap(): Map<Long, Float> = this.sims?.let(this.ids::zip)?.toMap() ?: emptyMap()
