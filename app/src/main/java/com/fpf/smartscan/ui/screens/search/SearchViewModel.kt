@@ -36,7 +36,6 @@ import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.search.SearchEngine
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SearchOptions
-import com.fpf.smartscan.search.parseQuery
 import com.fpf.smartscan.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
@@ -189,7 +188,7 @@ class SearchViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val query = searchFieldState.text.toString()
-                val (tag, actualQuery) = parseQuery(query)
+                val (tag, actualQuery) = searchEngine.parseTextQuery(query)
                 tag?.let{ tag ->
                     val ids = getMediaMatchingTag(tag, _state.value.mediaType, state.value.filter.startDate, state.value.filter.endDate)
                     _state.update { it.copy(filter = it.filter.copy(tag=tag, ids = ids)) }

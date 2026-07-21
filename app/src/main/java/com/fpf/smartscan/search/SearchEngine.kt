@@ -54,6 +54,15 @@ class SearchEngine(
         }
     }
 
+    fun parseTextQuery(query: String): Pair<String?, String>{
+        val regex = Regex("""^#([a-zA-Z0-9_]+)""")
+        val match = regex.find(query)
+        val tag = match?.groupValues?.get(1)
+        val actualQueryStart = if(!tag.isNullOrBlank()) tag.length + 1 else 0
+        val actualQuery = query.substring(actualQueryStart).trim()
+        return Pair(tag, actualQuery)
+    }
+
     private suspend fun postProcess(results: List<Long>, store: FileEmbeddingStore, options: SearchOptions): List<Long> {
         return if(options.hideDuplicates) hideDuplicates(results, store) else results
     }
@@ -71,8 +80,8 @@ class SearchEngine(
         val threshold = searchQuery.filter.similarity?: defaultTextQueryThreshold
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, threshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
-        val itemToSimMap = queryResultToMap(queryResult)
-        val clusterToSimMap = queryResultToMap(clusterResult)
+        val itemToSimMap = queryResult.toSimsMap()
+        val clusterToSimMap = clusterResult.toSimsMap()
         val itemsToClusterSims = toScoreMap(itemToSimMap, clusterToSimMap, getItemToClusterSimMap(searchQuery.filter.mediaType))
         val signals = getSearchSignals(itemsToClusterSims)
         val reranked = Reranker.rerank(itemToSimMap, signals, searchQuery.options.strictness)
@@ -90,8 +99,8 @@ class SearchEngine(
         val threshold = searchQuery.filter.similarity?: defaultImageQueryThreshold
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, threshold, startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
-        val itemToSimMap = queryResultToMap(queryResult)
-        val clusterToSimMap = queryResultToMap(clusterResult)
+        val itemToSimMap = queryResult.toSimsMap()
+        val clusterToSimMap = clusterResult.toSimsMap()
         val itemsToClusterSims = toScoreMap(itemToSimMap, clusterToSimMap, getItemToClusterSimMap(searchQuery.filter.mediaType))
         val signals = getSearchSignals(itemsToClusterSims)
         val reranked = Reranker.rerank(itemToSimMap, signals, searchQuery.options.strictness)
@@ -110,14 +119,13 @@ class SearchEngine(
         conceptSimMap?.let{ signals.add( RerankSignal(scores = conceptSimMap))}
         return signals
     }
-    private fun queryResultToMap(result: QueryResult): Map<Long, Float> = result.sims?.let(result.ids::zip)?.toMap() ?: emptyMap()
 
     private fun getStore(mediaType: MediaType) = if(mediaType == MediaType.VIDEO) videoEmbedStore else imageEmbedStore
 
     private suspend fun getItemToClusterSimMap(mediaType: MediaType) = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
 }
 
-fun  toScoreMap(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clusterToMediaMap:  Map<Long, MutableSet<Long>>): Map<Long, Float>{
+fun toScoreMap(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clusterToMediaMap:  Map<Long, MutableSet<Long>>): Map<Long, Float>{
     val itemToCluster = buildMap {
         clusterToMediaMap.forEach { (clusterId, items) ->
             items.forEach { itemId -> put(itemId, clusterId) }
@@ -125,5 +133,6 @@ fun  toScoreMap(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clu
     }
 
     return itemSimMap.keys.associateWith { itemId -> itemToCluster[itemId]?.let(clusterSims::get) ?: 0f }
-
 }
+
+fun QueryResult.toSimsMap(): Map<Long, Float> = this.sims?.let(this.ids::zip)?.toMap() ?: emptyMap()
