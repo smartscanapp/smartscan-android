@@ -41,7 +41,7 @@ class ModelRepository(
 
     private var miniLmTextEmbedder: TextEmbeddingProvider? = null
 
-
+    private var modelLastUsages: MutableMap<ModelName, Long> = mutableMapOf()
     fun downloadModel( modelInfo: ModelInfo){
         scope.launch {
             _modelDownloadStatus.update { ModelDownloadStatus.ACTIVE }
@@ -79,6 +79,16 @@ class ModelRepository(
         miniLmTextEmbedder = model
         return model
     }
+
+    fun updateModelLastUsage(model: ModelName, lastUsed: Long){
+        modelLastUsages[model] = lastUsed
+    }
+
+    fun shouldShutdownModel(model: ModelName, maxDuration: Long): Boolean {
+        val lastUsage = modelLastUsages[model]
+        return lastUsage != null && System.currentTimeMillis() - lastUsage >= maxDuration
+    }
+
 }
 
 enum class ModelDownloadStatus {

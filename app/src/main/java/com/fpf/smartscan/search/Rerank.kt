@@ -1,64 +1,80 @@
 package com.fpf.smartscan.search
 
-import android.util.Log
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-fun rerankItems(
-    itemToSimMap: Map<Long, Float>,
-    clusterToSimMap: Map<Long, Float>,
-    clusterToMediaIdsMap: Map<Long, Set<Long>>,
-    strictness: Float = 0f,
-    baseCutOffPercent: Float = 0.6f,
-    maxCutOffPercent: Float = 0.85f
-): List<Long> {
+data class RerankSignal(
+    val scores: Map<Long, Float>,
+    val weight: Float = 1f
+)
 
-    val itemToCluster = buildMap {
-        clusterToMediaIdsMap.forEach { (clusterId, items) ->
-            items.forEach { itemId -> put(itemId, clusterId) }
-        }
+object Reranker {
+
+    private const val EPS = 1e-3
+
+    fun rerank(
+        itemToSimMap: Map<Long, Float>,
+        signals: List<RerankSignal>,
+        strictness: Float = 0f,
+        baseCutOffPercent: Float = 0.6f,
+        maxCutOffPercent: Float = 0.85f
+    ): List<Long> {
+
+        val scoredItems = calculateRerankScores(itemToSimMap, signals)
+        // Early return if only a single or no result
+        if (scoredItems.size <= 1) return scoredItems.map { it.key }
+
+        val minAllowedScore = calculateRelevanceCutoff(scoredItems, strictness, baseCutOffPercent, maxCutOffPercent)
+        return scoredItems.filter { it.value >= minAllowedScore }.map { it.key }
     }
 
-    val clusterSims = itemToSimMap.keys.mapNotNull { itemId ->
-            itemToCluster[itemId]?.let(clusterToSimMap::get)?.toDouble()
-        }.sorted()
+    fun calculateRerankScores(itemToSimMap: Map<Long, Float>, signals: List<RerankSignal>): Map<Long, Double> {
+        val itemSpread = calculateSpread( itemToSimMap.values.map { it.toDouble() })
+        val signalStrengths = signals.map { signal -> calculateSignalStrength(signal.scores, itemSpread) }
 
-    val itemSims = itemToSimMap.values.map { it.toDouble() }.sorted()
-    val iP10 = itemSims.getOrNull((itemSims.size * 0.1).toInt()) ?: 0.0
-    val iP90 = itemSims.getOrNull((itemSims.size * 0.9).toInt()) ?: 0.0
-    val itemSpread = iP90 - iP10
+        val scoredItems = itemToSimMap.keys.map { itemId ->
+            val itemScore = itemToSimMap[itemId]?.toDouble() ?: 0.0
+            var score = itemScore
+            signals.forEachIndexed { index, signal ->
+                val signalScore = signal.scores[itemId]?.toDouble()?: 0.0
+                score *= 1 + signalStrengths[index] * signalScore * signal.weight
+            }
+            itemId to score
+        }.sortedByDescending { it.second }.associate { it.first to it.second }
+        return scoredItems
+    }
 
-    val cP10 = clusterSims.getOrNull((clusterSims.size * 0.1).toInt()) ?: 0.0
-    val cP90 = clusterSims.getOrNull((clusterSims.size * 0.9).toInt()) ?: 0.0
-    val clusterSpread = cP90 - cP10
+    fun calculateRelevanceCutoff(scoredItems: Map<Long, Double>, strictness: Float, baseCutOffPercent: Float, maxCutOffPercent: Float): Double{
+        val scores = scoredItems.map { it.value }.sorted()
+        val maxScore = scores.max()
+        val minScore = scores.min()
+        val medianScore = scores[scores.size / 2]
+        val meanScore = scores.average()
+        val stdScore = sqrt(scores.map{(it - meanScore).pow(2)}.average())
+        val centrality = medianScore - minScore
+        val safeStrictness = strictness.coerceIn(0f, 1f)
+        val strictnessDamping = (maxScore - medianScore) / (maxScore).coerceAtLeast(EPS)
+        val cutOffPercent = (baseCutOffPercent * (1f + strictnessDamping.toFloat() * safeStrictness)).coerceIn(baseCutOffPercent, maxCutOffPercent)
+        val baseCutOff = cutOffPercent * maxScore
+        val dynamicCutOff = medianScore - stdScore - (1 - safeStrictness) * centrality.pow(1.0 + safeStrictness)
+        val minAllowedScore = max(baseCutOff, dynamicCutOff)
+        return minAllowedScore
+    }
 
-    val eps = 1e-3
-    val ratio = clusterSpread / itemSpread.coerceAtLeast(eps)
-    val k = ratio.pow(3).coerceAtLeast(1.0)
+    fun calculateSpread(values: List<Double>): Double {
+        if (values.isEmpty()) return 0.0
 
-    val scoredItems = itemToSimMap.keys.map { itemId ->
-        val itemScore = itemToSimMap[itemId]?.toDouble() ?: 0.0
-        val clusterScore = itemToCluster[itemId]?.let(clusterToSimMap::get)?.toDouble() ?: 0.0
-        itemId to (itemScore * (1 + k * clusterScore))
-    }.sortedByDescending { it.second }
+        val sorted = values.sorted()
+        val p10 = sorted[(sorted.size * 0.1).toInt()]
+        val p90 = sorted[(sorted.size * 0.9).toInt()]
+        return p90 - p10
+    }
 
-    // Early return if only a single or no result
-    if (scoredItems.size <= 1) return scoredItems.map { it.first }
+    fun calculateSignalStrength(signalScores: Map<Long, Float>, itemSpread: Double): Double {
+        val signalSpread = calculateSpread(signalScores.values.map { it.toDouble() })
+        return (signalSpread / itemSpread.coerceAtLeast(EPS)).pow(3).coerceAtLeast(1.0)
+    }
 
-    val scores = scoredItems.map { it.second }.sorted()
-    val maxScore = scores.max()
-    val minScore = scores.min()
-    val medianScore = scores[scores.size / 2]
-    val meanScore = scores.average()
-    val stdScore = sqrt(scores.map{(it - meanScore).pow(2)}.average())
-    val centrality = medianScore - minScore
-    val safeStrictness = strictness.coerceIn(0f, 1f)
-    val strictnessDamping = (maxScore - medianScore) / (maxScore).coerceAtLeast(eps)
-    val cutOffPercent = (baseCutOffPercent * (1f + strictnessDamping.toFloat() * safeStrictness)).coerceIn(baseCutOffPercent, maxCutOffPercent)
-    val baseCutOff = cutOffPercent * maxScore
-    val dynamicCutOff = medianScore - stdScore - (1 - safeStrictness) * centrality.pow(1.0 + safeStrictness)
-    val minAllowedScore = max(baseCutOff, dynamicCutOff)
-//    Log.d("rerankItems", "strictnessDamping:$strictnessDamping\ncutoff:$cutOffPercent")
-    return scoredItems.filter { it.second >= minAllowedScore }.map { it.first }
 }
+

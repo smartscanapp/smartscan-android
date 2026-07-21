@@ -7,4 +7,7 @@ sealed class AppException(message: String, cause: Throwable? = null) : Exception
 
     class RestoreException(override val message: String = "Restore failed",  cause: Throwable? = null) : AppException(message, cause)
     class MissingApiKey(override val message: String = "Missing required API key") : AppException(message)
+
+    class SearchException(override val message: String = "An unknown search error occurred", cause: Throwable? = null) : AppException(message, cause)
+
 }

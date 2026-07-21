@@ -8,5 +8,6 @@ data class SearchFilter(
     val tag: String? = null,
     val startDate: Long? = null,
     val endDate: Long? = null,
+    val ids: List<Long> = emptyList()
 )
 
