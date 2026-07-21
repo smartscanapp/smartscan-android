@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.data.DataSyncHelper
 import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.theme.ThemeManager
@@ -52,17 +53,17 @@ class MainActivity : ComponentActivity() {
         if (intent?.action == Intent.ACTION_SEND && intent?.type?.startsWith("image/") == true) {
            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ){
                (intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java))?.let {
-                   intentSearchQuery = SearchQuery.ImageQuery(uri = it, mediaType=mediaType)
+                   intentSearchQuery = SearchQuery.ImageQuery(uri = it, filter= SearchFilter(mediaType=mediaType))
                }
            }else{
                (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM))?.let {
-                   if(it is Uri) intentSearchQuery = SearchQuery.ImageQuery(uri = it, mediaType=mediaType)
+                   if(it is Uri) intentSearchQuery = SearchQuery.ImageQuery(uri = it, filter= SearchFilter(mediaType=mediaType))
                }
            }
 
         } else if (intent?.action == Intent.ACTION_SEND && intent?.type == "text/plain") {
                 intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-                    intentSearchQuery = SearchQuery.TextQuery(text = it, mediaType=mediaType)
+                    intentSearchQuery = SearchQuery.TextQuery(text = it, filter= SearchFilter(mediaType=mediaType))
                 }
         }
 
