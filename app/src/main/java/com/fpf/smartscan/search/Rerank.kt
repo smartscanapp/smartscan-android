@@ -45,7 +45,13 @@ object Reranker {
         return scoredItems
     }
 
-    fun calculateRelevanceCutoff(scoredItems: Map<Long, Double>, strictness: Float, baseCutOffPercent: Float, maxCutOffPercent: Float): Double{
+    fun calculateRelevanceCutoff(
+        scoredItems: Map<Long, Double>,
+         strictness: Float = 0f,
+         baseCutOffPercent: Float = 0.6f,
+         maxCutOffPercent: Float = 0.85f
+    ): Double
+    {
         val scores = scoredItems.map { it.value }.sorted()
         val maxScore = scores.max()
         val minScore = scores.min()

@@ -1,5 +1,6 @@
 package com.fpf.smartscan.concepts
 
+import android.util.Log
 import com.fpf.smartscan.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.data.concepts.ConceptRepository
 import com.fpf.smartscan.media.MediaType
@@ -99,17 +100,19 @@ class ConceptManager(
     }
 
     private suspend fun findMediaMatchingConcept(concept: Concept): Map<Pair<Long, MediaType>, Float>{
-        val mediaItemSimsMap:  MutableMap<Pair<Long, MediaType>, Float> = mutableMapOf()
-
         val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
-        val imageResults = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true)
-        val imagesSimsMap = imageResults.toSimsMap()
-        imagesSimsMap.forEach { mediaItemSimsMap[Pair(it.key, MediaType.IMAGE)] = it.value}
-
-        val videoResults = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold)
-        val videoSimsMap = videoResults.toSimsMap()
-        videoSimsMap.forEach { itemSim -> mediaItemSimsMap[Pair(itemSim.key, MediaType.VIDEO)] = itemSim.value }
+        val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore, MediaType.IMAGE)
+        val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore, MediaType.VIDEO)
+        val mediaItemSimsMap =  imageResult + videoResult
         return mediaItemSimsMap
+    }
+
+    private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore, mediaType: MediaType): Map<Pair<Long, MediaType>, Float>{
+        val imageResults = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
+        val imagesSimsMap = imageResults.toSimsMap()
+       return buildMap {
+           imagesSimsMap.map { put(Pair(it.key, mediaType), it.value)}
+       }
     }
 
     private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
