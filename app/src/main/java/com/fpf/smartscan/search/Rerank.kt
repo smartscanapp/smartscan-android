@@ -1,5 +1,6 @@
 package com.fpf.smartscan.search
 
+import android.util.Log
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -52,6 +53,8 @@ object Reranker {
          maxCutOffPercent: Float = 0.85f
     ): Double
     {
+        if(scoredItems.isEmpty()) return 0.0
+
         val scores = scoredItems.map { it.value }.sorted()
         val maxScore = scores.max()
         val minScore = scores.min()
@@ -68,6 +71,7 @@ object Reranker {
         return minAllowedScore
     }
 
+    @JvmName("calculateRelevanceCutoffFloatMap")
     fun calculateRelevanceCutoff(
         scoredItems: Map<Long, Float>,
         strictness: Float = 0f,
