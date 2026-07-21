@@ -32,6 +32,7 @@ import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.search.SearchQuery
 import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.media.shareMediaMulti
+import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.search.SearchEngine
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SearchOptions
@@ -45,6 +46,7 @@ import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipTextEmbedder
+import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,10 +69,12 @@ class SearchViewModel(
     private val clusterEmbedStore: FileEmbeddingStore,
     private val tagManager: TagManager,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val mediaMetadataRepository: MediaMetadataRepository
+    private val mediaMetadataRepository: MediaMetadataRepository,
+    private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "SearchViewModel"
+        private const val MODEL_SHUTDOWN_DURATION_THRESHOLD = 60_000L
     }
 
 
@@ -195,9 +199,17 @@ class SearchViewModel(
                 val tagOnlySearch = actualQuery.isBlank() && tag != null
                 val queryResults =  when{
                     tagOnlySearch -> state.filter.ids.toList()
-                    state.queryImage != null -> searchEngine.search(SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions))
-                    searchFieldState.text.toString().isNotBlank() -> searchEngine.search(SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions))
-                   else -> emptyList()
+                    state.queryImage != null -> {
+                        val results = searchEngine.search(SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions))
+                        _event.emit(SearchEvent(SearchEventType.IMAGE_QUERY, success = true))
+                        results
+                    }
+                    searchFieldState.text.toString().isNotBlank() -> {
+                        val results = searchEngine.search(SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions))
+                        _event.emit(SearchEvent(SearchEventType.TEXT_QUERY, success = true))
+                        results
+                    }
+                    else -> emptyList()
                 }
                 handleSearchResult(queryResults)
             }catch (e: Exception) {
@@ -233,6 +245,27 @@ class SearchViewModel(
                 searchFieldState.edit { replace(0, searchFieldState.text.length, intentSearchQuery.text) }
                 search( searchOptions)
                 hasHandledExternalSearch = true
+            }
+        }
+    }
+
+    fun handleQueryEvent(event: SearchEvent){
+        if(event.type !in setOf(SearchEventType.TEXT_QUERY, SearchEventType.IMAGE_QUERY)) return
+        if (event.success){
+            when(event.type){
+                SearchEventType.TEXT_QUERY -> {
+                    val model = ModelName.CLIP_VIT_B_32_TEXT
+                    val modelToCheck =  ModelName.CLIP_VIT_B_32_IMAGE
+                    modelRepository.updateModelLastUsage(model, System.currentTimeMillis())
+                    if(modelRepository.shouldShutdownModel(modelToCheck, MODEL_SHUTDOWN_DURATION_THRESHOLD)) imageEmbedder.closeSession()
+                }
+                SearchEventType.IMAGE_QUERY -> {
+                    val model = ModelName.CLIP_VIT_B_32_IMAGE
+                    val modelToCheck =  ModelName.CLIP_VIT_B_32_TEXT
+                    modelRepository.updateModelLastUsage(model, System.currentTimeMillis())
+                    if(modelRepository.shouldShutdownModel(modelToCheck, MODEL_SHUTDOWN_DURATION_THRESHOLD)) textEmbedder.closeSession()
+                }
+                else -> {}
             }
         }
     }

@@ -225,6 +225,8 @@ fun SearchScreen(
                 SearchEventType.TAG -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
                 }
+                SearchEventType.IMAGE_QUERY,
+                SearchEventType.TEXT_QUERY -> searchViewModel.handleQueryEvent(event)
             }
         }
     }

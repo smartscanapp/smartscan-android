@@ -14,8 +14,6 @@ data class SearchState(
     val loading: Boolean = false,
     val error: String? = null,
     val resultToView: MediaItem? = null,
-    val imageEmbedderLastUsage: Long? = null,
-    val textEmbedderLastUsage: Long? = null,
     val tagOnlySearch: Boolean = false,
     val selection: SelectionState<MediaItem> = SelectionState(),
     val filter: SearchFilter = SearchFilter(mediaType = MediaType.IMAGE),

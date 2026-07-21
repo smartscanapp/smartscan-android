@@ -34,6 +34,7 @@ val viewModelModule = module {
             mediaMetadataRepository = get(),
             tagManager = get(),
             clusterCrossRefRepository = get(),
+            modelRepository = get()
         )
     }
     viewModel {
