@@ -15,7 +15,7 @@ object Reranker {
 
     fun rerank(
         itemToSimMap: Map<Long, Float>,
-        signals: List<RerankSignal>,
+        signals: List<RerankSignal> =emptyList(),
         strictness: Float = 0f,
         baseCutOffPercent: Float = 0.6f,
         maxCutOffPercent: Float = 0.85f
