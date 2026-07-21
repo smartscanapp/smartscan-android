@@ -70,10 +70,10 @@
     <string name="download_model_message">A new model is required to use the app. Download it now to continue.</string>
 
     <!--Sort Options-->
-    <string name="sort_date_asc_option">Sort by date (ascending)</string>
-    <string name="sort_date_desc_option">Sort by date (descending)</string>
-    <string name="sort_similarity_asc_option">Sort by similarity (ascending)</string>
-    <string name="sort_similarity_desc_option">Sort by similarity (descending)</string>
+    <string name="sort_date_asc_option">Date (ascending)</string>
+    <string name="sort_date_desc_option">Date (descending)</string>
+    <string name="sort_similarity_asc_option">Relevance (ascending)</string>
+    <string name="sort_similarity_desc_option">Relevance (descending)</string>
 
     <!-- Search screen -->
     <string name="search_storage_permissions">Storage permission required to search.</string>
