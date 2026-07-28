@@ -15,7 +15,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
 import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
@@ -26,7 +25,6 @@ import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.utils.canOpenUri
-import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
 import com.fpf.smartscan.search.SearchQuery
@@ -328,16 +326,6 @@ class SearchViewModel(
                 Log.e(TAG, "$message: $e")
                 _event.emit(SearchEvent(SearchEventType.TAG, success = false, message = message))
             }
-        }
-    }
-
-    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
-        viewModelScope.launch (Dispatchers.IO){
-            onMediaLoadingError(error,
-                imageEmbedStore = imageEmbedStore,
-                videoEmbedStore = videoEmbedStore,
-                mediaMetadataRepository =mediaMetadataRepository
-            )
         }
     }
 

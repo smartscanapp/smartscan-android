@@ -390,7 +390,7 @@ fun SearchScreen(
                 },
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsePx,
-                onError = searchViewModel::onErrorAsyncImage
+                onError = mediaViewModel::onErrorAsyncImage
             )
         }
 
