@@ -3,12 +3,15 @@ package com.fpf.smartscan.ui.shared
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.data.tags.TagRepository
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaJobManager
+import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.media.onMediaLoadingError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -16,11 +19,20 @@ import kotlinx.coroutines.withContext
 class MediaViewModel(
     private val mediaJobManager: MediaJobManager,
     private val tagRepository: TagRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
-
-    ) : ViewModel() {
+    private val clusterMetadataRepository: ClusterMetadataRepository
+) : ViewModel() {
     companion object {
         private const val TAG = "MediaViewModel"
+    }
+
+    fun delete(items: List<MediaItem>){
+        val (images, videos) = items.partition { it.type == MediaType.IMAGE }
+        if(images.isNotEmpty()) mediaJobManager.delete(images.map{it.id}, MediaType.IMAGE)
+        if(videos.isNotEmpty()) mediaJobManager.delete(videos.map{it.id}, MediaType.VIDEO)
+    }
+
+    fun delete(id: Long, mediaType: MediaType){
+        mediaJobManager.delete(listOf(id), mediaType)
     }
 
     fun updateDescription(updatedMedia: MediaItem){
@@ -39,6 +51,14 @@ class MediaViewModel(
                 }
             }else{
                 Log.e(TAG, "Collection not found: $collection")
+            }
+        }
+    }
+
+    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
+        viewModelScope.launch (Dispatchers.IO){
+            onMediaLoadingError(error){
+                id, mediaType -> delete(id, mediaType)
             }
         }
     }

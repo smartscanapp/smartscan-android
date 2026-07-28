@@ -9,7 +9,11 @@ val mediaModule = module {
         MediaJobManager(
             conceptManager = get(),
             mediaMetadataRepository = get(),
-            modelRepository = get()
+            modelRepository = get(),
+            imageEmbedStore = get(IMAGE_EMBED_STORE),
+            videoEmbedStore = get(VIDEO_EMBED_STORE),
+            imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
+            videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE)
         )
     }
 }

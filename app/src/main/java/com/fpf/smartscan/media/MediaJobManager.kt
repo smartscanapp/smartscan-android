@@ -8,6 +8,7 @@ import com.fpf.smartscan.index.CloudImageIndexListener
 import com.fpf.smartscan.models.ModelRepository
 import com.fpf.smartscan.queue.Queue
 import com.fpf.smartscan.queue.jobs.MediaProcessingJob
+import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,10 @@ class MediaJobManager(
     private val conceptManager: ConceptManager,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val modelRepository: ModelRepository,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val videoConceptEmbedStore: FileEmbeddingStore,
 ) {
 
     companion object {
@@ -56,6 +61,13 @@ class MediaJobManager(
         queue.submit(MediaProcessingJob.UpdateDescriptionAndConceptLinks(updatedMedia))
     }
 
+    fun delete(ids: List<Long>, mediaType: MediaType){
+        val stores = getStores(mediaType)
+        scope.launch(Dispatchers.IO) {
+            removeStaleMedia(ids, mediaType, stores, mediaMetadataRepository)
+        }
+    }
+
     private suspend fun updateDescriptionAndConceptLinksJob(updatedMedia: MediaItem){
         mediaMetadataRepository.update(listOf(updatedMedia.toMetadata()))
 
@@ -82,5 +94,10 @@ class MediaJobManager(
             mediaConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
         }
         return updatedOrNewMediaEmbed
+    }
+
+    private fun getStores(mediaType: MediaType) = when(mediaType){
+        MediaType.IMAGE -> listOf(imageEmbedStore, imageConceptEmbedStore)
+        MediaType.VIDEO -> listOf(videoEmbedStore, videoConceptEmbedStore)
     }
 }

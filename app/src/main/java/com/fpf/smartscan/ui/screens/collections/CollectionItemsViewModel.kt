@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.database.sqlite.SQLiteConstraintException
+import android.net.Uri
 import android.util.Log
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
@@ -14,7 +15,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.R
 import com.fpf.smartscan.cluster.ClusterManager
 import com.fpf.smartscan.constants.PrefsKeys
@@ -31,7 +31,6 @@ import com.fpf.smartscan.media.MediaItem
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.media.openImageInGallery
 import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.onMediaLoadingError
 import com.fpf.smartscan.media.shareMediaMulti
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SortBy
@@ -39,7 +38,6 @@ import com.fpf.smartscan.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.state.CollectionItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
-import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -55,15 +53,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.collections.map
 
-//TODO: move imageEmbedStore, videoEmbedStore out
 class CollectionItemsViewModel(
     application: Application,
     private val tagManager: TagManager,
     private val clusterManager: ClusterManager,
-    private val imageEmbedStore: FileEmbeddingStore,
-    private val videoEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
 ) : AndroidViewModel(application) {
     companion object {
@@ -155,8 +151,6 @@ class CollectionItemsViewModel(
         get()=  mapOf(
             SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
             SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
-//            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
-//            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
         )
 
     init {
@@ -167,7 +161,7 @@ class CollectionItemsViewModel(
         when(action){
             is CollectionItemAction.CopyMedia -> copyItem(action.clipboard, action.context)
             is CollectionItemAction.CreateNewCollectionAndMove -> createNewCollectionAndMove(action.newName)
-            CollectionItemAction.RemoveMedia -> removeItems()
+            is CollectionItemAction.RemoveTag -> removeTag()
             is CollectionItemAction.SetMediaToView -> setMediaToView(action.context, action.item, autoOpenInGallery = action.autoOpenInGallery)
             is CollectionItemAction.ShareMedia -> shareItems(action.context)
             is CollectionItemAction.ToggleSelectedMedia -> toggleSelectedItem(action.item)
@@ -180,13 +174,11 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ClearSelection -> clearSelection()
             is CollectionItemAction.SetFilter -> setFilters(action.filter)
             is CollectionItemAction.SetSortBy -> setSortBy(action.sortBy)
+            is CollectionItemAction.Delete -> deleteFromDevice(action.onDelete)
         }
     }
 
-    private fun load(){
-        _state.update { it.copy(sortBy = getSortByPref()) }
-    }
-
+    private fun load() = _state.update { it.copy(sortBy = getSortByPref()) }
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
     private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
     private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
@@ -211,7 +203,7 @@ class CollectionItemsViewModel(
         return tagManager.checkAutoCompletion(query, substringEnd, tagCollections.value.map { it.name }, startWithHashtag)
     }
 
-    private fun removeItems(){
+    private fun removeTag(){
         val currentCollection = _state.value.collection?: return
         if(currentCollection.type != CollectionType.TAG) return // Only allowed for tag collections
 
@@ -223,10 +215,20 @@ class CollectionItemsViewModel(
                 val message = if(selectedItems.size == 1 ) "Removed ${selectedItems.size} item" else "Removed ${selectedItems.size} items"
                 _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = true, message = message))
             }catch (e: Exception){
-                val message = "Error removing items"
+                val message = "Error removing tag"
                 Log.e(TAG, "$message: ${e.message}")
                 _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = false, message = message))
             }
+        }
+    }
+
+    private fun deleteFromDevice(onDelete: (List<MediaItem>) -> Unit){
+        viewModelScope.launch{
+            val items = withContext(Dispatchers.IO) {
+                getSelectedItems().toList()
+            }
+            onDelete(items)
+            resetSelection()
         }
     }
 
@@ -361,15 +363,5 @@ class CollectionItemsViewModel(
     private fun getSortByPref(): SortBy{
         val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "")?: ""
         return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
-    }
-
-    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
-        viewModelScope.launch (Dispatchers.IO){
-            onMediaLoadingError(error,
-                imageEmbedStore = imageEmbedStore,
-                videoEmbedStore = videoEmbedStore,
-                mediaMetadataRepository =mediaMetadataRepository
-                )
-        }
     }
 }

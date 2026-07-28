@@ -1,6 +1,7 @@
 package com.fpf.smartscan.ui.action
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.ui.platform.Clipboard
 import com.fpf.smartscan.media.MediaCollection
 import com.fpf.smartscan.media.MediaItem
@@ -20,7 +21,8 @@ sealed interface CollectionItemAction {
     data class SetSelectAll(val selectAll: Boolean): CollectionItemAction
     data class SetFilter(val filter: SearchFilter): CollectionItemAction
     data class SetSortBy(val sortBy: SortBy): CollectionItemAction
-    data object RemoveMedia : CollectionItemAction
+    data class Delete(val onDelete: (List<MediaItem>) -> Unit) : CollectionItemAction
+    data object RemoveTag : CollectionItemAction
     data object ToggleSelectionMode: CollectionItemAction
     data object ClearSelection: CollectionItemAction
     data object ResetSelection: CollectionItemAction

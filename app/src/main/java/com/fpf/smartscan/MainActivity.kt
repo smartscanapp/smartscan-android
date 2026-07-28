@@ -5,18 +5,15 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SearchQuery
@@ -28,18 +25,7 @@ import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
     private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE) }
-
-    private val deleteLauncher  = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-//            if (result.resultCode == RESULT_OK) {
-//                Log.d(TAG, "Media deleted")
-//            }else{
-//                Log.d(TAG, "Media NOT deleted")
-//            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +72,6 @@ class MainActivity : ComponentActivity() {
                     intentSearchQuery=intentSearchQuery,
                     onAppReady = {keepSplash = false},
                     onRestartApp = {restartApp()},
-                    onDeleteMedia = {uris -> deleteMedia(uris)}
                 )
             }
         }
@@ -117,14 +102,5 @@ class MainActivity : ComponentActivity() {
         }
 
         startActivity(intent)
-    }
-
-    private fun deleteMedia(uris: List<Uri>) {
-        deleteLauncher.launch(
-            MediaStoreHelper.createTrashRequest(
-                this,
-                uris
-            )
-        )
     }
 }

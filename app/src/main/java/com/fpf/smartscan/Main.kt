@@ -58,7 +58,6 @@ fun Main(
     intentSearchQuery: SearchQuery?,
     onAppReady: () -> Unit,
     onRestartApp: () -> Unit,
-    onDeleteMedia: (List<Uri>) -> Unit
 ) {
     val context = LocalContext.current
     val topBarState = remember { mutableStateOf(TopBarState()) }
