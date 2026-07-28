@@ -72,7 +72,7 @@ object DataSyncHelper {
 
             val mediaToPurge = existingIdsFromMetadata.filterNot { it in accessibleMediaIds }
             if (mediaToPurge.isNotEmpty()) {
-                removeStaleMedia(mediaToPurge, mediaType, store = store, mediaMetadataRepository)
+                removeStaleMedia(mediaToPurge, mediaType, listOf(store), mediaMetadataRepository)
                 store.save()
                 Log.d(TAG, "${mediaType.name}: Removed ${mediaToPurge.size} stale items and saved index file")
             }
