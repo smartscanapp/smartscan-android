@@ -155,6 +155,7 @@ class SearchViewModel(
             is SearchAction.ToggleSelectionMode -> toggleSelectionMode()
             is SearchAction.ResetSelection -> resetSelection()
             is SearchAction.ClearSelection -> clearSelection()
+            is SearchAction.Delete -> deleteFromDevice(action.onDelete)
         }
     }
 
@@ -283,6 +284,15 @@ class SearchViewModel(
         }
     }
 
+    private fun deleteFromDevice(onDelete: (List<MediaItem>) -> Unit){
+        viewModelScope.launch{
+            val items = withContext(Dispatchers.IO) {
+                getSelectedResults().toList()
+            }
+            onDelete(items)
+            resetSelection()
+        }
+    }
     private fun clearResultView() = _state.update {it.copy(resultToView = null)}
 
     private fun setQueryImage(uri: Uri?) = _state.update{it.copy(queryImage = uri)}
