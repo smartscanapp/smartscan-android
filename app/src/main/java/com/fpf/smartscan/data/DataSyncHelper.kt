@@ -24,20 +24,20 @@ object DataSyncHelper {
 
     suspend fun sync(
         context: Context,
-        imageStore: FileEmbeddingStore,
-        videoStore: FileEmbeddingStore,
+        imageEmbedStores: List<FileEmbeddingStore>,
+        videoEmbedStores: List<FileEmbeddingStore>,
         allowedImageDirs: List<Uri> = emptyList(),
         allowedVideoDirs: List<Uri> = emptyList(),
         mediaMetadataRepository: MediaMetadataRepository
         ){
         syncWithMediaStore(context,
-            store = imageStore,
+            embedStores = imageEmbedStores,
             allowedDirs = allowedImageDirs,
             mediaMetadataRepository = mediaMetadataRepository,
             mediaType = MediaType.IMAGE
         )
         syncWithMediaStore(context,
-            store = videoStore,
+            embedStores = videoEmbedStores,
             allowedDirs = allowedVideoDirs,
             mediaMetadataRepository = mediaMetadataRepository,
             mediaType = MediaType.VIDEO
@@ -56,7 +56,7 @@ object DataSyncHelper {
 
     private suspend fun syncWithMediaStore(
         context: Context,
-        store: FileEmbeddingStore,
+        embedStores: List<FileEmbeddingStore>,
         allowedDirs: List<Uri> = emptyList(),
         mediaMetadataRepository: MediaMetadataRepository,
         mediaType: MediaType
@@ -72,7 +72,7 @@ object DataSyncHelper {
 
             val mediaToPurge = existingIdsFromMetadata.filterNot { it in accessibleMediaIds }
             if (mediaToPurge.isNotEmpty()) {
-                removeStaleMedia(mediaToPurge, mediaType, listOf(store), mediaMetadataRepository)
+                removeStaleMedia(mediaToPurge, mediaType, embedStores, mediaMetadataRepository)
                 Log.d(TAG, "${mediaType.name}: Removed ${mediaToPurge.size} stale items")
             }
         }catch (e: Exception){

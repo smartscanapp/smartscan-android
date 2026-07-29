@@ -42,9 +42,11 @@ import java.util.concurrent.TimeUnit
 class MainViewModel(
     application: Application,
     private val db: MediaDatabase,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
+    private val imageEmbedStore: FileEmbeddingStore,
+    private val videoEmbedStore: FileEmbeddingStore,
+    private val clusterEmbedStore: FileEmbeddingStore,
+    private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val modelRepository: ModelRepository
@@ -110,15 +112,16 @@ class MainViewModel(
 
             DataSyncHelper.quantEmbedStoresIfNeeded(
                 mapOf(
-                    File(application.filesDir, EmbeddingStoresFiles.IMAGE) to imageStore,
-                    File(application.filesDir, EmbeddingStoresFiles.VIDEO) to videoStore,
-                    File(application.filesDir, EmbeddingStoresFiles.MEDIA_CLUSTER) to clusterStore
+                    File(application.filesDir, EmbeddingStoresFiles.IMAGE) to imageEmbedStore,
+                    File(application.filesDir, EmbeddingStoresFiles.VIDEO) to videoEmbedStore,
+                    File(application.filesDir, EmbeddingStoresFiles.MEDIA_CLUSTER) to clusterEmbedStore
                 )
             )
             // Always run on app start to handle media that may have been deleted from the device
             DataSyncHelper.sync(
-                application, imageStore = imageStore,
-                videoStore=videoStore,
+                application,
+                imageEmbedStores = listOf(imageEmbedStore, imageConceptEmbedStore),
+                videoEmbedStores = listOf(videoEmbedStore, videoConceptEmbedStore),
                 allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()},
                 allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()},
                 mediaMetadataRepository = MediaMetadataRepository(db.metadataDao())
@@ -126,8 +129,8 @@ class MainViewModel(
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
 
-            _hasIndexedImages.update { imageStore.exists }
-            _hasIndexedVideos.update { videoStore.exists }
+            _hasIndexedImages.update { imageEmbedStore.exists }
+            _hasIndexedVideos.update { videoEmbedStore.exists }
             onAppReady()
         }
     }
@@ -145,8 +148,8 @@ class MainViewModel(
         if (storageAccess != StorageAccess.Denied) {
             val mediaTypeToEmbedStore = mediaTypes.map{
                 when(it) {
-                    MediaType.IMAGE -> it to imageStore
-                    MediaType.VIDEO -> it to videoStore
+                    MediaType.IMAGE -> it to imageEmbedStore
+                    MediaType.VIDEO -> it to videoEmbedStore
                 }
             }
             viewModelScope.launch {
@@ -158,8 +161,8 @@ class MainViewModel(
 
     fun onIndexingFinished(mediaType: MediaType) {
         when(mediaType){
-            MediaType.IMAGE -> _hasIndexedImages.value = imageStore.exists
-            MediaType.VIDEO -> _hasIndexedVideos.value = videoStore.exists
+            MediaType.IMAGE -> _hasIndexedImages.value = imageEmbedStore.exists
+            MediaType.VIDEO -> _hasIndexedVideos.value = videoEmbedStore.exists
         }
         resetIndexingState(mediaType)
         _runningMediaTypes.update { it - mediaType}
@@ -198,7 +201,7 @@ class MainViewModel(
     }
 
     private fun scheduleIndexWorker(){
-        if (!imageStore.exists && !videoStore.exists) return
+        if (!imageEmbedStore.exists && !videoEmbedStore.exists) return
         // Delay is required to prevent race condition issues on first index
         IndexWorker.scheduleWorker(getApplication(), Pair(1L, TimeUnit.DAYS), Pair(1L, TimeUnit.DAYS))
     }
