@@ -194,7 +194,7 @@ fun SearchScreen(
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    val screenTitle = stringResource(R.string.title_search)
+    val screenTitle = stringResource(R.string.title_explore)
 
     DisposableEffect(Unit) {
         when {

@@ -1,7 +1,7 @@
 package com.fpf.smartscan.navigation
 
 object Routes {
-    const val SEARCH = "search"
+    const val EXPLORE = "explore"
     const val COLLECTIONS = "collections"
     const val COLLECTION_ITEMS = "collection_items"
     const val CONCEPTS = "concepts"

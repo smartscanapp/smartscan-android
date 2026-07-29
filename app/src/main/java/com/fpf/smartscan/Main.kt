@@ -61,7 +61,7 @@ fun Main(
     val topBarState = remember { mutableStateOf(TopBarState()) }
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val mainRoute = Routes.SEARCH
+    val mainRoute = Routes.EXPLORE
     val mainViewModel: MainViewModel = koinViewModel()
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val mediaViewModel: MediaViewModel = koinViewModel()
@@ -164,7 +164,7 @@ fun Main(
                     navController = navController,
                     startDestination = mainRoute,
                 ) {
-                    composable(Routes.SEARCH) {
+                    composable(Routes.EXPLORE) {
                         SearchScreen(
                             mediaViewModel = mediaViewModel,
                             appSettings = settingsViewModel.appSettings,
