@@ -21,9 +21,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Merge
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,10 +69,11 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(FlowPreview::class)
 @Composable
 fun CollectionsScreen(
-    onTopBarChange: (TopBarState) -> Unit,
-    onViewCollection: (MediaCollection) -> Unit,
     isMainScanRequired: Boolean,
     hasStoragePermission: Boolean,
+    onTopBarChange: (TopBarState) -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
 
@@ -141,21 +144,16 @@ fun CollectionsScreen(
         onTopBarChange(
             TopBarState(
                 title = screenTitle,
-//                actions = {
-//                    Box{
-//                        IconButton(onClick = { showMenu = true }) {
-//                            Icon(
-//                                imageVector = Icons.Filled.MoreVert,
-//                                contentDescription = "menu"
-//                            )
-//                        }
-//                        DropDownMenuWrapper(
-//                            expanded = showMenu,
-//                            actions = menuActions,
-//                            onClose = {showMenu = false}
-//                        )
-//                    }
-//                }
+                actions = {
+                    IconButton(
+                        onClick = {onOpenSettings()}
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "settings"
+                        )
+                    }
+                }
             )
         )
     }

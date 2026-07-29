@@ -9,6 +9,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,8 +51,9 @@ fun SettingsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onRestartApp: () -> Unit,
     onScanRefresh: () -> Unit,
-    onScanRebuild: () -> Unit
-) {
+    onScanRebuild: () -> Unit,
+    onBack: () -> Unit,
+    ) {
     val appSettings by viewModel.appSettings.collectAsState()
     val isBackupLoading by viewModel.isBackupLoading.collectAsState()
     val isRestoreLoading by viewModel.isRestoreLoading.collectAsState()
@@ -68,7 +73,17 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         onTopBarChange(
-            TopBarState(title = screenTitle)
+            TopBarState(
+                title = screenTitle,
+                navigationIcon = {
+                    IconButton (onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                },
+            ),
         )
     }
 

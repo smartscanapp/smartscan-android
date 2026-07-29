@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,12 +72,13 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(FlowPreview::class)
 @Composable
 fun ConceptsScreen(
-    appSettings: StateFlow<AppSettings>,
     hasStoragePermission: Boolean,
     isMainScanRequired: Boolean,
+    appSettings: StateFlow<AppSettings>,
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     onIndex: ()-> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
@@ -142,6 +144,14 @@ fun ConceptsScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
+                    IconButton(
+                        onClick = {onOpenSettings()}
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "settings"
+                        )
+                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(

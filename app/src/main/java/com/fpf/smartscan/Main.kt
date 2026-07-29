@@ -184,6 +184,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(Routes.COLLECTIONS) {
@@ -198,6 +199,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(
@@ -239,6 +241,7 @@ fun Main(
 
                                 navController.navigate(Routes.CONCEPT_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(
@@ -272,8 +275,9 @@ fun Main(
                             },
                             onRestartApp = onRestartApp,
                             onScanRebuild = { showScanAndRebuildModal = true },
-                            onScanRefresh = { showRefreshScanModel = true }
-                        )
+                            onScanRefresh = { showRefreshScanModel = true },
+                            onBack = { navController.popBackStack() },
+                            )
                     }
                     composable(
                         route = Routes.SETTINGS_DETAIL,
