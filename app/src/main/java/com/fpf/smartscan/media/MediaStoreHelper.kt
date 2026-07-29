@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import androidx.activity.result.IntentSenderRequest
 import java.io.File
 
 
@@ -45,6 +46,12 @@ object MediaStoreHelper {
         startDate: Long? = null,
         endDate: Long? = null
     ): List<Long> = queryImageIdDateMap(context, allowedDirs, startDate, endDate).keys.toList()
+
+    fun createTrashRequest(context: Context, uris: Collection<Uri>, trash: Boolean = true): IntentSenderRequest {
+        val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, uris.toList(), trash)
+        return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+    }
+
 
     fun getImageToDateMap(context: Context, ids: List<Long>): Map<Long, Long> = getMediaToDateMap(context, MediaType.IMAGE, ids)
 

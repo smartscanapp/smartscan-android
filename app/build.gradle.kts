@@ -82,7 +82,8 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.documentfile)
-    implementation(libs.smartscan.ml)
+//    implementation(libs.smartscan.ml)
+    implementation("com.github.smartscanapp.smartscan-sdk:smartscan-ml:2.2.1")
 
     implementation(platform(libs.koin.bom))
 

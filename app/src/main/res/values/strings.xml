@@ -36,6 +36,7 @@
     <string name="more_action">More</string>
     <string name="copy_action">Copy</string>
     <string name="add_tag_action">Add tag</string>
+    <string name="remove_tag_action">Remove tag</string>
     <string name="add_collection_action">Add collection</string>
     <string name="copy_to_clipboard_action">Copy to clipboard</string>
     <string name="cancel_action">Cancel</string>

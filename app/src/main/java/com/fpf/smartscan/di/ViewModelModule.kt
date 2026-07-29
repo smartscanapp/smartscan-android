@@ -40,8 +40,6 @@ val viewModelModule = module {
     viewModel {
         CollectionItemsViewModel(
             application = get(),
-            imageEmbedStore = get(IMAGE_EMBED_STORE),
-            videoEmbedStore = get(VIDEO_EMBED_STORE),
             mediaMetadataRepository = get(),
             clusterManager = get(),
             tagManager = get()

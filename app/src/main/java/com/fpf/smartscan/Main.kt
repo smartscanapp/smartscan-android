@@ -1,5 +1,6 @@
 package com.fpf.smartscan
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -56,7 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun Main(
     intentSearchQuery: SearchQuery?,
     onAppReady: () -> Unit,
-    onRestartApp: () -> Unit
+    onRestartApp: () -> Unit,
 ) {
     val context = LocalContext.current
     val topBarState = remember { mutableStateOf(TopBarState()) }

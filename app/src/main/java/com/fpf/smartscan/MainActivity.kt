@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.DataSyncHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.search.SearchFilter
 import com.fpf.smartscan.search.SearchQuery
@@ -72,7 +71,7 @@ class MainActivity : ComponentActivity() {
                 Main(
                     intentSearchQuery=intentSearchQuery,
                     onAppReady = {keepSplash = false},
-                    onRestartApp = {restartApp()}
+                    onRestartApp = {restartApp()},
                 )
             }
         }

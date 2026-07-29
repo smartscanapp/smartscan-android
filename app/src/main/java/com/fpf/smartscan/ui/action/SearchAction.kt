@@ -18,8 +18,8 @@ sealed interface SearchAction {
     data class SetMediaTypeFilter(val mediaType: MediaType): SearchAction
     data class CopyResult(val clipboard: Clipboard, val context: Context): SearchAction
     data class ShareResults(val context: Context): SearchAction
-
     data class SetSelectAll(val selectAll: Boolean): SearchAction
+    data class Delete(val onDelete: (List<MediaItem>) -> Unit) : SearchAction
     data object RemoveUploadedImage: SearchAction
     data object ClearDateFilters: SearchAction
     data object Reset: SearchAction

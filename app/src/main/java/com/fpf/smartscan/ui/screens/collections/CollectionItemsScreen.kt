@@ -1,7 +1,11 @@
 package com.fpf.smartscan.ui.screens.collections
 
+import android.app.Activity
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -22,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DriveFileMoveRtl
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
@@ -52,6 +55,8 @@ import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.media.CollectionType
 import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.media.MediaItem
+import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchFilter
@@ -118,6 +123,19 @@ fun CollectionItemsScreen(
     var isAddingTag by remember { mutableStateOf(false) }
     var showMoreActions by remember { mutableStateOf(false) }
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
+    var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
+
+    val deleteLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            pendingDeleteItems?.let{mediaViewModel.delete(it)}
+            items.refresh()
+            pendingDeleteItems = null
+        }else{
+            pendingDeleteItems = null
+        }
+    }
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
@@ -139,10 +157,9 @@ fun CollectionItemsScreen(
             icon=Icons.Filled.Share
         ),
         ActionConfig(
-            label = stringResource(R.string.remove_action),
-            onClick = { viewModel.onAction(CollectionItemAction.RemoveMedia) },
-            enabled = collection.type == CollectionType.TAG,
-            icon=Icons.Filled.RemoveCircle
+            label = stringResource(R.string.add_tag_action),
+            onClick = { isAddingTag = true },
+            icon=Icons.Filled.Tag
         ),
         ActionConfig(
             label = stringResource(R.string.move_action),
@@ -165,8 +182,19 @@ fun CollectionItemsScreen(
         ),
 
          MenuActionConfig.Button(
-             label = stringResource(R.string.add_tag_action),
-             onClick = { isAddingTag = true },
+             label = stringResource(R.string.remove_tag_action),
+             enabled = collection.type == CollectionType.TAG,
+             onClick = { viewModel.onAction(CollectionItemAction.RemoveTag) },
+             hideIfDisabled = true
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.delete_action),
+            onClick = { viewModel.onAction(CollectionItemAction.Delete{ items ->
+                pendingDeleteItems = items
+                deleteLauncher.launch(
+                    MediaStoreHelper.createTrashRequest(context, items.map{it.uri})
+                )
+            }) },
         ),
     )
 
@@ -310,7 +338,7 @@ fun CollectionItemsScreen(
                     },
                     onOffsetChange = { offset = it },
                     maxCollapsePx = maxCollapsablePx,
-                    onError = viewModel::onErrorAsyncImage
+                    onError = mediaViewModel::onErrorAsyncImage
                 )
 
                 EmptyItemsScreen(
@@ -481,5 +509,4 @@ fun CollectionItemsScreen(
         },
         onClose = {showFilters = false}
     )
-
 }

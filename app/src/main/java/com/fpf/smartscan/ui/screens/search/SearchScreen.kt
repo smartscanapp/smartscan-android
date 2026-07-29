@@ -1,7 +1,10 @@
 package com.fpf.smartscan.ui.screens.search
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
@@ -35,12 +39,15 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.media.MediaItem
+import com.fpf.smartscan.media.MediaStoreHelper
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.search.SearchOptions
@@ -59,6 +66,8 @@ import com.fpf.smartscan.ui.components.search.SearchBar
 import com.fpf.smartscan.ui.components.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
@@ -104,10 +113,23 @@ fun SearchScreen(
         stringResource(R.string.placeholders_search_by_tag_query),
     )
 
-
     var isAddingTag by remember { mutableStateOf(false) }
     var tagAutoCompleteTagResults by remember { mutableStateOf<List<String>>(emptyList()) }
     var isSelectingMediaType by remember { mutableStateOf(false) }
+    var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
+    var showMoreActions by remember { mutableStateOf(false) }
+
+    val deleteLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            pendingDeleteItems?.let{mediaViewModel.delete(it)}
+            searchResults.refresh()
+            pendingDeleteItems = null
+        }else{
+            pendingDeleteItems = null
+        }
+    }
 
     // action bar actions
     val actionBarActions: List<ActionConfig> = listOf(
@@ -130,24 +152,41 @@ fun SearchScreen(
             icon = Icons.Filled.Search
         ),
         ActionConfig(
-            label = stringResource(R.string.copy_action),
-            onClick = { searchViewModel.onAction(SearchAction.CopyResult(clipboard, context)) },
-            icon = Icons.Filled.ContentCopy,
-            enabled = state.selection.selectedItems.size == 1 && state.selection.selectedItems.first().type == MediaType.IMAGE
-        ),
-        ActionConfig(
             label = stringResource(R.string.add_tag_action),
             onClick = { isAddingTag = true },
             icon = Icons.Filled.Tag),
+        ActionConfig(
+            label = stringResource(R.string.more_action),
+            onClick = { showMoreActions = true },
+            icon = Icons.Filled.MoreVert
         )
+    )
+
+    val moreActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.copy_to_clipboard_action),
+            onClick = { searchViewModel.onAction(SearchAction.CopyResult(clipboard, context)) },
+            enabled = state.selection.selectedItems.size == 1 && state.selection.selectedItems.first().type == MediaType.IMAGE
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.delete_action),
+            onClick = { searchViewModel.onAction(SearchAction.Delete{ items ->
+                pendingDeleteItems = items
+                deleteLauncher.launch(
+                    MediaStoreHelper.createTrashRequest(context, items.map{it.uri})
+                )
+            }) },
+        ),
+    )
 
     // Dynamic hide animation
     val isActionBarVisible =  state.selection.isSelecting && state.selection.selectedCount > 0
     var offset by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
-    val actionBarHeight = with(density) { 70.dp.toPx() }
+    val actionBarHeight = 70
+    val _actionBarHeight = with(density) {actionBarHeight.dp.toPx() }
     val searchBarHeight = with(density) { (if(state.queryImage != null) 200 else 120).dp.toPx() }
-    val maxCollapsePx = max(actionBarHeight, searchBarHeight).toInt()
+    val maxCollapsePx = max(_actionBarHeight, searchBarHeight).toInt()
 
     // Filters
     var showFilters by remember { mutableStateOf(false) }
@@ -390,7 +429,7 @@ fun SearchScreen(
                 },
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsePx,
-                onError = searchViewModel::onErrorAsyncImage
+                onError = mediaViewModel::onErrorAsyncImage
             )
         }
 
@@ -442,10 +481,24 @@ fun SearchScreen(
                     else Modifier
                 )
             ) {
-            ActionBar(
-                modifier = Modifier.height(70.dp),
-                actions = actionBarActions
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                ActionBar(
+                    actions = actionBarActions,
+                    modifier = Modifier.height(actionBarHeight.dp),
+                )
+                Box(
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    DropDownMenuWrapper(
+                        expanded = showMoreActions,
+                        actions = moreActions,
+                        offset = DpOffset(x = 0.dp, y = -(actionBarHeight).dp),
+                        onClose = { showMoreActions = false }
+                    )
+                }
+            }
         }
     }
     DatePickerModal(
