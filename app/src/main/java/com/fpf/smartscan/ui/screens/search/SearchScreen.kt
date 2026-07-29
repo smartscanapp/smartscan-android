@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
@@ -85,16 +85,17 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 @Composable
 fun SearchScreen(
-    searchViewModel: SearchViewModel = koinViewModel(),
-    mediaViewModel: MediaViewModel = koinViewModel(),
-    appSettings:  StateFlow<AppSettings>,
-    onTopBarChange: (TopBarState) -> Unit,
     hasIndexedImages: Boolean?,
     hasIndexedVideos: Boolean?,
     hasStoragePermission: Boolean,
+    appSettings:  StateFlow<AppSettings>,
     onIndex: (mediaType: MediaType?) -> Unit,
+    onOpenSettings: () -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    intentSearchQuery: SearchQuery? = null
+    onTopBarChange: (TopBarState) -> Unit,
+    intentSearchQuery: SearchQuery? = null,
+    searchViewModel: SearchViewModel = koinViewModel(),
+    mediaViewModel: MediaViewModel = koinViewModel(),
 ) {
     val appSettings by appSettings.collectAsState()
     val context = LocalContext.current
@@ -193,7 +194,7 @@ fun SearchScreen(
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    val screenTitle = stringResource(R.string.title_search)
+    val screenTitle = stringResource(R.string.title_explore)
 
     DisposableEffect(Unit) {
         when {
@@ -236,6 +237,14 @@ fun SearchScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
+                    IconButton(
+                        onClick = {onOpenSettings()}
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "settings"
+                        )
+                    }
                     IconButton(
                         onClick = {showFilters = true}
                     ) {

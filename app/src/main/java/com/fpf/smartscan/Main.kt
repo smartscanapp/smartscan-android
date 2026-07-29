@@ -61,7 +61,7 @@ fun Main(
     val topBarState = remember { mutableStateOf(TopBarState()) }
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val mainRoute = Routes.SEARCH
+    val mainRoute = Routes.EXPLORE
     val mainViewModel: MainViewModel = koinViewModel()
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val mediaViewModel: MediaViewModel = koinViewModel()
@@ -164,7 +164,7 @@ fun Main(
                     navController = navController,
                     startDestination = mainRoute,
                 ) {
-                    composable(Routes.SEARCH) {
+                    composable(Routes.EXPLORE) {
                         SearchScreen(
                             mediaViewModel = mediaViewModel,
                             appSettings = settingsViewModel.appSettings,
@@ -184,6 +184,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(Routes.COLLECTIONS) {
@@ -198,6 +199,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(
@@ -239,6 +241,7 @@ fun Main(
 
                                 navController.navigate(Routes.CONCEPT_ITEMS)
                             },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(
@@ -272,8 +275,9 @@ fun Main(
                             },
                             onRestartApp = onRestartApp,
                             onScanRebuild = { showScanAndRebuildModal = true },
-                            onScanRefresh = { showRefreshScanModel = true }
-                        )
+                            onScanRefresh = { showRefreshScanModel = true },
+                            onBack = { navController.popBackStack() },
+                            )
                     }
                     composable(
                         route = Routes.SETTINGS_DETAIL,

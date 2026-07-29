@@ -7,7 +7,7 @@
 
 
     <!-- Screen titles-->
-    <string name="title_search">Search</string>
+    <string name="title_explore">Explore</string>
     <string name="title_concepts">Concepts</string>
     <string name="title_collections">Collections</string>
     <string name="title_settings">Settings</string>
