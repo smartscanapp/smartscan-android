@@ -84,22 +84,18 @@ fun ConceptCard(
                 Text(
                     text = "${item.size} items",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
+                if (item.isPinned) {
+                    Icon(
+                        imageVector = Icons.Outlined.PushPin,
+                        contentDescription = "Pinned",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
 
             }
-        }
-
-        if (item.isPinned) {
-            Icon(
-                imageVector = Icons.Outlined.PushPin,
-                contentDescription = "Pinned",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, start = 8.dp, end = 8.dp)
-                    .size(20.dp)
-            )
         }
 
         if (isSelecting) {
