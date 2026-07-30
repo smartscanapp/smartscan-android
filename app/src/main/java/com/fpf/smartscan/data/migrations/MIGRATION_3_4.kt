@@ -75,7 +75,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 
         db.execSQL(
             """
-            INSERT INTO media_cluster_crossref_new (
+            INSERT OR IGNORE INTO media_cluster_crossref_new (
                 mediaId,
                 mediaType,
                 clusterId
