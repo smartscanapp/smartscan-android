@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
 import com.fpf.smartscan.R
-import com.fpf.smartscan.api.llm.LLMProviderConfig
-import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaType
 import com.fpf.smartscan.concepts.getAllowedClusters
@@ -19,6 +17,8 @@ import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
 import com.fpf.smartscansdk.core.processors.BatchProcessor
+import com.fpflabs.llmconnect.LLMProviderConfig
+import com.fpflabs.llmconnect.openai.OpenaiClient
 import kotlinx.coroutines.CancellationException
 
 class CloudIndexJobManager(

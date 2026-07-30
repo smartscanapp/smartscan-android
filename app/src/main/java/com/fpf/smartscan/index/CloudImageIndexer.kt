@@ -4,8 +4,6 @@ package com.fpf.smartscan.index
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
-import com.fpf.smartscan.api.ImageSummary
-import com.fpf.smartscan.api.llm.OpenaiClient
 import com.fpf.smartscan.constants.DEFAULT_PROMPT
 import com.fpf.smartscan.data.media.MediaMetadataRepository
 import com.fpf.smartscan.media.MediaMetadata
@@ -18,8 +16,10 @@ import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.MemoryOptions
+import com.fpflabs.llmconnect.openai.OpenaiClient
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 class CloudImageIndexer(
     context: Context,
@@ -61,3 +61,9 @@ class CloudImageIndexer(
         return topicsStr + "\n" + summary
     }
 }
+
+@Serializable
+data class ImageSummary(
+    val summary: String,
+    val topics: List<String>
+)

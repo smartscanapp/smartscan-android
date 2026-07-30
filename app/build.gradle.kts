@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.documentfile)
 //    implementation(libs.smartscan.ml)
     implementation("com.github.smartscanapp.smartscan-sdk:smartscan-ml:2.2.1")
+    implementation("com.github.devdiaries41.llmconnect-android:llmconnect:1.0.0")
 
     implementation(platform(libs.koin.bom))
 
