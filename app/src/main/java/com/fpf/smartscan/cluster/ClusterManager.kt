@@ -50,7 +50,7 @@ class ClusterManager(
         } else {
             getDefaultThreshold(existingClusters)
         }
-        val clusterer = IncrementalClusterer(existingClusters = existingClusters, defaultThreshold = defaultThreshold)
+        val clusterer = IncrementalClusterer(existingClusters = existingClusters, defaultThreshold = defaultThreshold, similarityAlpha = 0.975f)
         val result = clusterer.cluster(unclusterItemEmbeds.associate { it.id to it.embedding})
         updateClustersAndAssign(result, existingClusters.keys, unclusterItems)
     }
