@@ -51,8 +51,8 @@ import com.fpf.smartscan.ui.components.modals.TextInputModal
 import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
 import androidx.compose.ui.res.stringResource
-import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.media.CollectionType
+import com.fpf.smartscan.core.concepts.Concept
+import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow

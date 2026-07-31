@@ -1,8 +1,7 @@
 package com.fpf.smartscan.di
 
-import com.fpf.smartscan.concepts.ConceptManager
+import com.fpf.smartscan.core.concepts.ConceptManager
 import org.koin.dsl.module
-
 
 val conceptModule = module {
     single {

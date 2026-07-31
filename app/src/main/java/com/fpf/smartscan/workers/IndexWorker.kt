@@ -4,12 +4,13 @@ import android.app.Application
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.work.*
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
+import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE
@@ -18,10 +19,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.index.CloudIndexJobManager
-import com.fpf.smartscan.index.LocalIndexJobManager
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.models.ModelRepository
+import com.fpf.smartscan.core.index.CloudIndexJobManager
+import com.fpf.smartscan.core.index.LocalIndexJobManager
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.services.MediaIndexForegroundService
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.isServiceRunning
@@ -92,7 +93,6 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val localIndexJobManager by lazy {
         LocalIndexJobManager(
             application = applicationContext as Application,
-            sharedPrefs=sharedPrefs,
             imageEmbedder = imageEmbedder,
             imageEmbedStore = imageEmbedStore,
             videoEmbedStore = videoEmbedStore,
@@ -103,8 +103,6 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             useListener = false
         )
     }
-
-
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
@@ -122,14 +120,16 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             if(videoEmbedStore.exists){
                 mediaTypes.add((MediaType.VIDEO))
             }
-            localIndexJobManager.run(mediaTypes)
-
-            val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
             val appSettings = loadSettings(sharedPrefs)
 
+            val allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()}
+            val allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()}
+            localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
+
             //TODO: replace openai api with SmartScan API key
+            val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
             if(modelExist && !appSettings.openaiApiKey.isNullOrBlank() && imageConceptsEmbedStore.exists){
-                cloudIndexJobManager.run(listOf(MediaType.IMAGE)) // only image is supported ATM
+                cloudIndexJobManager.run(listOf(MediaType.IMAGE), appSettings.openaiApiKey) // only image is supported ATM
             }
 
             return@withContext Result.success()

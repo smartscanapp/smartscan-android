@@ -3,7 +3,6 @@ package com.fpf.smartscan.ui.components.media
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
@@ -21,7 +20,7 @@ import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.request.crossfade
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaType
 
 @Composable
 fun ImageDisplay(

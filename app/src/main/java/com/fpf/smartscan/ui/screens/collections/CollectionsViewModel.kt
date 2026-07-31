@@ -5,12 +5,12 @@ import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.cluster.ClusterManager
-import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.core.cluster.ClusterManager
+import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.events.CollectionEventType
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.tag.TagManager
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.state.CollectionsState
 import com.fpf.smartscan.ui.utils.SelectionUtils

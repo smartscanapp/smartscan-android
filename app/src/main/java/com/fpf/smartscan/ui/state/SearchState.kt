@@ -1,10 +1,10 @@
 package com.fpf.smartscan.ui.state
 
 import android.net.Uri
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.search.SearchFilter
-import com.fpf.smartscan.search.SortBy
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.search.SearchFilter
+import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class SearchState(

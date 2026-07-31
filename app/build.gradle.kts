@@ -78,30 +78,19 @@ extensions.configure<ApplicationExtension> {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.documentfile)
-//    implementation(libs.smartscan.ml)
-    implementation("com.github.smartscanapp.smartscan-sdk:smartscan-ml:2.2.1")
-    implementation("com.github.devdiaries41.llmconnect-android:llmconnect:1.0.0")
+    implementation(project(":core"))
 
-    implementation(platform(libs.koin.bom))
+    implementation(platform(libs.androidx.compose.bom))
 
     // Koin DI
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose.viewmodel)
+    implementation(platform(libs.koin.bom))
 
     // SplashScreen
     implementation(libs.androidx.core.splashscreen)
 
-    // media loading
-    implementation(libs.coil.compose)
-    implementation(libs.coil.video)
-
-    // Requests
-    implementation(libs.okhttp)
-
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
@@ -115,28 +104,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
 
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.paging.compose)
-    ksp(libs.androidx.room.compiler)
-
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.ui)
-
     debugImplementation(libs.androidx.ui.tooling)
 
-    // JVM unit tests
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-    testImplementation(libs.mockk)
-    testImplementation(kotlin("test"))
-
-    // Android instrumented tests
-    androidTestImplementation(libs.androidx.core)
-    androidTestImplementation(libs.androidx.junit.ktx)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.androidx.espresso.core)
 }
 

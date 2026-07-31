@@ -42,7 +42,7 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.settings.SettingSection
 import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeMode
-import com.fpf.smartscan.utils.BackupUtils.BACKUP_FILENAME
+import com.fpf.smartscan.core.utils.BackupUtils.BACKUP_FILENAME
 
 @Composable
 fun SettingsScreen(

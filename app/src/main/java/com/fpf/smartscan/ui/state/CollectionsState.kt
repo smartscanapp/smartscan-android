@@ -1,7 +1,7 @@
 package com.fpf.smartscan.ui.state
 
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class CollectionsState(

@@ -3,13 +3,12 @@ package com.fpf.smartscan.ui.screens.settings
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.MediaDatabase
-import com.fpf.smartscan.errors.AppException
-import com.fpf.smartscan.models.ModelRepository
+import com.fpf.smartscan.core.data.MediaDatabase
+import com.fpf.smartscan.core.errors.AppException
+import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
 import com.fpf.smartscan.events.ModelEvent
@@ -22,7 +21,7 @@ import com.fpf.smartscan.settings.saveSettings
 import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeManager
 import com.fpf.smartscan.ui.theme.ThemeMode
-import com.fpf.smartscan.utils.BackupUtils
+import com.fpf.smartscan.core.utils.BackupUtils
 import com.fpf.smartscansdk.ml.models.ModelInfo
 import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.Dispatchers

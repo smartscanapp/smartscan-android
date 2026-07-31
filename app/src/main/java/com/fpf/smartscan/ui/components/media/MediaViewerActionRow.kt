@@ -17,15 +17,15 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.openImageInGallery
-import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.shareMedia
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.openImageInGallery
+import com.fpf.smartscan.core.media.openVideoInGallery
+import com.fpf.smartscan.core.media.shareMedia
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.ActionRowWithFade
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
-import com.fpf.smartscan.utils.canOpenUri
+import com.fpf.smartscan.core.utils.canOpenUri
 
 
 @Composable

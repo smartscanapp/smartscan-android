@@ -25,9 +25,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)

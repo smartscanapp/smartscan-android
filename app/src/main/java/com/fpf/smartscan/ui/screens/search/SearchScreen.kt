@@ -45,13 +45,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaStoreHelper
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.search.SearchOptions
-import com.fpf.smartscan.search.SearchQuery
+import com.fpf.smartscan.core.search.SearchOptions
+import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
@@ -73,11 +72,13 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.formatDate
 import com.fpf.smartscan.utils.toEpochSeconds
+import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.collections.map
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -174,7 +175,7 @@ fun SearchScreen(
             onClick = { searchViewModel.onAction(SearchAction.Delete{ items ->
                 pendingDeleteItems = items
                 deleteLauncher.launch(
-                    MediaStoreHelper.createTrashRequest(context, items.map{it.uri})
+                    createTrashRequest(context, items.map{it.uri})
                 )
             }) },
         ),

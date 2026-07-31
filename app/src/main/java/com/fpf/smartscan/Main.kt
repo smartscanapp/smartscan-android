@@ -19,16 +19,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.models.ModelDownloadStatus
-import com.fpf.smartscan.index.IndexingStatus
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.concepts.Concept
+import com.fpf.smartscan.core.models.ModelDownloadStatus
+import com.fpf.smartscan.core.index.IndexingStatus
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.Routes
 import com.fpf.smartscan.navigation.BottomNavigationBar
 import com.fpf.smartscan.navigation.NavDataKeys
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.search.SearchQuery
+import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.ui.components.ScanLoadingView
 import com.fpf.smartscan.ui.components.ScanModal
 import com.fpf.smartscan.ui.components.UpdatePopUp
@@ -47,6 +47,7 @@ import com.fpf.smartscan.ui.screens.settings.SettingsDetailScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsViewModel
 import com.fpf.smartscan.ui.shared.MediaViewModel
+import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.ml.models.ModelName
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -81,7 +82,11 @@ fun Main(
             videoIndexStatus == IndexingStatus.ACTIVE ||
             cloudImageIndexStatus == IndexingStatus.ACTIVE ||
             runningMediaTypes.isNotEmpty()
-
+    val indexCompleteTitle = stringResource(R.string.notif_title_index_complete)
+    var showFirstScanModal by remember { mutableStateOf(false) }
+    var showScanAndRebuildModal by remember { mutableStateOf(false) }
+    var showRefreshScanModel by remember { mutableStateOf(false) }
+    var requiredMediaTypeToIndex by remember { mutableStateOf<MediaType?>(null) }
 
     // Model downloading
     val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
@@ -90,10 +95,6 @@ fun Main(
     val modelDownloadRequired =  ModelName.ALL_MINILM_L6_V2 !in installedModels
 
     var hasStoragePermission by remember { mutableStateOf(false) }
-    var showFirstScanModal by remember { mutableStateOf(false) }
-    var showScanAndRebuildModal by remember { mutableStateOf(false) }
-    var showRefreshScanModel by remember { mutableStateOf(false) }
-    var requiredMediaTypeToIndex by remember { mutableStateOf<MediaType?>(null) }
 
     LaunchedEffect(Unit) {
         hasStoragePermission = getStorageAccess(context) != StorageAccess.Denied
@@ -102,12 +103,38 @@ fun Main(
 
     LaunchedEffect(imageIndexStatus) {
         if (imageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
+            when(imageIndexStatus){
+                IndexingStatus.COMPLETE -> {
+                    val content = mainViewModel.getIndexCompleteNotification(MediaType.IMAGE)
+                    content?.let {
+                        showNotification(context, title = indexCompleteTitle, text = it, 100)
+                    }
+                }
+                IndexingStatus.FAILED -> {
+                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.IMAGE)
+                    showNotification(context, indexFailTitle, indexFailContent, 100)
+                }
+                else -> {}
+            }
             mainViewModel.onIndexingFinished(MediaType.IMAGE)
         }
     }
 
     LaunchedEffect(videoIndexStatus) {
         if (videoIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
+            when(videoIndexStatus){
+                IndexingStatus.COMPLETE -> {
+                    val content = mainViewModel.getIndexCompleteNotification(MediaType.VIDEO)
+                    content?.let {
+                        showNotification(context, title = indexCompleteTitle, text = it, 100)
+                    }
+                }
+                IndexingStatus.FAILED -> {
+                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.VIDEO)
+                    showNotification(context, indexFailTitle, indexFailContent, 100)
+                }
+                else -> {}
+            }
             mainViewModel.onIndexingFinished(MediaType.VIDEO)
         }
     }

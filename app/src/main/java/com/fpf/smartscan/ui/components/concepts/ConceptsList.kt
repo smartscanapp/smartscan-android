@@ -22,7 +22,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.core.concepts.Concept
 import kotlin.math.roundToInt
 
 @Composable
@@ -94,7 +94,10 @@ fun ConceptsList(
                 .nestedScroll(connection),
             contentPadding = PaddingValues(0.dp)
         ) {
-            items(items, key = { it.id }) { item ->
+            items(
+                items = items,
+                key = { it.id }
+            ) { item ->
                 ConceptCard(
                     item=item,
                     onItemClick=onItemClick,

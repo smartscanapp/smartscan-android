@@ -55,9 +55,9 @@ import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
 import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.events.CollectionEventType
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaCollection.Companion.UNLABELLED_COLLECTION
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaCollection.Companion.UNLABELLED_COLLECTION
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow

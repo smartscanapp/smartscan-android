@@ -22,7 +22,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaCollection
 
 @Composable
 fun MultiCollectionPicker(

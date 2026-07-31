@@ -14,12 +14,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.search.SearchFilter
-import com.fpf.smartscan.search.SearchQuery
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.search.SearchFilter
+import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.theme.ThemeManager
-import com.fpf.smartscan.utils.BackupUtils
+import com.fpf.smartscan.core.utils.BackupUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

@@ -2,10 +2,10 @@ package com.fpf.smartscan.ui.action
 
 import android.content.Context
 import androidx.compose.ui.platform.Clipboard
-import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.search.SearchFilter
-import com.fpf.smartscan.search.SortBy
+import com.fpf.smartscan.core.concepts.Concept
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.search.SearchFilter
+import com.fpf.smartscan.core.search.SortBy
 
 sealed interface ConceptItemsAction {
     data class CopyMedia(val clipboard: Clipboard, val context: Context): ConceptItemsAction

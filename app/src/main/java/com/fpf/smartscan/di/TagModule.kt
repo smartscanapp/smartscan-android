@@ -1,8 +1,7 @@
 package com.fpf.smartscan.di
 
-import com.fpf.smartscan.tag.TagManager
+import com.fpf.smartscan.core.tag.TagManager
 import org.koin.dsl.module
-
 
 val tagModule = module {
     single {

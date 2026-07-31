@@ -6,26 +6,32 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import com.fpf.smartscan.R
 import com.fpf.smartscan.MainActivity
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
+import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE
 import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.index.CloudIndexJobManager
-import com.fpf.smartscan.index.IndexJobType
-import com.fpf.smartscan.index.LocalIndexJobManager
+import com.fpf.smartscan.core.index.CloudIndexJobManager
+import com.fpf.smartscan.core.index.IndexJobType
+import com.fpf.smartscan.core.index.LocalIndexJobManager
+import com.fpf.smartscan.settings.loadSettings
+import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,7 +75,6 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     private val localIndexJobManager by lazy {
         LocalIndexJobManager(
             application = application,
-            sharedPrefs=sharedPrefs,
             imageEmbedder = imageEmbedder,
             imageEmbedStore = imageEmbedStore,
             videoEmbedStore = videoEmbedStore,
@@ -118,8 +123,49 @@ class MediaIndexForegroundService : Service(), KoinComponent {
                 val mediaTypes = intent?.getStringArrayListExtra(EXTRA_MEDIA_TYPES)?.map(MediaType::valueOf) ?: MediaType.entries
                 val indexJob = IndexJobType.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
                 when(indexJob){
-                    IndexJobType.CLOUD -> cloudIndexJobManager.run(mediaTypes)
-                    IndexJobType.LOCAL -> localIndexJobManager.run(mediaTypes)
+                    IndexJobType.CLOUD -> {
+                        try {
+                            val appSettings = loadSettings(sharedPrefs)
+                            cloudIndexJobManager.run(mediaTypes, appSettings.openaiApiKey)
+                        } catch (e: AppException.MissingApiKey) {
+                            Log.e(TAG, e.message, e)
+                            val title = application.getString(R.string.notif_title_index_error_service, "Media")
+                            val content = application.getString(R.string.notif_content_missing_api_key_error_service)
+                            showNotification(application, title, content, NOTIFICATION_ID + 1)
+                        }
+
+                        catch (e: CancellationException) {
+                            Log.w(TAG, "Indexing job cancelled:", e)
+                        }
+                        catch (e: Exception) {
+                            Log.e(TAG, "Cloud Indexing failed:", e)
+                            val title = application.getString(R.string.notif_title_index_error_service, "Media")
+                            val content = application.getString(R.string.notif_content_index_error_service)
+                            showNotification(application, title, content, NOTIFICATION_ID + 1)
+                        }
+                    }
+                    IndexJobType.LOCAL -> {
+                        try {
+                            val appSettings = loadSettings(sharedPrefs)
+                            val allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()}
+                            val allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()}
+                            localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
+                        }catch (e: AppException.ClusterException)  {
+                            Log.e(TAG, e.message, e)
+                            val title = application.getString(R.string.notif_title_index_error_service, "Media")
+                            val content = application.getString(R.string.notif_content_cluster_error_service)
+                            showNotification(application, title, content, NOTIFICATION_ID + 1)
+                        }
+                        catch (e: CancellationException) {
+                            Log.w(TAG, "Indexing job cancelled:", e)
+                        }
+                        catch (e: Exception) {
+                            Log.e(TAG, "Indexing failed:", e)
+                            val title = application.getString(R.string.notif_title_index_error_service, "Media")
+                            val content = application.getString(R.string.notif_content_index_error_service)
+                            showNotification(application, title, content, NOTIFICATION_ID + 1)
+                        }
+                    }
                 }
             }
             finally {

@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
-import com.fpf.smartscan.media.MediaItem
+import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 
 
