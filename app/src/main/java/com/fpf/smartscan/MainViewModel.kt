@@ -85,16 +85,18 @@ class MainViewModel(
         null
     }
 
-    private val _isUpdatePopUpVisible = MutableStateFlow(!hasShownUpdatePopUp)
-    val  isUpdatePopUpVisible: StateFlow<Boolean> = _isUpdatePopUpVisible
+    val storedVersion: String?
+        get() = sharedPrefs.getString(PrefsKeys.UPDATES, null)
 
-    val hasShownUpdatePopUp: Boolean
-        get() = sharedPrefs.getString(PrefsKeys.UPDATES, null) == versionName
+    private val _isUpdatePopUpVisible = MutableStateFlow(storedVersion != versionName && storedVersion != null)
+    val  isUpdatePopUpVisible: StateFlow<Boolean> = _isUpdatePopUpVisible
 
     fun closeUpdatePopUp(){
         _isUpdatePopUpVisible.value = false
         sharedPrefs.edit { putString(PrefsKeys.UPDATES, versionName.toString()) }
     }
+
+    fun setVersion() = sharedPrefs.edit { putString(PrefsKeys.UPDATES, versionName.toString()) }
 
     fun getUpdates(): List<String> {
         return listOf(
@@ -131,6 +133,9 @@ class MainViewModel(
 
             _hasIndexedImages.update { imageEmbedStore.exists }
             _hasIndexedVideos.update { videoEmbedStore.exists }
+
+            if(storedVersion == null) setVersion()
+
             onAppReady()
         }
     }
