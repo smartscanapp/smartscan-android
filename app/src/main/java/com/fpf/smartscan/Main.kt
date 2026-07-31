@@ -174,8 +174,10 @@ fun Main(
                             hasIndexedVideos = hasIndexedVideos,
                             hasStoragePermission = hasStoragePermission,
                             onIndex = {
-                                requiredMediaTypeToIndex = it
-                                showFirstScanModal = true
+                                if(!isIndexing) {
+                                    requiredMediaTypeToIndex = it
+                                    showFirstScanModal = true
+                                }
                             },
                             onViewCollection = { collection ->
                                 navController.currentBackStackEntry
