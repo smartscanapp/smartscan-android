@@ -7,7 +7,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.constants.EmbeddingStoresFiles
+import com.fpf.smartscan.core.embeds.EmbeddingStoresFiles
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.DataSyncHelper
