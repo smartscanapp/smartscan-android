@@ -1,6 +1,7 @@
 package com.fpf.smartscan.core.search
 
 import android.util.Log
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -14,12 +15,9 @@ object Reranker {
     fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
         val scoredItems = calculateRerankScores(signals)
         if (scoredItems.size <= 1) return scoredItems.keys.toList()
-        val windowSize = (0.05 * scoredItems.size).toInt().coerceAtLeast(1)
-        val minAllowedScore = calculateRelevanceCutoff(scoredItems, windowSize = windowSize)
-        Log.d(TAG, "cutoff=$minAllowedScore")
+        val minAllowedScore = calculateRelevanceCutoff(scoredItems.values.toList())
         return scoredItems.filter { it.value >= minAllowedScore }.keys.toList()
     }
-
 
     fun calculateRerankScores(signals: List<RerankSignal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
@@ -53,12 +51,6 @@ object Reranker {
             .toMap()
     }
 
-
-    private fun normalizeScores(scores: Map<Long, Float>): Map<Long, Double> { if (scores.isEmpty()) return emptyMap()
-        val maxScore = scores.values.maxOrNull()?.toDouble()?.coerceAtLeast(EPS) ?: return emptyMap()
-        return scores.mapValues { (_, value) -> (value.toDouble() / maxScore).coerceIn(0.0, 1.0) }
-    }
-
     fun calculateSignalStrength(signalScores: Map<Long, Float>, totalResults: Int): Double {
         if (signalScores.isEmpty() || totalResults <= 0) return 0.0
 
@@ -71,149 +63,129 @@ object Reranker {
         return (0.7 * separation + 0.3 * topMean) * (1.0 + sparsityBonus)
     }
 
-    fun calculateRelevanceCutoff(
-        scoredItems: Map<Long, Double>,
-        windowSize: Int = 10,
-        relativeSlopeThreshold: Double = 0.05,
-        increaseFactor: Double = 1.25,
-        sustainedWindows: Int = 5
-    ): Double {
+    fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.05): Double {
+        if (scores.isEmpty()) return 0.0
+        val n = scores.size
+        val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
+        if (scores.size < minSegmentLength) return scores.last()
 
-        if(scoredItems.isEmpty()) return 0.0
+        // Prefix sums for O(1) linear regression error calculation.
+        val prefixY = DoubleArray(n + 1)
+        val prefixYY = DoubleArray(n + 1)
+        val prefixX = DoubleArray(n + 1)
+        val prefixXX = DoubleArray(n + 1)
+        val prefixXY = DoubleArray(n + 1)
 
-        Log.d(
-            TAG,
-            "Window size=$windowSize, Relative slope threshold=$relativeSlopeThreshold, Increase factor=$increaseFactor"
-        )
+        for (i in scores.indices) {
+            val x = i.toDouble()
+            val y = scores[i]
 
-        val scores = scoredItems.values.toList()
-
-        if (scores.size <= windowSize + 1) {
-            Log.d(TAG, "Too few scores. Using fallback.")
-            return fallback(scores)
+            prefixY[i + 1] = prefixY[i] + y
+            prefixYY[i + 1] = prefixYY[i] + y * y
+            prefixX[i + 1] = prefixX[i] + x
+            prefixXX[i + 1] = prefixXX[i] + x * x
+            prefixXY[i + 1] = prefixXY[i] + x * y
         }
 
-        Log.d(TAG, "Scores:\n${scores.joinToString("\n")}")
+        fun segmentError(start: Int, end: Int): Double {
+            val count = end - start + 1
 
-        val drops = scores.zipWithNext { a, b -> a - b }
+            if (count <= 1) return 0.0
 
-        val rollingSlope = drops
-            .windowed(windowSize, partialWindows =false)
-            .map { it.average() }
+            val sumX = prefixX[end + 1] - prefixX[start]
+            val sumY = prefixY[end + 1] - prefixY[start]
+            val sumXX = prefixXX[end + 1] - prefixXX[start]
+            val sumXY = prefixXY[end + 1] - prefixXY[start]
+            val sumYY = prefixYY[end + 1] - prefixYY[start]
 
-        Log.d(TAG, "Rolling slopes:\n${rollingSlope.joinToString("\n")}")
+            val denominator = count * sumXX - sumX * sumX
 
-        if (rollingSlope.isEmpty()) {
-            Log.d(TAG, "No rolling slopes. Using fallback.")
-            return fallback(scores)
-        }
-
-        val initialSlope = rollingSlope.first()
-
-        Log.d(TAG, "Initial slope=$initialSlope")
-
-        // Phase 1 -> Phase 2 detection.
-        var plateauStart = -1
-        var plateauLength = 0
-
-        for (i in rollingSlope.indices) {
-            val relativeSlope = rollingSlope[i] / initialSlope
-
-            Log.d(
-                TAG,
-                "Window=$i, Slope=${rollingSlope[i]}, RelativeSlope=$relativeSlope"
-            )
-
-            if (relativeSlope <= relativeSlopeThreshold) {
-                if (plateauStart == -1) {
-                    plateauStart = i
-                    Log.d(TAG, "Plateau started at window=$i")
+            val slope = if (abs(denominator) < 1e-12) {
+                    0.0
+                } else {
+                    (count * sumXY - sumX * sumY) / denominator
                 }
 
-                plateauLength++
-            } else if (plateauStart != -1) {
-                break
+            val intercept = (sumY - slope * sumX) / count
+
+            val error = sumYY +
+                        slope * slope * sumXX +
+                        count * intercept * intercept +
+                        2.0 * slope * intercept * sumX -
+                        2.0 * slope * sumXY -
+                        2.0 * intercept * sumY
+
+            return maxOf(0.0, error)
+        }
+
+        // Penalty scales with the total fitting error.
+        //This prevents both under-segmentation and excessive micro-segmentation.
+        val totalError = segmentError(0, n - 1)
+        val penalty = totalError * segmentPenaltyMultiplier
+
+        //cost[end] = minimum fitting error up to end + segment penalties.
+        val cost = DoubleArray(n) { Double.POSITIVE_INFINITY }
+        val previousBoundary = IntArray(n) { -1 }
+
+        for (end in scores.indices) {
+            for (start in 0..end) {
+                val segmentLength = end - start + 1
+
+                if (segmentLength < minSegmentLength) continue
+
+                val fittingError = segmentError(start, end)
+                val previousCost = if (start == 0) 0.0 else cost[start - 1]
+                val segmentPenalty = if (start == 0) 0.0 else penalty
+                val candidateCost = previousCost + fittingError + segmentPenalty
+
+                if (candidateCost < cost[end]) {
+                    cost[end] = candidateCost
+                    previousBoundary[end] = start - 1
+                }
             }
         }
 
-        // Single-phase distribution.
-        if (plateauStart == -1) {
-            Log.d(TAG, "No plateau detected. Using fallback.")
-            return fallback(scores)
+        val segments = mutableListOf<Pair<Int, Int>>()
+        var end = n - 1
+
+        while (end >= 0) {
+            val previous = previousBoundary[end]
+            val start = previous + 1
+            segments.add(start to end)
+            end = previous
         }
 
-        val plateauSlope = rollingSlope
-            .subList(plateauStart, plateauStart + plateauLength)
-            .average()
+        segments.reverse()
 
-        Log.d(
-            TAG,
-            "Plateau detected. Start=$plateauStart, Length=$plateauLength, AverageSlope=$plateauSlope"
-        )
+//        segments.forEachIndexed { index, segment ->
+//            Log.d(
+//                TAG,
+//                "Segment ${index + 1}: " +
+//                        "start=${segment.first}, " +
+//                        "finish=${segment.second}, " +
+//                        "startScore=${scores[segment.first]}, " +
+//                        "finishScore=${scores[segment.second]}"
+//            )
+//        }
 
-        // Phase 2 -> Phase 3 detection.
-        var increaseCount = 0
-
-        for (i in plateauStart + plateauLength until rollingSlope.size) {
-
-            val slope = rollingSlope[i]
-            val increaseRatio = slope / plateauSlope
-
-            Log.d(
-                TAG,
-                "Window=$i, Slope=$slope, IncreaseRatio=$increaseRatio"
-            )
-
-            if (increaseRatio >= increaseFactor) {
-                increaseCount++
-
-                Log.d(
-                    TAG,
-                    "Slope increase detected ($increaseCount/$sustainedWindows)"
-                )
-
-                if (increaseCount >= sustainedWindows) {
-                    Log.d(
-                        TAG,
-                        "Tail detected. Cutoff at index=$i, score=${scores[i]}"
-                    )
-                    return scores[i]
-                }
-            } else {
-                increaseCount = 0
-            }
-        }
-
-        Log.d(
-            TAG,
-            "No tail detected. Returning plateau cutoff at index=$plateauStart, score=${scores[plateauStart]}"
-        )
-
-        // Two-phase distribution.
-        return scores[plateauStart]
+        val cutoffIndex = if (segments.size == 1) n - 1 else segments.last().first
+//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
+        return scores[cutoffIndex]
     }
-
-    private fun fallback(scores: List<Double>): Double = percentile(scores, 0.9)
 
     @JvmName("calculateRelevanceCutoffFloatMap")
-    fun calculateRelevanceCutoff(
-        scoredItems: Map<Long, Float>,
-    ): Double
-    {
+    fun calculateRelevanceCutoff(scoredItems: Map<Long, Float>): Double {
         val scoredItems = buildMap{scoredItems.forEach{put(it.key, it.value.toDouble())}}
-        return calculateRelevanceCutoff(scoredItems)
+        return calculateRelevanceCutoff(scoredItems.values.toList())
     }
 
-
+    private fun normalizeScores(scores: Map<Long, Float>): Map<Long, Double> { if (scores.isEmpty()) return emptyMap()
+        val maxScore = scores.values.maxOrNull()?.toDouble()?.coerceAtLeast(EPS) ?: return emptyMap()
+        return scores.mapValues { (_, value) -> (value.toDouble() / maxScore).coerceIn(0.0, 1.0) }
+    }
 
     private fun percentile(values: List<Double>, percent: Double): Double {
         if (values.isEmpty()) return 0.0
         return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()]
-    }
-
-    @JvmName("percentileFloat")
-    private fun percentile(values: List<Float>, percent: Double): Double {
-        if (values.isEmpty()) return 0.0
-        return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()].toDouble()
     }
 }
