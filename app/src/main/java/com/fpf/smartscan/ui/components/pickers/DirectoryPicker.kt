@@ -32,7 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import com.fpf.smartscan.utils.getDirectoryName
+import com.fpf.smartscan.core.utils.getDirectoryName
 
 @Composable
 fun DirectoryPicker(

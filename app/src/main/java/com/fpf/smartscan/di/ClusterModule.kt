@@ -1,6 +1,6 @@
 package com.fpf.smartscan.di
 
-import com.fpf.smartscan.cluster.ClusterManager
+import com.fpf.smartscan.core.cluster.ClusterManager
 import org.koin.dsl.module
 
 

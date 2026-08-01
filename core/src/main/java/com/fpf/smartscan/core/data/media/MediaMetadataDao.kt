@@ -1,0 +1,326 @@
+package com.fpf.smartscan.core.data.media
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
+import com.fpf.smartscan.core.media.MediaType
+
+@Dao
+interface MediaMetadataDao {
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(items: List<MediaMetadataEntity>)
+
+    @Update
+    suspend fun update(items: List<MediaMetadataEntity>)
+
+    @Query("SELECT * FROM media_metadata WHERE id IN (:mediaIds) AND type = :type")
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadataEntity>
+
+
+    @Query("SELECT * FROM media_metadata WHERE type = :type")
+    suspend fun getByType(type: MediaType): List<MediaMetadataEntity>
+
+    @Query("SELECT id FROM media_metadata WHERE type = :type")
+    suspend fun getIdsByType(type: MediaType): List<Long>
+
+
+    @Query("""
+        SELECT id, type
+        FROM media_metadata
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM media_cluster_crossref c
+            WHERE c.mediaId = media_metadata.id
+              AND c.mediaType = media_metadata.type
+        )
+    """)
+    suspend fun getUnclusteredItemIds(): List<com.fpf.smartscan.core.data.MediaIdType>
+
+
+    // TAG QUERIES
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+    ORDER BY m.dateAdded DESC, m.id DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByTagDesc(
+        tagId: Long,
+        mediaType: MediaType?,
+        startDate: Long?,
+        endDate: Long?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByTagAsc(
+        tagId: Long,
+        mediaType: MediaType?,
+        startDate: Long?,
+        endDate: Long?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+    ORDER BY m.dateAdded DESC, m.id DESC
+""")
+    suspend fun getByTag(
+        tagId: Long,
+        mediaType: MediaType?,
+        startDate: Long?,
+        endDate: Long?
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT DISTINCT m.*
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId IN (:tagIds)
+      AND m.description IS NULL
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+""")
+    suspend fun getByTagsWithoutDescription(
+        tagIds: List<Long>,
+        mediaType: MediaType?
+    ): List<MediaMetadataEntity>
+
+    // CLUSTER QUERIES
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId = :clusterId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+    ORDER BY m.dateAdded DESC, m.id DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByClusterDesc(
+        clusterId: Long,
+        mediaType: MediaType?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId = :clusterId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByClusterAsc(
+        clusterId: Long,
+        mediaType: MediaType?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId = :clusterId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+    ORDER BY m.dateAdded DESC, m.id DESC
+""")
+    suspend fun getByCluster(
+        clusterId: Long,
+        mediaType: MediaType?
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId IN (:clusterIds)
+      AND m.description IS NULL
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+""")
+    suspend fun getByClustersWithoutDescription(
+        clusterIds: List<Long>,
+        mediaType: MediaType?
+    ): List<MediaMetadataEntity>
+
+    // Concept queries
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY m.dateAdded DESC, m.id DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedByDateDesc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY m.dateAdded ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedByDateAsc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY m.dateAdded DESC, m.id DESC
+""")
+    suspend fun getByConceptSortedByDate(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY c.similarity DESC, m.id DESC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedBySimilarityDesc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY c.similarity ASC, m.id ASC
+    LIMIT :limit OFFSET :offset
+""")
+    suspend fun getByConceptSortedBySimilarityAsc(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        limit: Int,
+        offset: Int
+    ): List<MediaMetadataEntity>
+
+
+    @Query("""
+    SELECT m.*
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+      AND (:mediaType IS NULL OR m.type = :mediaType)
+      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY c.similarity DESC, m.id DESC
+""")
+    suspend fun getByConceptSortedBySimilarity(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?
+    ): List<MediaMetadataEntity>
+
+    @Transaction
+    @Query("""
+        DELETE FROM media_metadata
+        WHERE id IN (:mediaIds)
+          AND type = :type
+    """)
+
+    suspend fun deleteByIds(mediaIds: List<Long>, type: MediaType)
+
+    @Query("DELETE FROM media_metadata")
+    suspend fun clear()
+}

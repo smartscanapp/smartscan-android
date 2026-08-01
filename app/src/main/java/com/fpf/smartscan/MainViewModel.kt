@@ -7,27 +7,28 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.constants.EmbeddingStoresFiles
+import com.fpf.smartscan.cloud.index.CloudImageIndexListener
+import com.fpf.smartscan.core.embeds.EmbeddingStoresFiles
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.DataSyncHelper
-import com.fpf.smartscan.data.MediaDatabase
-import com.fpf.smartscan.models.ModelRepository
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.data.media.MediaMetadataRepository
-import com.fpf.smartscan.index.CloudImageIndexListener
-import com.fpf.smartscan.index.ImageIndexListener
-import com.fpf.smartscan.index.IndexJobType
-import com.fpf.smartscan.index.VideoIndexListener
-import com.fpf.smartscan.index.rebuildIndex
-import com.fpf.smartscan.index.refreshIndex
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.data.DataSyncHelper
+import com.fpf.smartscan.core.data.MediaDatabase
+import com.fpf.smartscan.core.models.ModelRepository
+import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
+import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.index.ImageIndexListener
+import com.fpf.smartscan.core.index.IndexJobType
+import com.fpf.smartscan.core.index.VideoIndexListener
+import com.fpf.smartscan.services.rebuildIndex
+import com.fpf.smartscan.services.refreshIndex
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
-import com.fpf.smartscan.utils.isWorkScheduled
+import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.workers.IndexWorker
+import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.ml.models.ModelName
 import com.fpf.smartscansdk.ml.models.ModelRegistry
@@ -190,6 +191,23 @@ class MainViewModel(
     fun resetModelProgress() = modelRepository.reset()
 
     fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
+
+    fun getIndexFailNotification(mediaType: MediaType): Pair<String, String>{
+        val title = getApplication<Application>().getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
+        val content = getApplication<Application>().getString(R.string.notif_content_index_error_service)
+        return Pair(title, content)
+    }
+
+    fun getIndexCompleteNotification(mediaType: MediaType): String?{
+        val metrics = when(mediaType){
+            MediaType.IMAGE -> ImageIndexListener.result.value
+            MediaType.VIDEO -> VideoIndexListener.result.value
+        }?: return null
+        if(metrics.totalProcessed == 0) return null
+        val (minutes, seconds) = getTimeInMinutesAndSeconds(metrics.timeElapsed)
+        val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${metrics.totalProcessed}, Time: ${minutes}m ${seconds}s"
+        return notificationText
+    }
 
     private fun resetIndexingState(mediaType: MediaType){
         when(mediaType){

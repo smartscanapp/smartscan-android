@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.fpf.smartscan.concepts.Concept
+import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 
 

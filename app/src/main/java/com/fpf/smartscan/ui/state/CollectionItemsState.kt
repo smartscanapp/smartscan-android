@@ -1,10 +1,9 @@
 package com.fpf.smartscan.ui.state
 
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.search.SearchFilter
-import com.fpf.smartscan.search.SortBy
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.search.SearchFilter
+import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class CollectionItemsState(

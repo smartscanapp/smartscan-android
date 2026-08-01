@@ -3,9 +3,9 @@ package com.fpf.smartscan.ui.action
 import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.platform.Clipboard
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.search.SearchOptions
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.search.SearchOptions
 
 sealed interface SearchAction {
     data class Search(val searchOptions: SearchOptions): SearchAction

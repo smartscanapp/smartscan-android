@@ -1,7 +1,7 @@
 package com.fpf.smartscan.di
 
 import android.app.Application
-import com.fpf.smartscan.constants.EmbeddingStoresFilesQuant
+import com.fpf.smartscan.core.embeds.EmbeddingStoresFilesQuant
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import org.koin.core.qualifier.named
 import org.koin.dsl.module

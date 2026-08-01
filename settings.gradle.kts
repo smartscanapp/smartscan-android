@@ -26,3 +26,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "SmartScan"
 include(":app")
+include(":core")
+include(":cloud")

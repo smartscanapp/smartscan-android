@@ -1,8 +1,8 @@
 package com.fpf.smartscan.ui.action
 
-import com.fpf.smartscan.concepts.Concept
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
+import com.fpf.smartscan.core.concepts.Concept
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaCollection
 
 sealed interface ConceptAction {
     data class SetCollectionType(val collectionType: CollectionType?): ConceptAction

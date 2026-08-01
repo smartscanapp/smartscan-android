@@ -45,8 +45,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 import com.fpf.smartscan.ui.components.media.ImageDisplay
 import kotlinx.coroutines.launch
@@ -122,7 +122,10 @@ fun MediaCollectionsList(
                 .nestedScroll(connection),
             contentPadding = PaddingValues(0.dp)
         ) {
-            items(items, key = { it.id }) { item ->
+            items(
+                items = items,
+                key = { it.id }
+            ) { item ->
                 val shape = RoundedCornerShape(12.dp)
 
                 Column{

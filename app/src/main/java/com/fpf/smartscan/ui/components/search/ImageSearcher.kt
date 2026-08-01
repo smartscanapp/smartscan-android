@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.ui.components.media.ImageDisplay
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 

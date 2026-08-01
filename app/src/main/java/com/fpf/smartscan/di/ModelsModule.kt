@@ -1,7 +1,7 @@
 package com.fpf.smartscan.di
 
 import android.app.Application
-import com.fpf.smartscan.models.ModelRepository
+import com.fpf.smartscan.core.models.ModelRepository
 import org.koin.dsl.module
 
 val modelsModule = module {
