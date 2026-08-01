@@ -117,7 +117,7 @@ class ConceptManager(
     private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore): Map<Long, Float>{
         val result = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
         val simsMap = result.toSimsMap()
-        val cutOff = Reranker.calculateRelevanceCutoff(simsMap, baseCutOffPercent = 0.5f)
+        val cutOff = Reranker.calculateRelevanceCutoff(simsMap)
         return simsMap.filter { it.value >= cutOff }
     }
 

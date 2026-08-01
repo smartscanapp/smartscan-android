@@ -1,100 +1,219 @@
 package com.fpf.smartscan.core.search
 
-import kotlin.math.max
+import android.util.Log
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-data class RerankSignal(
-    val scores: Map<Long, Float>,
-    val weight: Float = 1f
-)
+data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
 
 object Reranker {
+    private const val TAG = "Reranker"
+    private const val EPS = 1e-6
+    private const val SIGNAL_ALPHA = 5.0
 
-    private const val EPS = 1e-3
-
-    fun rerank(
-        itemToSimMap: Map<Long, Float>,
-        signals: List<RerankSignal> =emptyList(),
-        strictness: Float = 0f,
-        baseCutOffPercent: Float = 0.6f,
-        maxCutOffPercent: Float = 0.85f
-    ): List<Long> {
-
-        val scoredItems = calculateRerankScores(itemToSimMap, signals)
-        // Early return if only a single or no result
-        if (scoredItems.size <= 1) return scoredItems.map { it.key }
-
-        val minAllowedScore = calculateRelevanceCutoff(scoredItems, strictness, baseCutOffPercent, maxCutOffPercent)
-        return scoredItems.filter { it.value >= minAllowedScore }.map { it.key }
+    fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
+        val scoredItems = calculateRerankScores(signals)
+        if (scoredItems.size <= 1) return scoredItems.keys.toList()
+        val windowSize = (0.05 * scoredItems.size).toInt().coerceAtLeast(1)
+        val minAllowedScore = calculateRelevanceCutoff(scoredItems, windowSize = windowSize)
+        Log.d(TAG, "cutoff=$minAllowedScore")
+        return scoredItems.filter { it.value >= minAllowedScore }.keys.toList()
     }
 
-    fun calculateRerankScores(itemToSimMap: Map<Long, Float>, signals: List<RerankSignal>): Map<Long, Double> {
-        val itemSpread = calculateSpread( itemToSimMap.values.map { it.toDouble() })
-        val signalStrengths = signals.map { signal -> calculateSignalStrength(signal.scores, itemSpread) }
 
-        val scoredItems = itemToSimMap.keys.map { itemId ->
-            val itemScore = itemToSimMap[itemId]?.toDouble() ?: 0.0
-            var score = itemScore
-            signals.forEachIndexed { index, signal ->
-                val signalScore = signal.scores[itemId]?.toDouble()?: 0.0
-                score *= 1 + signalStrengths[index] * signalScore * signal.weight
-            }
+    fun calculateRerankScores(signals: List<RerankSignal>): Map<Long, Double> {
+        if (signals.isEmpty()) return emptyMap()
+
+        val mainSignal = signals.maxByOrNull { it.scores.size } ?: return emptyMap()
+        val totalResults = mainSignal.scores.size
+        val normalizedSignals = signals.associate { signal ->
+            signal.key to normalizeScores(signal.scores)
+        }
+
+        val signalStrengths = signals.associate { signal ->
+            signal.key to calculateSignalStrength(signal.scores, totalResults)
+        }
+        Log.d(TAG, "Signal strengths: $signalStrengths")
+
+        return mainSignal.scores.keys.map { itemId ->
+            val mainScore = normalizedSignals[mainSignal.key]?.get(itemId)?: 1.0
+            var score = mainScore * (signalStrengths[mainSignal.key]?.pow(2)?: 0.0)
+
+            signals.asSequence()
+                .filter { it.key != mainSignal.key }
+                .forEach { signal ->
+                    val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
+                    val strength = signalStrengths[signal.key] ?: return@forEach
+                    score  *= 1.0 + SIGNAL_ALPHA * strength * signalScore.pow(2)
+                }
+
             itemId to score
-        }.sortedByDescending { it.second }.associate { it.first to it.second }
-        return scoredItems
+        }
+            .sortedByDescending { it.second }
+            .toMap()
+    }
+
+
+    private fun normalizeScores(scores: Map<Long, Float>): Map<Long, Double> { if (scores.isEmpty()) return emptyMap()
+        val maxScore = scores.values.maxOrNull()?.toDouble()?.coerceAtLeast(EPS) ?: return emptyMap()
+        return scores.mapValues { (_, value) -> (value.toDouble() / maxScore).coerceIn(0.0, 1.0) }
+    }
+
+    fun calculateSignalStrength(signalScores: Map<Long, Float>, totalResults: Int): Double {
+        if (signalScores.isEmpty() || totalResults <= 0) return 0.0
+
+        val values = signalScores.values.map { it.toDouble() }.sortedDescending()
+        val topCount = maxOf(1, percentile(values, 0.2).toInt())
+        val topMean = values.take(topCount).average()
+        val bottomMean = values.drop(topCount).ifEmpty { listOf(0.0) }.average()
+        val separation = (topMean - bottomMean).coerceAtLeast(0.0)
+        val sparsityBonus = 1.0 / sqrt(values.size.toDouble())
+        return (0.7 * separation + 0.3 * topMean) * (1.0 + sparsityBonus)
     }
 
     fun calculateRelevanceCutoff(
         scoredItems: Map<Long, Double>,
-         strictness: Float = 0f,
-         baseCutOffPercent: Float = 0.6f,
-         maxCutOffPercent: Float = 0.85f
-    ): Double
-    {
+        windowSize: Int = 10,
+        relativeSlopeThreshold: Double = 0.05,
+        increaseFactor: Double = 1.25,
+        sustainedWindows: Int = 5
+    ): Double {
+
         if(scoredItems.isEmpty()) return 0.0
 
-        val scores = scoredItems.map { it.value }.sorted()
-        val maxScore = scores.max()
-        val minScore = scores.min()
-        val medianScore = scores[scores.size / 2]
-        val meanScore = scores.average()
-        val stdScore = sqrt(scores.map{(it - meanScore).pow(2)}.average())
-        val centrality = medianScore - minScore
-        val safeStrictness = strictness.coerceIn(0f, 1f)
-        val strictnessDamping = (maxScore - medianScore) / (maxScore).coerceAtLeast(EPS)
-        val cutOffPercent = (baseCutOffPercent * (1f + strictnessDamping.toFloat() * safeStrictness)).coerceIn(baseCutOffPercent, maxCutOffPercent)
-        val baseCutOff = cutOffPercent * maxScore
-        val dynamicCutOff = medianScore - stdScore - (1 - safeStrictness) * centrality.pow(1.0 + safeStrictness)
-        val minAllowedScore = max(baseCutOff, dynamicCutOff)
-        return minAllowedScore
+        Log.d(
+            TAG,
+            "Window size=$windowSize, Relative slope threshold=$relativeSlopeThreshold, Increase factor=$increaseFactor"
+        )
+
+        val scores = scoredItems.values.toList()
+
+        if (scores.size <= windowSize + 1) {
+            Log.d(TAG, "Too few scores. Using fallback.")
+            return fallback(scores)
+        }
+
+        Log.d(TAG, "Scores:\n${scores.joinToString("\n")}")
+
+        val drops = scores.zipWithNext { a, b -> a - b }
+
+        val rollingSlope = drops
+            .windowed(windowSize, partialWindows =false)
+            .map { it.average() }
+
+        Log.d(TAG, "Rolling slopes:\n${rollingSlope.joinToString("\n")}")
+
+        if (rollingSlope.isEmpty()) {
+            Log.d(TAG, "No rolling slopes. Using fallback.")
+            return fallback(scores)
+        }
+
+        val initialSlope = rollingSlope.first()
+
+        Log.d(TAG, "Initial slope=$initialSlope")
+
+        // Phase 1 -> Phase 2 detection.
+        var plateauStart = -1
+        var plateauLength = 0
+
+        for (i in rollingSlope.indices) {
+            val relativeSlope = rollingSlope[i] / initialSlope
+
+            Log.d(
+                TAG,
+                "Window=$i, Slope=${rollingSlope[i]}, RelativeSlope=$relativeSlope"
+            )
+
+            if (relativeSlope <= relativeSlopeThreshold) {
+                if (plateauStart == -1) {
+                    plateauStart = i
+                    Log.d(TAG, "Plateau started at window=$i")
+                }
+
+                plateauLength++
+            } else if (plateauStart != -1) {
+                break
+            }
+        }
+
+        // Single-phase distribution.
+        if (plateauStart == -1) {
+            Log.d(TAG, "No plateau detected. Using fallback.")
+            return fallback(scores)
+        }
+
+        val plateauSlope = rollingSlope
+            .subList(plateauStart, plateauStart + plateauLength)
+            .average()
+
+        Log.d(
+            TAG,
+            "Plateau detected. Start=$plateauStart, Length=$plateauLength, AverageSlope=$plateauSlope"
+        )
+
+        // Phase 2 -> Phase 3 detection.
+        var increaseCount = 0
+
+        for (i in plateauStart + plateauLength until rollingSlope.size) {
+
+            val slope = rollingSlope[i]
+            val increaseRatio = slope / plateauSlope
+
+            Log.d(
+                TAG,
+                "Window=$i, Slope=$slope, IncreaseRatio=$increaseRatio"
+            )
+
+            if (increaseRatio >= increaseFactor) {
+                increaseCount++
+
+                Log.d(
+                    TAG,
+                    "Slope increase detected ($increaseCount/$sustainedWindows)"
+                )
+
+                if (increaseCount >= sustainedWindows) {
+                    Log.d(
+                        TAG,
+                        "Tail detected. Cutoff at index=$i, score=${scores[i]}"
+                    )
+                    return scores[i]
+                }
+            } else {
+                increaseCount = 0
+            }
+        }
+
+        Log.d(
+            TAG,
+            "No tail detected. Returning plateau cutoff at index=$plateauStart, score=${scores[plateauStart]}"
+        )
+
+        // Two-phase distribution.
+        return scores[plateauStart]
     }
+
+    private fun fallback(scores: List<Double>): Double = percentile(scores, 0.9)
 
     @JvmName("calculateRelevanceCutoffFloatMap")
     fun calculateRelevanceCutoff(
         scoredItems: Map<Long, Float>,
-        strictness: Float = 0f,
-        baseCutOffPercent: Float = 0.6f,
-        maxCutOffPercent: Float = 0.85f
     ): Double
     {
         val scoredItems = buildMap{scoredItems.forEach{put(it.key, it.value.toDouble())}}
-        return calculateRelevanceCutoff(scoredItems, strictness, baseCutOffPercent, maxCutOffPercent)
+        return calculateRelevanceCutoff(scoredItems)
     }
 
-    fun calculateSpread(values: List<Double>): Double {
+
+
+    private fun percentile(values: List<Double>, percent: Double): Double {
         if (values.isEmpty()) return 0.0
-
-        val sorted = values.sorted()
-        val p10 = sorted[(sorted.size * 0.1).toInt()]
-        val p90 = sorted[(sorted.size * 0.9).toInt()]
-        return p90 - p10
+        return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()]
     }
 
-    fun calculateSignalStrength(signalScores: Map<Long, Float>, itemSpread: Double): Double {
-        val signalSpread = calculateSpread(signalScores.values.map { it.toDouble() })
-        return (signalSpread / itemSpread.coerceAtLeast(EPS)).pow(3).coerceAtLeast(1.0)
+    @JvmName("percentileFloat")
+    private fun percentile(values: List<Float>, percent: Double): Double {
+        if (values.isEmpty()) return 0.0
+        return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()].toDouble()
     }
-
 }
-
