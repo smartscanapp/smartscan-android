@@ -19,8 +19,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.core.index.CloudIndexJobManager
+import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.core.index.LocalIndexJobManager
+import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.services.MediaIndexForegroundService
@@ -74,6 +75,7 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
     private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
+    private val mediaJobManager: MediaJobManager by inject()
 
     private val sharedPrefs by lazy { applicationContext.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
 
@@ -86,6 +88,7 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             textEmbedder = textEmbedder,
             imageConceptsEmbedStore = imageConceptsEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
+            mediaJobManager=mediaJobManager,
             useListener = false
         )
     }

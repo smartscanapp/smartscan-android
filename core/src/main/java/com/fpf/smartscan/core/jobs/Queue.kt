@@ -1,4 +1,4 @@
-package com.fpf.smartscan.core.queue
+package com.fpf.smartscan.core.jobs
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

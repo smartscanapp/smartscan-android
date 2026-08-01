@@ -1,4 +1,4 @@
-package com.fpf.smartscan.core.queue.jobs
+package com.fpf.smartscan.core.jobs
 
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType

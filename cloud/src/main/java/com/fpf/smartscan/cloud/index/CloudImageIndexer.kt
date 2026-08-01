@@ -1,10 +1,11 @@
-package com.fpf.smartscan.core.index
-
+package com.fpf.smartscan.cloud.index
 
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.jobs.MediaProcessingJob
+import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.utils.uriToBase64
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
@@ -25,6 +26,7 @@ class CloudImageIndexer(
     private val embedder: TextEmbeddingProvider,
     private val openaiClient: OpenaiClient,
     private val store: EmbeddingStore,
+    private val mediaJobManager: MediaJobManager,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean,
     private val maxImageSize: Int = 720,
@@ -38,6 +40,9 @@ class CloudImageIndexer(
         val filteredBatch = batch.filterNotNull()
         store.add(filteredBatch.map{it.second})
         mediaMetadataRepository.update(filteredBatch.map { it.first })
+        filteredBatch.forEach { (metadata, embed) ->
+            mediaJobManager.enqueue(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
+        }
         listener?.onBatchComplete(context, batch)
     }
 

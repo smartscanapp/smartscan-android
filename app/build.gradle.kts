@@ -79,6 +79,7 @@ extensions.configure<ApplicationExtension> {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":cloud"))
 
     implementation(platform(libs.androidx.compose.bom))
 

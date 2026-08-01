@@ -1,16 +1,15 @@
-package com.fpf.smartscan.core.index
+package com.fpf.smartscan.cloud.index
 
 import android.content.Context
 import android.util.Log
+import com.fpf.smartscan.core.index.IndexingStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.fpf.smartscan.core.media.MediaMetadata
-import com.fpf.smartscan.core.queue.jobs.MediaProcessingJob
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.processors.Metrics
 import com.fpf.smartscansdk.core.processors.ProcessorListener
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+
 
 abstract class BaseCloudIndexListener(private val tag: String) : ProcessorListener<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?> {
     private val _progress = MutableStateFlow(0f)
@@ -24,13 +23,6 @@ abstract class BaseCloudIndexListener(private val tag: String) : ProcessorListen
 
     abstract val itemName: String
 
-    private val _jobs = MutableSharedFlow<MediaProcessingJob>()
-    val jobs = _jobs.asSharedFlow()
-
-    protected suspend fun emitJob(job: MediaProcessingJob) {
-        _jobs.emit(job)
-    }
-
     override suspend fun onProgress(context: Context, progress: Float) {
         _progress.value = progress
     }
@@ -43,13 +35,6 @@ abstract class BaseCloudIndexListener(private val tag: String) : ProcessorListen
         _indexingStatus.value = IndexingStatus.COMPLETE
         _progress.value = 0f
         _result.value = metrics
-    }
-
-    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
-        val filteredBatch = batch.filterNotNull()
-        filteredBatch.forEach { (metadata, embed) ->
-            emitJob(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
-        }
     }
 
     override suspend fun onFail(context: Context, failureMetrics: Metrics.Failure) {

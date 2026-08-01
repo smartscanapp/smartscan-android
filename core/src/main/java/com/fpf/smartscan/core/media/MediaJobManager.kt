@@ -4,10 +4,9 @@ import android.util.Log
 import com.fpf.smartscan.core.concepts.ConceptManager
 import com.fpf.smartscan.core.data.mappers.toMetadata
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
-import com.fpf.smartscan.core.index.CloudImageIndexListener
+import com.fpf.smartscan.core.jobs.MediaProcessingJob
+import com.fpf.smartscan.core.jobs.Queue
 import com.fpf.smartscan.core.models.ModelRepository
-import com.fpf.smartscan.core.queue.Queue
-import com.fpf.smartscan.core.queue.jobs.MediaProcessingJob
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
@@ -49,14 +48,7 @@ class MediaJobManager(
             }
         }
     )
-    init{
-        scope.launch {
-            CloudImageIndexListener.jobs.collect { job ->
-                queue.submit(job)
-            }
-        }
-    }
-
+    fun enqueue(job: MediaProcessingJob) = queue.submit(job)
     fun updateDescription(updatedMedia: MediaItem){
         queue.submit(MediaProcessingJob.UpdateDescriptionAndConceptLinks(updatedMedia))
     }
@@ -87,7 +79,11 @@ class MediaJobManager(
         val newRawEmbedding = textEmbedder.embed(updatedMedia.description)
         val existingMediaEmbed = mediaConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
         val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
-            ?: StoredEmbedding(updatedMedia.id, updatedMedia.dateAdded, newRawEmbedding.toQInt8Embed())
+            ?: StoredEmbedding(
+                updatedMedia.id,
+                updatedMedia.dateAdded,
+                newRawEmbedding.toQInt8Embed()
+            )
         if (existingMediaEmbed != null) {
             mediaConceptEmbedStore.update(listOf(updatedOrNewMediaEmbed))
         } else {

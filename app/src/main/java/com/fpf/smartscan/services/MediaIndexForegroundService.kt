@@ -21,9 +21,10 @@ import com.fpf.smartscan.di.VIDEO_EMBED_STORE
 import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
-import com.fpf.smartscan.core.index.CloudIndexJobManager
+import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
+import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -55,6 +56,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
     private val clusterMetadataRepository: ClusterMetadataRepository by inject()
     private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
+    private val mediaJobManager: MediaJobManager by inject()
     private val imageEmbedStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
     private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
     private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
@@ -69,6 +71,7 @@ class MediaIndexForegroundService : Service(), KoinComponent {
             textEmbedder = textEmbedder,
             imageConceptsEmbedStore = imageConceptsEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
+            mediaJobManager=mediaJobManager
         )
     }
 

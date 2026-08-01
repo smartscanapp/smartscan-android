@@ -1,13 +1,14 @@
-package com.fpf.smartscan.core.index
+package com.fpf.smartscan.cloud.index
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.fpf.smartscan.core.data.media.MediaMetadataRepository
-import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.concepts.getAllowedClusters
 import com.fpf.smartscan.core.concepts.getAllowedTags
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.errors.AppException
+import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaMetadata
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
@@ -21,6 +22,7 @@ class CloudIndexJobManager(
     private val textEmbedder: TextEmbeddingProvider,
     private val imageConceptsEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
+    private val mediaJobManager: MediaJobManager,
     private val useListener: Boolean = true
 ) {
     companion object {
@@ -32,8 +34,12 @@ class CloudIndexJobManager(
         val allowedTags= getAllowedTags(sharedPrefs)
         val allowedClusters = getAllowedClusters(sharedPrefs)
         val openaiClient = OpenaiClient(
-            apiKey = apiKey?: throw AppException.MissingApiKey(),
-            config = LLMProviderConfig(model = "gpt-5.4-mini", systemPrompt = DEFAULT_SYSTEM_PROMPT, maxTokens = 500)
+            apiKey = apiKey ?: throw AppException.MissingApiKey(),
+            config = LLMProviderConfig(
+                model = "gpt-5.4-mini",
+                systemPrompt = DEFAULT_SYSTEM_PROMPT,
+                maxTokens = 500
+            )
         )
         if(!textEmbedder.isInitialized()) textEmbedder.initialize()
 
@@ -42,12 +48,13 @@ class CloudIndexJobManager(
                 MediaType.IMAGE -> {
                     val imageIndexer = CloudImageIndexer(
                         context = application,
+                        openaiClient = openaiClient,
                         embedder=textEmbedder,
                         listener = if(useListener) CloudImageIndexListener else null,
                         store = imageConceptsEmbedStore,
                         mediaMetadataRepository = mediaMetadataRepository,
+                        mediaJobManager=mediaJobManager,
                         quantize = true,
-                        openaiClient = openaiClient
                     )
                     indexMediaCloud(
                         mediaType,

@@ -1,4 +1,4 @@
-package com.fpf.smartscan.core.index
+package com.fpf.smartscan.cloud.index
 
 const val DEFAULT_SYSTEM_PROMPT = """
 Analyze the image and generate a concise semantic summary.

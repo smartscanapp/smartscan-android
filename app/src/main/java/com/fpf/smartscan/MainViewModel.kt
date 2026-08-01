@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.fpf.smartscan.cloud.index.CloudImageIndexListener
 import com.fpf.smartscan.core.embeds.EmbeddingStoresFiles
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
@@ -16,7 +17,6 @@ import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
-import com.fpf.smartscan.core.index.CloudImageIndexListener
 import com.fpf.smartscan.core.index.ImageIndexListener
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.VideoIndexListener
