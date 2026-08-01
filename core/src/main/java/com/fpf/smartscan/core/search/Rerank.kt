@@ -157,19 +157,23 @@ object Reranker {
 
         segments.reverse()
 
-//        segments.forEachIndexed { index, segment ->
-//            Log.d(
-//                TAG,
-//                "Segment ${index + 1}: " +
-//                        "start=${segment.first}, " +
-//                        "finish=${segment.second}, " +
-//                        "startScore=${scores[segment.first]}, " +
-//                        "finishScore=${scores[segment.second]}"
-//            )
-//        }
+        segments.forEachIndexed { index, segment ->
+            Log.d(
+                TAG,
+                "Segment ${index + 1}: " +
+                        "start=${segment.first}, " +
+                        "finish=${segment.second}, " +
+                        "startScore=${scores[segment.first]}, " +
+                        "finishScore=${scores[segment.second]}"
+            )
+        }
 
-        val cutoffIndex = if (segments.size == 1) n - 1 else segments.last().first
-//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
+        val cutoffIndex = when {
+            segments.size == 1 -> n - 1
+            scores[segments[0].second] <= scores[segments[0].first] * 0.5 -> segments[1].first
+            else -> segments.last().first
+        }
+        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
         return scores[cutoffIndex]
     }
 
