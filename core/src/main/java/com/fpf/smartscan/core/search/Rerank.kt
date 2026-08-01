@@ -34,8 +34,8 @@ object Reranker {
         Log.d(TAG, "Signal strengths: $signalStrengths")
 
         return mainSignal.scores.keys.map { itemId ->
-            val mainScore = normalizedSignals[mainSignal.key]?.get(itemId)?: 1.0
-            var score = mainScore * (signalStrengths[mainSignal.key]?.pow(2)?: 0.0)
+            val mainScore = (normalizedSignals[mainSignal.key]?.get(itemId)?: 1.0).pow(2)
+            var score = mainScore * (signalStrengths[mainSignal.key]?: 0.0)
 
             signals.asSequence()
                 .filter { it.key != mainSignal.key }
