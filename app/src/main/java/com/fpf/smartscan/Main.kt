@@ -170,19 +170,23 @@ fun Main(
 
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(topBarState.value.title)
-                    },
-                    navigationIcon = {
-                        topBarState.value.navigationIcon?.invoke()
-                    },
-                    actions = {
-                        topBarState.value.actions?.invoke(this)
-                    }
-                )
+                if(!isIndexing) {
+                    TopAppBar(
+                        title = {
+                            Text(topBarState.value.title)
+                        },
+                        navigationIcon = {
+                            topBarState.value.navigationIcon?.invoke()
+                        },
+                        actions = {
+                            topBarState.value.actions?.invoke(this)
+                        }
+                    )
+                }
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { if(!isIndexing){
+                BottomNavigationBar(navController)
+            } }
         ) { paddingValues ->
             Box(
                 modifier = Modifier.padding(paddingValues)
