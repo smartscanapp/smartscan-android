@@ -14,19 +14,19 @@ import kotlin.collections.map
 
 
 fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJobType = IndexJobType.LOCAL) {
-    Intent(context.applicationContext, MediaIndexForegroundService::class.java)
+    Intent(context.applicationContext, IndexService::class.java)
         .putStringArrayListExtra(
-            MediaIndexForegroundService.EXTRA_MEDIA_TYPES,
+            IndexService.EXTRA_MEDIA_TYPES,
             ArrayList(mediaTypes.map { it.name })
         )
-        .putExtra(MediaIndexForegroundService.EXTRA_INDEX_JOB, indexJob.name)
+        .putExtra(IndexService.EXTRA_INDEX_JOB, indexJob.name)
         .also { intent -> context.applicationContext.startForegroundService(intent) }
 }
 
 fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJobType = IndexJobType.LOCAL) {
-    val running = isServiceRunning(context.applicationContext, MediaIndexForegroundService::class.java)
+    val running = isServiceRunning(context.applicationContext, IndexService::class.java)
     if(running){
-        context.applicationContext.stopService(Intent(context.applicationContext, MediaIndexForegroundService::class.java))
+        context.applicationContext.stopService(Intent(context.applicationContext, IndexService::class.java))
     }
     startIndexing(context.applicationContext, mediaTypes, indexJob)
 }

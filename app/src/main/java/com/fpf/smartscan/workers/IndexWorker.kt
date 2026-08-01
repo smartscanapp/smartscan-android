@@ -24,7 +24,7 @@ import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.models.ModelRepository
-import com.fpf.smartscan.services.MediaIndexForegroundService
+import com.fpf.smartscan.services.IndexService
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.isServiceRunning
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
@@ -109,7 +109,7 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val serviceRunning = isServiceRunning(applicationContext, MediaIndexForegroundService::class.java)
+            val serviceRunning = isServiceRunning(applicationContext, IndexService::class.java)
             if(serviceRunning) {
                 return@withContext Result.success()
             }

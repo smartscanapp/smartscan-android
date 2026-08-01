@@ -25,7 +25,7 @@
         android:supportsRtl="true"
         tools:targetApi="33">
         <service
-            android:name="com.fpf.smartscan.services.MediaIndexForegroundService"
+            android:name="com.fpf.smartscan.services.IndexService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
 <!--        <service-->

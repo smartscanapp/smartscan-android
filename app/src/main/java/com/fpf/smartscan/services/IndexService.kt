@@ -41,12 +41,12 @@ import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import kotlin.collections.map
 
-class MediaIndexForegroundService : Service(), KoinComponent {
+class IndexService : Service(), KoinComponent {
     companion object {
         const val EXTRA_MEDIA_TYPES = "extra_media_types"
         const val EXTRA_INDEX_JOB = "extra_index_job"
         private const val NOTIFICATION_ID = 300
-        private const val TAG = "MediaIndexService"
+        private const val TAG = "IndexService"
     }
 
     private val serviceJob = SupervisorJob()
