@@ -8,6 +8,8 @@ import android.app.ActivityManager
 import android.app.Service
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -86,4 +88,11 @@ fun isServiceRunning(context: Context, serviceClass: Class<out Service>): Boolea
 fun createTrashRequest(context: Context, uris: Collection<Uri>, trash: Boolean = true): IntentSenderRequest {
     val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, uris.toList(), trash)
     return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+}
+
+fun isConnectedToWifi(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork ?: return false
+    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+    return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
 }
