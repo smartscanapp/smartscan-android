@@ -3,7 +3,6 @@ package com.fpf.smartscan.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +21,8 @@ import com.fpf.smartscan.R
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        BottomNavItem(Routes.COLLECTIONS, stringResource(R.string.title_collections), Icons.Filled.PhotoLibrary),
         BottomNavItem(Routes.EXPLORE, stringResource(R.string.title_explore), Icons.Filled.Explore),
+        BottomNavItem(Routes.COLLECTIONS, stringResource(R.string.title_collections), Icons.Filled.PhotoLibrary),
         BottomNavItem(Routes.CONCEPTS, stringResource(R.string.title_concepts), Icons.Filled.Lightbulb),
     )
 
