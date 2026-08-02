@@ -63,6 +63,8 @@ class SearchViewModel(
     application: Application,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
+    private val imageConceptEmbedStore: FileEmbeddingStore,
+    private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
     private val tagManager: TagManager,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
@@ -80,12 +82,14 @@ class SearchViewModel(
     private val imageEmbedder = ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))
 
     private val searchEngine = SearchEngine(
-        application = getApplication(),
         dualEncoderVlm = Pair(textEmbedder, imageEmbedder),
         imageEmbedStore=imageEmbedStore,
         videoEmbedStore=videoEmbedStore,
+        imageConceptEmbedStore=imageConceptEmbedStore,
+        videoConceptEmbedStore=videoConceptEmbedStore,
         clusterEmbedStore=clusterEmbedStore,
-        clusterCrossRefRepository = clusterCrossRefRepository
+        clusterCrossRefRepository = clusterCrossRefRepository,
+        modelRepository=modelRepository
     )
     val allTags: StateFlow<List<Tag>> = tagManager.allTagsFlow.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -198,12 +202,12 @@ class SearchViewModel(
                 val queryResults =  when{
                     tagOnlySearch -> state.filter.ids.toList()
                     state.queryImage != null -> {
-                        val results = searchEngine.search(SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions))
+                        val results = searchEngine.search(getApplication(), SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions))
                         _event.emit(SearchEvent(SearchEventType.IMAGE_QUERY, success = true))
                         results
                     }
                     searchFieldState.text.toString().isNotBlank() -> {
-                        val results = searchEngine.search(SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions))
+                        val results = searchEngine.search(getApplication(), SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions))
                         _event.emit(SearchEvent(SearchEventType.TEXT_QUERY, success = true))
                         results
                     }
@@ -376,6 +380,5 @@ class SearchViewModel(
     override fun onCleared() {
         textEmbedder.closeSession()
         imageEmbedder.closeSession()
-        super.onCleared()
     }
 }
