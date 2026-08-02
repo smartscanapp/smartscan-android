@@ -69,6 +69,7 @@ import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
+import com.fpf.smartscan.ui.components.search.RecentSearchesList
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.formatDate
 import com.fpf.smartscan.utils.toEpochSeconds
@@ -120,6 +121,7 @@ fun SearchScreen(
     var isSelectingMediaType by remember { mutableStateOf(false) }
     var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
     var showMoreActions by remember { mutableStateOf(false) }
+    var showRecentSearches by remember { mutableStateOf(false) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -197,13 +199,10 @@ fun SearchScreen(
 
     val screenTitle = stringResource(R.string.title_explore)
 
-    DisposableEffect(Unit) {
+    LaunchedEffect(Unit) {
         when {
             hasIndexedImages ==true && hasIndexedVideos==false -> searchViewModel.onAction(SearchAction.SetMediaTypeFilter(MediaType.IMAGE))
             hasIndexedVideos == true && hasIndexedImages==false -> searchViewModel.onAction(SearchAction.SetMediaTypeFilter(MediaType.VIDEO))
-        }
-        onDispose {
-//            searchViewModel.onAction(SearchAction.Reset)
         }
     }
 
@@ -231,7 +230,6 @@ fun SearchScreen(
             searchViewModel.externalSearch(intentSearchQuery, options)
         }
     }
-
 
     LaunchedEffect(Unit) {
         onTopBarChange(
@@ -356,6 +354,7 @@ fun SearchScreen(
                                 modifier = Modifier.weight(1f),
                                 searchFieldState = searchViewModel.searchFieldState,
                                 enabled = hasStoragePermission && !state.loading ,
+                                placeholders = searchBarPlaceholders,
                                 onSearch = {
                                     searchViewModel.onAction(SearchAction.Search(SearchOptions(hideDuplicates = appSettings.enableDedupe, strictness = appSettings.textQueryStrictness )))
                                 },
@@ -365,7 +364,7 @@ fun SearchScreen(
                                 onClearResults = {
                                     searchViewModel.onAction(SearchAction.Reset)
                                 },
-                                placeholders = searchBarPlaceholders,
+                                onFocusedChange = {showRecentSearches = it},
                                 trailingIcon = {
                                     IconButton (
                                         onClick = { isSelectingMediaType = true }
@@ -389,6 +388,17 @@ fun SearchScreen(
                         }
                     }
                 }
+                RecentSearchesList(
+                    isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
+                    recentSearches = state.recentSearches.toList(),
+                    onSelect = {
+                        searchViewModel.searchFieldState.edit { replace(0, searchViewModel.searchFieldState.text.length, it) }
+                        searchViewModel.onAction(SearchAction.Search(SearchOptions(hideDuplicates = appSettings.enableDedupe, strictness = appSettings.textQueryStrictness )))
+                    },
+                    onRemoveRecentSearch = {searchViewModel.onAction(SearchAction.RemoveRecentSearch(it))},
+                    onClearAll = {searchViewModel.onAction(SearchAction.ClearRecentSearches)},
+                    label = "Recent searches"
+                )
                 AutoCompleter(
                     isVisible = tagAutoCompleteTagResults.isNotEmpty() && !isAddingTag,
                     autoCompleteResults = tagAutoCompleteTagResults,
