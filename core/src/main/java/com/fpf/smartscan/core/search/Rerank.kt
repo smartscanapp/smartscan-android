@@ -37,12 +37,8 @@ object Reranker {
 //        Log.d(TAG, "Signal signalWeights: $signalWeights")
 
         return signalWithMostCoverage.scores.keys.map { itemId ->
-            val mainScore = (normalizedSignals[signalWithMostCoverage.key]?.get(itemId)?: 1.0).pow(2)
-            val mainWeight = signalWeights[signalWithMostCoverage.key]?: 1.0
-            var score = mainScore * mainWeight
-
+            var score = 0.0
             signals.asSequence()
-                .filter { it.key != signalWithMostCoverage.key }
                 .forEach { signal ->
                     val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
                     val weight = signalWeights[signal.key] ?: return@forEach
