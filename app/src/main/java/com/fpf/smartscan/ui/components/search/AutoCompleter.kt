@@ -46,7 +46,7 @@ fun AutoCompleter(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        label?.let { item { Text(it, style = MaterialTheme.typography.labelSmall) } }
+        label?.let { item { Text(it, style = MaterialTheme.typography.labelLarge) } }
         items(autoCompleteResults) { result ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
