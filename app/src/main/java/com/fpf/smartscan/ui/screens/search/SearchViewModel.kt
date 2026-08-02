@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.platform.Clipboard
+import androidx.core.content.edit
 import kotlinx.coroutines.launch
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,8 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -58,7 +61,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 
-
 class SearchViewModel(
     application: Application,
     private val imageEmbedStore: FileEmbeddingStore,
@@ -74,11 +76,11 @@ class SearchViewModel(
     companion object {
         private const val TAG = "SearchViewModel"
         private const val MODEL_SHUTDOWN_DURATION_THRESHOLD = 60_000L
+
+        private const val RECENT_SEARCHES_LIMIT = 10
     }
 
-
     private val textEmbedder  = ClipTextEmbedder(application, ModelAssetSource.Resource(R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(R.raw.vocab), mergesSource = ModelAssetSource.Resource(R.raw.merges))
-
     private val imageEmbedder = ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))
 
     private val searchEngine = SearchEngine(
@@ -135,6 +137,11 @@ class SearchViewModel(
         }
         .cachedIn(viewModelScope)
 
+    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)}
+
+    init {
+        loadRecentSearches()
+    }
 
     fun onAction(action: SearchAction){
         when(action){
@@ -160,74 +167,8 @@ class SearchViewModel(
             is SearchAction.ResetSelection -> resetSelection()
             is SearchAction.ClearSelection -> clearSelection()
             is SearchAction.Delete -> deleteFromDevice(action.onDelete)
-        }
-    }
-
-    private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
-    private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
-    private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
-
-    private fun setMediaType(type: MediaType) {
-        _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
-        reset()
-    }
-
-    private fun reset(){
-        _state.update{ it.copy(
-            totalResults = 0,
-            resultIds = emptySet(),
-            selection = SelectionState(),
-            resultToView = null,
-            error = null,
-            filter = it.filter.copy(tag = null),
-            tagOnlySearch = false
-        ) }
-    }
-
-    private fun search(searchOptions: SearchOptions){
-        reset()
-        _state.update { it.copy(loading = true) }
-
-        viewModelScope.launch(Dispatchers.Default) {
-            try {
-                val query = searchFieldState.text.toString()
-                val (tag, actualQuery) = searchEngine.parseTextQuery(query)
-                tag?.let{ tag ->
-                    val ids = getMediaMatchingTag(tag, _state.value.mediaType, state.value.filter.startDate, state.value.filter.endDate)
-                    _state.update { it.copy(filter = it.filter.copy(tag=tag, ids = ids)) }
-                    tagManager.updateLastUsage(tag)
-                }
-                val state = _state.value
-                val tagOnlySearch = actualQuery.isBlank() && tag != null
-                val queryResults =  when{
-                    tagOnlySearch -> state.filter.ids.toList()
-                    state.queryImage != null -> {
-                        val results = searchEngine.search(getApplication(), SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions))
-                        _event.emit(SearchEvent(SearchEventType.IMAGE_QUERY, success = true))
-                        results
-                    }
-                    searchFieldState.text.toString().isNotBlank() -> {
-                        val results = searchEngine.search(getApplication(), SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions))
-                        _event.emit(SearchEvent(SearchEventType.TEXT_QUERY, success = true))
-                        results
-                    }
-                    else -> emptyList()
-                }
-                handleSearchResult(queryResults)
-            }catch (e: Exception) {
-                Log.e(TAG, "$e")
-                _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_unknown))}
-            } finally {
-                _state.update{it.copy(loading = false)}
-            }
-        }
-    }
-
-    private fun handleSearchResult(queryResults: List<Long>) {
-        if (queryResults.isEmpty()) {
-            _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
-        }else{
-            _state.update{ it.copy(totalResults = queryResults.size, resultIds = queryResults.toSet())}
+            is SearchAction.ClearRecentSearches -> clearRecentSearches()
+            is SearchAction.RemoveRecentSearch -> removeRecentSearch(action.query)
         }
     }
 
@@ -269,6 +210,85 @@ class SearchViewModel(
                 }
                 else -> {}
             }
+        }
+    }
+
+    fun handleAutoCompletionCheck(query: CharSequence, substringEnd: Int, startWithHashtag: Boolean =  true): List<String>{
+        return tagManager.checkAutoCompletion(query, substringEnd, allTags.value.map{it.name}, startWithHashtag)
+    }
+
+    fun onSelectAutoCompleteResult(tag: String){
+        searchFieldState.edit { replace(0, searchFieldState.text.length, "#$tag ") }
+    }
+
+    private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
+    private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
+    private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
+
+    private fun setMediaType(type: MediaType) {
+        _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
+        reset()
+    }
+
+    private fun reset(){
+        _state.update{ it.copy(
+            totalResults = 0,
+            resultIds = emptySet(),
+            selection = SelectionState(),
+            resultToView = null,
+            error = null,
+            filter = it.filter.copy(tag = null),
+            tagOnlySearch = false
+        ) }
+    }
+
+    private fun search(searchOptions: SearchOptions){
+        reset()
+        _state.update { it.copy(loading = true) }
+
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val query = searchFieldState.text.toString()
+                val (tag, actualQuery) = searchEngine.parseTextQuery(query)
+                tag?.let{ tag ->
+                    val ids = getMediaMatchingTag(tag, _state.value.mediaType, state.value.filter.startDate, state.value.filter.endDate)
+                    _state.update { it.copy(filter = it.filter.copy(tag=tag, ids = ids)) }
+                    tagManager.updateLastUsage(tag)
+                }
+                val state = _state.value
+                val tagOnlySearch = actualQuery.isBlank() && tag != null
+                val queryResults =  when{
+                    tagOnlySearch -> state.filter.ids.toList()
+                    state.queryImage != null -> {
+                        val searchQuery =  SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions)
+                        val results = searchEngine.search(getApplication(), searchQuery)
+                        _event.emit(SearchEvent(SearchEventType.IMAGE_QUERY, success = true))
+                        results
+                    }
+                    searchFieldState.text.toString().isNotBlank() -> {
+                        val searchQuery = SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions)
+                        val results = searchEngine.search(getApplication(), searchQuery)
+                        addRecentSearch(searchQuery.text)
+                        _event.emit(SearchEvent(SearchEventType.TEXT_QUERY, success = true))
+                        results
+                    }
+                    else -> emptyList()
+                }
+                handleSearchResult(queryResults)
+            }catch (e: Exception) {
+                Log.e(TAG, "$e")
+                _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_unknown))}
+            } finally {
+                _state.update{it.copy(loading = false)}
+            }
+        }
+    }
+
+    private fun handleSearchResult(queryResults: List<Long>) {
+        if (queryResults.isEmpty()) {
+            _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
+        }else{
+            _state.update{ it.copy(totalResults = queryResults.size, resultIds = queryResults.toSet())}
         }
     }
 
@@ -343,14 +363,6 @@ class SearchViewModel(
         }
     }
 
-    fun handleAutoCompletionCheck(query: CharSequence, substringEnd: Int, startWithHashtag: Boolean =  true): List<String>{
-        return tagManager.checkAutoCompletion(query, substringEnd, allTags.value.map{it.name}, startWithHashtag)
-    }
-
-    fun onSelectAutoCompleteResult(tag: String){
-        searchFieldState.edit { replace(0, searchFieldState.text.length, "#$tag ") }
-    }
-
     private fun toggleSelectedResult(item: MediaItem){
         _state.update { it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, it.totalResults)) }
     }
@@ -375,6 +387,31 @@ class SearchViewModel(
         }else{
             tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
         }
+    }
+
+    private fun loadRecentSearches(){
+        val searches = sharedPrefs.getStringSet(PrefsKeys.RECENT_SEARCHES_KEY, emptySet()).orEmpty()
+        _state.update { it.copy(recentSearches = searches) }
+    }
+
+    private fun saveRecentSearches(){
+        val searches = _state.value.recentSearches.toList().takeLast(RECENT_SEARCHES_LIMIT).toSet()
+        sharedPrefs.edit{ putStringSet(PrefsKeys.RECENT_SEARCHES_KEY, searches) }
+    }
+
+    private fun addRecentSearch(query: String){
+        _state.update { it.copy(recentSearches = it.recentSearches + query) }
+        saveRecentSearches()
+    }
+
+    private fun removeRecentSearch(query: String){
+        _state.update { it.copy(recentSearches = it.recentSearches - query) }
+        saveRecentSearches()
+    }
+
+    private fun clearRecentSearches(){
+        _state.update { it.copy(recentSearches = emptySet()) }
+        saveRecentSearches()
     }
 
     override fun onCleared() {

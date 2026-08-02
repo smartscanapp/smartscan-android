@@ -20,7 +20,9 @@ sealed interface SearchAction {
     data class ShareResults(val context: Context): SearchAction
     data class SetSelectAll(val selectAll: Boolean): SearchAction
     data class Delete(val onDelete: (List<MediaItem>) -> Unit) : SearchAction
+    data class RemoveRecentSearch(val query: String): SearchAction
     data object RemoveUploadedImage: SearchAction
+    data object ClearRecentSearches: SearchAction
     data object ClearDateFilters: SearchAction
     data object Reset: SearchAction
     data object ClearResultView: SearchAction
