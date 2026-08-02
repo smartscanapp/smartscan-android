@@ -115,6 +115,7 @@ fun SearchScreen(
        stringResource(R.string.placeholders_search_by_tag),
         stringResource(R.string.placeholders_search_by_tag_query),
     )
+    val searchResultsVisible = searchResults.itemCount > 0
 
     var isAddingTag by remember { mutableStateOf(false) }
     var tagAutoCompleteTagResults by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -416,11 +417,11 @@ fun SearchScreen(
                 Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
             }
 
-            SearchPlaceholderDisplay(isVisible = state.resultIds.isEmpty())
+            SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
 
             MediaItemsList(
                 headerTitle = "${state.totalResults} Results",
-                isVisible = searchResults.itemCount > 0,
+                isVisible = searchResultsVisible,
                 numGridColumns = appSettings.resultsPerRow,
                 items = searchResults,
                 isSelecting = state.selection.isSelecting,
