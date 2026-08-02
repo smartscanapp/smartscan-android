@@ -10,8 +10,6 @@ data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
-    private const val SIGNAL_ALPHA = 5.0
-
     fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
         val scoredItems = calculateRerankScores(signals)
         if (scoredItems.size <= 1) return scoredItems.keys.toList()
@@ -22,27 +20,33 @@ object Reranker {
     fun calculateRerankScores(signals: List<RerankSignal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
 
-        val mainSignal = signals.maxByOrNull { it.scores.size } ?: return emptyMap()
-        val totalResults = mainSignal.scores.size
+        val signalWithMostCoverage = signals.maxByOrNull { it.scores.size } ?: return emptyMap()
+        val totalResults = signalWithMostCoverage.scores.size
         val normalizedSignals = signals.associate { signal ->
             signal.key to normalizeScores(signal.scores)
         }
-
         val signalStrengths = signals.associate { signal ->
             signal.key to calculateSignalStrength(signal.scores, totalResults)
         }
-        Log.d(TAG, "Signal strengths: $signalStrengths")
+        val signalWeights = signalStrengths.entries
+            .sortedByDescending { it.value }
+            .mapIndexed { rank, entry -> entry.key to signalStrengths.size.toDouble() / (rank + 1) }
+            .toMap()
 
-        return mainSignal.scores.keys.map { itemId ->
-            val mainScore = (normalizedSignals[mainSignal.key]?.get(itemId)?: 1.0).pow(2)
-            var score = mainScore * (signalStrengths[mainSignal.key]?: 0.0)
+//        Log.d(TAG, "Signal strengths: $signalStrengths")
+//        Log.d(TAG, "Signal signalWeights: $signalWeights")
+
+        return signalWithMostCoverage.scores.keys.map { itemId ->
+            val mainScore = (normalizedSignals[signalWithMostCoverage.key]?.get(itemId)?: 1.0).pow(2)
+            val mainWeight = signalWeights[signalWithMostCoverage.key]?: 1.0
+            var score = mainScore * mainWeight
 
             signals.asSequence()
-                .filter { it.key != mainSignal.key }
+                .filter { it.key != signalWithMostCoverage.key }
                 .forEach { signal ->
                     val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
-                    val strength = signalStrengths[signal.key] ?: return@forEach
-                    score  *= 1.0 + SIGNAL_ALPHA * strength * signalScore.pow(2)
+                    val weight = signalWeights[signal.key] ?: return@forEach
+                    score += weight * signalScore.pow(2)
                 }
 
             itemId to score
@@ -157,30 +161,29 @@ object Reranker {
 
         segments.reverse()
 
-        segments.forEachIndexed { index, segment ->
-            Log.d(
-                TAG,
-                "Segment ${index + 1}: " +
-                        "start=${segment.first}, " +
-                        "finish=${segment.second}, " +
-                        "startScore=${scores[segment.first]}, " +
-                        "finishScore=${scores[segment.second]}"
-            )
-        }
+//        segments.forEachIndexed { index, segment ->
+//            Log.d(
+//                TAG,
+//                "Segment ${index + 1}: " +
+//                        "start=${segment.first}, " +
+//                        "finish=${segment.second}, " +
+//                        "startScore=${scores[segment.first]}, " +
+//                        "finishScore=${scores[segment.second]}"
+//            )
+//        }
 
         val cutoffIndex = when {
             segments.size == 1 -> n - 1
             scores[segments[0].second] <= scores[segments[0].first] * 0.5 -> segments[1].first
             else -> segments.last().first
         }
-        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
+//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
         return scores[cutoffIndex]
     }
 
     @JvmName("calculateRelevanceCutoffFloatMap")
     fun calculateRelevanceCutoff(scoredItems: Map<Long, Float>): Double {
-        val scoredItems = buildMap{scoredItems.forEach{put(it.key, it.value.toDouble())}}
-        return calculateRelevanceCutoff(scoredItems.values.toList())
+        return calculateRelevanceCutoff(scoredItems.values.map{it.toDouble()})
     }
 
     private fun normalizeScores(scores: Map<Long, Float>): Map<Long, Double> { if (scores.isEmpty()) return emptyMap()
