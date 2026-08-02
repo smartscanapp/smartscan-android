@@ -55,7 +55,6 @@ import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
-import com.fpf.smartscan.core.media.MediaStoreHelper
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.core.search.SearchFilter
@@ -65,7 +64,7 @@ import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
-import com.fpf.smartscan.ui.components.TagAdder
+import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.components.media.MediaItemsList

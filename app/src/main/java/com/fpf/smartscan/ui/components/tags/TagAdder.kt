@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.components
+package com.fpf.smartscan.ui.components.tags
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement

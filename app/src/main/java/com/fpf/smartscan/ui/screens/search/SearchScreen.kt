@@ -62,7 +62,7 @@ import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.search.AutoCompleter
 import com.fpf.smartscan.ui.components.search.ImageSearcher
 import com.fpf.smartscan.ui.components.search.SearchBar
-import com.fpf.smartscan.ui.components.TagAdder
+import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
