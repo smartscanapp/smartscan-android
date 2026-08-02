@@ -14,8 +14,6 @@ import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import com.fpf.smartscansdk.core.media.getBitmapFromUri
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 
-// TODO: add support for concepts
-
 class SearchEngine(
     private val dualEncoderVlm: Pair<TextEmbeddingProvider, ImageEmbeddingProvider>,
     private val imageEmbedStore: FileEmbeddingStore,
