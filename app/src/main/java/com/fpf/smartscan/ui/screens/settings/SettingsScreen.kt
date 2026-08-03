@@ -122,11 +122,6 @@ fun SettingsScreen(
 
     val searchSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
-            label = stringResource(id = R.string.setting_strictness),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.THRESHOLD)) },
-            description = stringResource(R.string.setting_strictness_description)
-        ),
-        SettingActionConfig.Button(
             label = stringResource(id = R.string.setting_allowed_folders),
             onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
             description = stringResource(R.string.setting_searchable_folders_description)

@@ -59,18 +59,6 @@ class SettingsViewModel(application: Application, private val modelRepository: M
         _appSettings.value = loadSettings(sharedPrefs)
     }
 
-    fun updateTextQueryStrictness(strictness: Float) {
-        val currentSettings = _appSettings.value
-        _appSettings.value = currentSettings.copy(textQueryStrictness = strictness)
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
-
-    fun updateImageQueryStrictness(strictness: Float) {
-        val currentSettings = _appSettings.value
-        _appSettings.value = currentSettings.copy(imageQueryStrictness = strictness)
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
-
     fun addSearchableImageDirectory(dir: String) {
         val currentSettings = _appSettings.value
         val newDirs = currentSettings.searchableImageDirectories + dir

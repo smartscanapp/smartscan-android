@@ -14,7 +14,6 @@ object Routes {
 }
 
 object SettingsRoutes {
-    const val THRESHOLD = "threshold"
     const val MODELS = "models"
     const val MANAGE_MODELS = "manage_models"
     const val ALLOWED_FOLDERS = "allowed_folders"
