@@ -2,7 +2,6 @@ package com.fpf.smartscan.core.search
 
 import android.util.Log
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
@@ -10,6 +9,7 @@ data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
+
     fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
         val scoredItems = calculateRerankScores(signals)
         if (scoredItems.size <= 1) return scoredItems.keys.toList()
@@ -29,10 +29,6 @@ object Reranker {
         val signalStrengths = signals.associate { signal ->
             signal.key to calculateSignalStrength(signal.scores, totalResults)
         }
-        val signalWeights = signalStrengths.entries
-            .sortedByDescending { it.value }
-            .mapIndexed { rank, entry -> entry.key to signalStrengths.size.toDouble() / (rank + 1) }
-            .toMap()
 
 //        Log.d(TAG, "Signal strengths: $signalStrengths")
 //        Log.d(TAG, "Signal signalWeights: $signalWeights")
@@ -42,10 +38,9 @@ object Reranker {
             signals.asSequence()
                 .forEach { signal ->
                     val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
-                    val weight = signalWeights[signal.key] ?: return@forEach
-                    score += weight * signalScore.pow(2)
+                    val strength = signalStrengths[signal.key] ?: return@forEach
+                    score += strength * signalScore
                 }
-
             itemId to score
         }
             .sortedByDescending { it.second }
@@ -68,7 +63,7 @@ object Reranker {
         if (scores.isEmpty()) return 0.0
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
-        if (scores.size < minSegmentLength) return scores.last()
+        if (scores.size < minSegmentLength) return scores.average()
 
         // Prefix sums for O(1) linear regression error calculation.
         val prefixY = DoubleArray(n + 1)
