@@ -393,12 +393,12 @@ class SearchViewModel(
     }
 
     private fun saveRecentSearches(){
-        val searches = _state.value.recentSearches.toList().takeLast(RECENT_SEARCHES_LIMIT).toSet()
+        val searches = _state.value.recentSearches.toList().take(RECENT_SEARCHES_LIMIT).toSet()
         sharedPrefs.edit{ putStringSet(PrefsKeys.RECENT_SEARCHES_KEY, searches) }
     }
 
     private fun addRecentSearch(query: String){
-        val updatedRecentSearches = (_state.value.recentSearches.toList() + query).takeLast(RECENT_SEARCHES_LIMIT).toSet()
+        val updatedRecentSearches = (listOf(query) + _state.value.recentSearches.toList()).take(RECENT_SEARCHES_LIMIT).toSet()
         _state.update { it.copy(recentSearches = updatedRecentSearches) }
         saveRecentSearches()
     }
