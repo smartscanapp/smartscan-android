@@ -384,7 +384,7 @@ fun SearchScreen(
                                 onClick = { searchViewModel.onAction(SearchAction.ClearDateFilters) },
                                 modifier = Modifier.align(Alignment.End)
                             ) {
-                                Text("Clear filters")
+                                Text(stringResource(R.string.reset_filters_action))
                             }
                         }
                     }
@@ -398,14 +398,14 @@ fun SearchScreen(
                     },
                     onRemoveRecentSearch = {searchViewModel.onAction(SearchAction.RemoveRecentSearch(it))},
                     onClearAll = {searchViewModel.onAction(SearchAction.ClearRecentSearches)},
-                    label = "Recent searches"
+                    label = stringResource(R.string.search_recent_searches_label)
                 )
                 AutoCompleter(
                     isVisible = tagAutoCompleteTagResults.isNotEmpty() && !isAddingTag,
                     autoCompleteResults = tagAutoCompleteTagResults,
                     query = searchViewModel.searchFieldState.text.toString(),
                     onSelect = searchViewModel::onSelectAutoCompleteResult,
-                    label = "Tags",
+                    label = stringResource(R.string.search_tags_label)
                 )
             }
 
@@ -549,7 +549,7 @@ fun SearchScreen(
         show = showFilters,
         onDismiss = { showFilters = false }
     ) {
-        Text("Filters", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+        Text(stringResource(R.string.filter_action), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
 
         Spacer(Modifier.height(16.dp))
 
@@ -559,9 +559,9 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Start date")
+                Text(stringResource(R.string.search_start_date_label))
                 TextButton(onClick = { showStartDatePicker = true }) {
-                    Text(state.filter.startDate?.let { formatDate(it) } ?: "Any time")
+                    Text(state.filter.startDate?.let { formatDate(it) } ?: stringResource(R.string.search_any_time_label))
                 }
             }
 
@@ -569,9 +569,9 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("End date")
+                Text(stringResource(R.string.search_end_date_label))
                 TextButton(onClick = { showEndDatePicker = true }) {
-                    Text(state.filter.endDate?.let { formatDate(it) } ?: "Any time")
+                    Text(state.filter.endDate?.let { formatDate(it) } ?: stringResource(R.string.search_any_time_label))
                 }
             }
         }
@@ -587,7 +587,7 @@ fun SearchScreen(
                     searchViewModel.onAction(SearchAction.ClearDateFilters)
                 }
             ) {
-                Text("Clear")
+                Text(stringResource(R.string.reset_filters_action))
             }
         }
     }
