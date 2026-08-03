@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
@@ -65,6 +66,7 @@ import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.concepts.ConceptsList
+import com.fpf.smartscan.utils.isConnectedToWifi
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -82,6 +84,7 @@ fun ConceptsScreen(
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
+    val context = LocalContext.current
     val settings by appSettings.collectAsState()
     val state by viewModel.state.collectAsState()
     val clusterCollections by viewModel.clusterCollections.collectAsState()
@@ -99,6 +102,7 @@ fun ConceptsScreen(
     var isCreatingConcept by remember { mutableStateOf(false) }
     var isEditingConcept by remember { mutableStateOf(false) }
     var isDeletingConcept by remember { mutableStateOf(false) }
+    var showWifiWarning by remember { mutableStateOf(false) }
     val isActionBarVisible = state.selection.isSelecting && state.selection.selectedCount > 0
 
     val actionBarHeight = 70
@@ -109,18 +113,24 @@ fun ConceptsScreen(
     )
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = "Set allowed tag collections",
+            label = stringResource(R.string.concepts_allowed_tag_collection_menu_action),
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.TAG)) },
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = "Set allowed auto collections",
+            label = stringResource(R.string.concepts_allowed_auto_collection_menu_action),
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.CLUSTER)) },
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = "Generate summaries",
-            onClick = { onGenerateSummaries()},
+            label = stringResource(R.string.concepts_generate_summaries_menu_action),
+            onClick = {
+                if(isConnectedToWifi(context)){
+                    onGenerateSummaries()
+                }else{
+                    showWifiWarning = true
+                }
+                      },
             enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
         ),
     )
@@ -202,7 +212,7 @@ fun ConceptsScreen(
                 ) {
                     LoadingIndicator(true)
                     Text(
-                        text = "Updating matching media...",
+                        text = stringResource(R.string.concepts_updating_matching_media),
                     )
                 }
             }
@@ -354,6 +364,25 @@ fun ConceptsScreen(
                 TextButton(onClick = {
                     viewModel.onAction(ConceptAction.DeleteConcepts)
                     isDeletingConcept = false
+                })
+                { Text(stringResource(R.string.confirm_action)) }
+            }
+        )
+    }
+
+    if ( showWifiWarning) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(stringResource(R.string.concepts_wifi_warning_alert_title)) },
+            text = { Text(stringResource(R.string.concepts_wifi_warning_alert_content)) },
+            dismissButton = {
+                TextButton(onClick = { showWifiWarning = false })
+                { Text(stringResource(R.string.cancel_action)) }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showWifiWarning = false
+                    onGenerateSummaries()
                 })
                 { Text(stringResource(R.string.confirm_action)) }
             }
