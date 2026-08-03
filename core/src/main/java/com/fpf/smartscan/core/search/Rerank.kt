@@ -63,7 +63,7 @@ object Reranker {
         if (scores.isEmpty()) return 0.0
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
-        if (scores.size < minSegmentLength) return scores.last()
+        if (scores.size < minSegmentLength) return scores.average()
 
         // Prefix sums for O(1) linear regression error calculation.
         val prefixY = DoubleArray(n + 1)
