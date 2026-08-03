@@ -2,7 +2,6 @@ package com.fpf.smartscan.core.search
 
 import android.util.Log
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
@@ -10,6 +9,7 @@ data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
+
     fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
         val scoredItems = calculateRerankScores(signals)
         if (scoredItems.size <= 1) return scoredItems.keys.toList()
