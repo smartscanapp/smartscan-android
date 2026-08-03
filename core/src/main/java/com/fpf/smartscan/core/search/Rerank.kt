@@ -19,9 +19,10 @@ object Reranker {
 
     fun calculateRerankScores(signals: List<RerankSignal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
+        val allItemsIds: MutableSet<Long> = mutableSetOf()
+        signals.forEach { allItemsIds.addAll(it.scores.keys)}
 
-        val signalWithMostCoverage = signals.maxByOrNull { it.scores.size } ?: return emptyMap()
-        val totalResults = signalWithMostCoverage.scores.size
+        val totalResults = allItemsIds.size
         val normalizedSignals = signals.associate { signal ->
             signal.key to normalizeScores(signal.scores)
         }
@@ -36,7 +37,7 @@ object Reranker {
 //        Log.d(TAG, "Signal strengths: $signalStrengths")
 //        Log.d(TAG, "Signal signalWeights: $signalWeights")
 
-        return signalWithMostCoverage.scores.keys.map { itemId ->
+        return allItemsIds.map { itemId ->
             var score = 0.0
             signals.asSequence()
                 .forEach { signal ->
