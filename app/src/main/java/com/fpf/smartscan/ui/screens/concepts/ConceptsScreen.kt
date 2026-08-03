@@ -77,7 +77,7 @@ fun ConceptsScreen(
     appSettings: StateFlow<AppSettings>,
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
-    onIndex: ()-> Unit,
+    onGenerateSummaries: ()-> Unit,
     onOpenSettings: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
@@ -120,7 +120,7 @@ fun ConceptsScreen(
         ),
         MenuActionConfig.Button(
             label = "Generate summaries",
-            onClick = { onIndex()},
+            onClick = { onGenerateSummaries()},
             enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
         ),
     )

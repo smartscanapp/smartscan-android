@@ -264,7 +264,7 @@ fun Main(
                             isMainScanRequired = hasIndexedImages == false && hasIndexedVideos == false,
                             hasStoragePermission = hasStoragePermission,
                             onTopBarChange = { topBarState.value = it },
-                            onIndex = {
+                            onGenerateSummaries = {
                                 mainViewModel.startConceptIndexing(listOf(MediaType.IMAGE))
                             },
                             onViewConcept = { concept ->
