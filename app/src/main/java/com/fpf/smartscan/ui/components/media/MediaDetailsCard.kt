@@ -171,6 +171,7 @@ fun MediaDetailsCard(
                                     MaterialTheme.colorScheme.secondaryContainer
                             }
                         ),
+                        shape=MaterialTheme.shapes.extraLarge,
                         border = AssistChipDefaults.assistChipBorder(
                             enabled = true,
                             borderColor = when (type) {
