@@ -29,10 +29,6 @@ object Reranker {
         val signalStrengths = signals.associate { signal ->
             signal.key to calculateSignalStrength(signal.scores, totalResults)
         }
-        val signalWeights = signalStrengths.entries
-            .sortedByDescending { it.value }
-            .mapIndexed { rank, entry -> entry.key to signalStrengths.size.toDouble() / (rank + 1) }
-            .toMap()
 
 //        Log.d(TAG, "Signal strengths: $signalStrengths")
 //        Log.d(TAG, "Signal signalWeights: $signalWeights")
@@ -42,10 +38,9 @@ object Reranker {
             signals.asSequence()
                 .forEach { signal ->
                     val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
-                    val weight = signalWeights[signal.key] ?: return@forEach
-                    score += weight * signalScore.pow(2)
+                    val strength = signalStrengths[signal.key] ?: return@forEach
+                    score += strength * signalScore
                 }
-
             itemId to score
         }
             .sortedByDescending { it.second }
