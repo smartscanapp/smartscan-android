@@ -105,7 +105,12 @@
     <string name="edit_concept_action">Edit</string>
     <string name="pin_unpin_concept_action">Pin / Unpin </string>
     <string name="placeholders_add_concept">Describe your new concept</string>
-
+    <string name="concepts_wifi_warning_alert_title">Not connected to Wi-Fi</string>
+    <string name="concepts_wifi_warning_alert_content">Generating summaries can use a lot of network data. Do you want to continue without connecting to Wi-Fi?</string>
+    <string name="concepts_allowed_tag_collection_menu_action">Set allowed tag collections</string>
+    <string name="concepts_allowed_auto_collection_menu_action">Set allowed auto collections</string>
+    <string name="concepts_generate_summaries_menu_action">Generate summaries</string>
+    <string name="concepts_updating_matching_media">Updating matching media…</string>
 
     <!--Collections Screen-->
     <string name="collections_storage_permissions">Storage permission required to create collections.</string>
