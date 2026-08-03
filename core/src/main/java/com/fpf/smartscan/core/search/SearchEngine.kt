@@ -2,6 +2,7 @@ package com.fpf.smartscan.core.search
 
 import android.content.Context
 import android.util.Log
+import com.fpf.smartscan.core.concepts.ConceptManager
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.media.MediaType
@@ -16,15 +17,16 @@ import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 
 class SearchEngine(
     private val dualEncoderVlm: Pair<TextEmbeddingProvider, ImageEmbeddingProvider>,
+    private val modelRepository: ModelRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val modelRepository: ModelRepository,
-    private val defaultTextQueryThreshold: Float = 0.2f,
-    private val defaultImageQueryThreshold: Float = 0.5f,
+    private val vlmTextSimThreshold: Float = 0.2f,
+    private val vlmImageSimThreshold: Float = 0.5f,
+    private val conceptSimThreshold: Float = ConceptManager.DEFAULT_SIMILARITY_THRESHOLD,
     private val dedupeThreshold: Float = 0.95f,
     ) {
 
@@ -81,7 +83,7 @@ class SearchEngine(
         val store = getStore(searchQuery.filter.mediaType)
         val embedding = dualEngineVlmTextEmbedder.embed(query)
         val queryEmbed = embedding.toQInt8Embed()
-        val threshold = searchQuery.filter.similarity?: defaultTextQueryThreshold
+        val threshold = vlmTextSimThreshold
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, threshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
         val mainSims = queryResult.toSimsMap()
@@ -90,7 +92,7 @@ class SearchEngine(
 
         val conceptQueryEmbed = miniLmTextEmbedder.embed(query).toQInt8Embed()
         val conceptStore = getConceptStore(searchQuery.filter.mediaType)
-        val conceptQueryResult = conceptStore.query(conceptQueryEmbed, Int.MAX_VALUE, threshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
+        val conceptQueryResult = conceptStore.query(conceptQueryEmbed, Int.MAX_VALUE, conceptSimThreshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val conceptSims = conceptQueryResult.toSimsMap()
         val signals = getSearchSignals(mainSims, itemClusterSims, conceptSims)
         val reranked = Reranker.rerank(signals)
@@ -105,7 +107,7 @@ class SearchEngine(
         val embedding = dualEngineVlmImageEmbedder.embed(bitmap)
         val queryEmbed= embedding.toQInt8Embed()
         val store = getStore(searchQuery.filter.mediaType)
-        val threshold = searchQuery.filter.similarity?: defaultImageQueryThreshold
+        val threshold = vlmImageSimThreshold
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, threshold, startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
         val mainSims = queryResult.toSimsMap()
