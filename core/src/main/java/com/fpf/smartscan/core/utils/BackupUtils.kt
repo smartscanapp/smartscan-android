@@ -19,8 +19,9 @@ object BackupUtils {
         val hashFile = File(context.cacheDir, HASH_FILENAME)
         val dbPath = context.getDatabasePath(MediaDatabase.DB_NAME)
 
-        val embedStoreFiles = getMainEmbedStoreFiles(context) + getConceptEmbedStoreFiles(context)
-        val filesToZip = listOf( hashFile, dbPath) + embedStoreFiles
+        val embedStoreFiles = getEmbedStoreFiles(context)
+        val embedTombstoneFiles = getTombstoneFiles(embedStoreFiles)
+        val filesToZip = listOf( hashFile, dbPath) + embedStoreFiles + embedTombstoneFiles
 
         try {
             if(embedStoreFiles.none{it.exists()}) throw AppException.BackupException("Missing index file(s)")
@@ -80,22 +81,26 @@ object BackupUtils {
         if(hashesFromFile.isEmpty()) return false
 
         val otherFiles = extractedFiles.filterNot{it.name == HASH_FILENAME}
-        val otherFileHashes = otherFiles.map{hashFile(it)}
-        return hashesFromFile.toSet() == otherFileHashes.toSet()
+        val computedHashes = otherFiles.map{hashFile(it)}
+        return hashesFromFile.toSet() == computedHashes.toSet()
     }
 
-    private fun getMainEmbedStoreFiles(context: Context): List<File>{
+    private fun getEmbedStoreFiles(context: Context): List<File>{
         val imageEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE)
         val videoEmbeddingStoreFile = File(context.filesDir,  EmbeddingStoresFilesQuant.VIDEO)
         val clusterEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER)
-        return listOf(imageEmbeddingStoreFile, videoEmbeddingStoreFile, clusterEmbeddingStoreFile)
-    }
-
-    private fun getConceptEmbedStoreFiles(context: Context): List<File>{
         val imageConceptEmbeddingStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.IMAGE_CONCEPT)
         val videoConceptEmbeddingStoreFile = File(context.filesDir,  EmbeddingStoresFilesQuant.VIDEO_CONCEPT)
         val conceptEmbedStoreFile = File(context.filesDir, EmbeddingStoresFilesQuant.CONCEPT)
-        return listOf(imageConceptEmbeddingStoreFile, videoConceptEmbeddingStoreFile, conceptEmbedStoreFile)
+        return listOf(
+            imageEmbeddingStoreFile,
+            videoEmbeddingStoreFile,
+            clusterEmbeddingStoreFile,
+            imageConceptEmbeddingStoreFile,
+            videoConceptEmbeddingStoreFile,
+            conceptEmbedStoreFile
+        )
     }
 
+    private fun getTombstoneFiles(embedStoreFiles: List<File>): List<File> = embedStoreFiles.map{File("${it.path}.tombstones")}
 }
