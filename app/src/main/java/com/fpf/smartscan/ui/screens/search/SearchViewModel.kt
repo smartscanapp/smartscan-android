@@ -374,10 +374,8 @@ class SearchViewModel(
     private suspend fun getSelectedResults(): Set<MediaItem> = SelectionUtils.getSelectedItems(_state.value.selection){getAllResults()}
 
     private suspend fun getAllResults(): MutableSet<MediaItem> {
-        return withContext(Dispatchers.IO) {
-            val mediaMetadataList = mediaMetadataRepository.getByIds(_state.value.resultIds.toList(), _state.value.mediaType)
-            mediaMetadataList.map { it.toItem() }.toMutableSet()
-        }
+        val mediaMetadataList = mediaMetadataRepository.getByIds(_state.value.resultIds.toList(), _state.value.mediaType)
+        return  mediaMetadataList.map { it.toItem() }.toMutableSet()
     }
     private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
         tagName?: return emptyList()
@@ -400,7 +398,8 @@ class SearchViewModel(
     }
 
     private fun addRecentSearch(query: String){
-        _state.update { it.copy(recentSearches = it.recentSearches + query) }
+        val updatedRecentSearches = (_state.value.recentSearches.toList() + query).takeLast(RECENT_SEARCHES_LIMIT).toSet()
+        _state.update { it.copy(recentSearches = updatedRecentSearches) }
         saveRecentSearches()
     }
 
