@@ -31,7 +31,7 @@ fun MultiCollectionPicker(
     onSaveSelectedCollections: () -> Unit,
     selectedItems: Set<MediaCollection> = emptySet(),
     excludedItems: Set<MediaCollection> = emptySet(),
-    onToggleSelected: ((MediaCollection) -> Unit)? = null,
+    onItemClick: (MediaCollection) -> Unit,
     selectAll: Boolean = false,
 ) {
 
@@ -77,10 +77,9 @@ fun MultiCollectionPicker(
                         isVisible = true,
                         numGridColumns = 3,
                         items = collections,
-                        onItemClick = {},
                         selectedItems= selectedItems,
                         excludedItems=excludedItems,
-                        onToggleSelected= onToggleSelected,
+                        onItemClick= onItemClick,
                         isSelecting = true,
                         selectAll  = selectAll,
                     )

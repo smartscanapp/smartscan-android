@@ -57,10 +57,9 @@ fun MediaCollectionsList(
     isVisible: Boolean,
     items: List<MediaCollection>,
     onItemClick: (MediaCollection) -> Unit,
+    onLongItemClick: ((item: MediaCollection) -> Unit)? = null,
     selectedItems: Set<MediaCollection> = emptySet(),
     excludedItems: Set<MediaCollection> = emptySet(),
-    onToggleSelected: ((MediaCollection) -> Unit)? = null,
-    onToggleSelectionMode: (() -> Unit)? = null,
     onOffsetChange: ((Int) -> Unit)? = null,
     numGridColumns: Int = 3,
     maxCollapsePx: Int = 0,
@@ -138,16 +137,11 @@ fun MediaCollectionsList(
                             .combinedClickable(
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() },
-                                onClick = {
-                                    if (isSelecting) onToggleSelected?.invoke(item) else onItemClick(
-                                        item
-                                    )
-                                },
-                                onLongClick = {
-                                    if (!isSelecting) {
-                                        onToggleSelectionMode?.invoke()
-                                        onToggleSelected?.invoke(item)
-                                    }
+                                onClick = { onItemClick(item) },
+                                onLongClick =if (isSelecting) {
+                                    null
+                                } else {
+                                    { onLongItemClick?.invoke(item) }
                                 }
                             )
                     ) {
@@ -161,7 +155,7 @@ fun MediaCollectionsList(
                         if (isSelecting) {
                             CircularCheckbox(
                                 checked = item in selectedItems || (selectAll && item !in excludedItems),
-                                onCheckedChange = { onToggleSelected?.invoke(item) },
+                                onCheckedChange = { onItemClick(item) },
                                 modifier = Modifier
                                     .offset(x = 8.dp, y = 8.dp)
                                     .align(Alignment.TopStart),

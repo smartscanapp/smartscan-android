@@ -313,7 +313,7 @@ fun ConceptsScreen(
             collections = collections,
             onClose = { viewModel.onAction(ConceptAction.SetCollectionType(null)) },
             selectedItems = state.collectionsSelection.selectedItems,
-            onToggleSelected = {
+            onItemClick = {
                 viewModel.onAction(ConceptAction.ToggleSelectedCollection(it))
             },
             onSaveSelectedCollections = {
