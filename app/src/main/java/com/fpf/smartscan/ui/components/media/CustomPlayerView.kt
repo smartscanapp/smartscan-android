@@ -33,13 +33,21 @@ class CustomPlayerView @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
-    private fun setScale(scale: Float) {
+    private fun setScale(scale: Float, animate: Boolean = false) {
         currentScale = scale
 
         if (isNotEmpty()) {
             getChildAt(0).apply {
-                scaleX = currentScale
-                scaleY = currentScale
+                if (animate) {
+                    animate()
+                        .scaleX(scale)
+                        .scaleY(scale)
+                        .setDuration(200)
+                        .start()
+                } else {
+                    scaleX = scale
+                    scaleY = scale
+                }
             }
         }
     }
@@ -60,7 +68,7 @@ class CustomPlayerView @JvmOverloads constructor(
         }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            setScale(if (currentScale == 1f) 3f else 1f)
+            setScale(if (currentScale == 1f) 3f else 1f, true)
             return true
         }
     }
