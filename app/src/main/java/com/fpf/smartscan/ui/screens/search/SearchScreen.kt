@@ -401,10 +401,16 @@ fun SearchScreen(
                 selectAll = state.selection.selectAll,
                 excludedItems = state.selection.excludedItems,
                 selectedItems = state.selection.selectedItems,
-                onItemClick = { item -> searchViewModel.onAction(SearchAction.ViewResult(item)) },
-                onToggleSelected = { searchViewModel.onAction(SearchAction.ToggleSelectedResult(it)) },
-                onToggleSelectionMode = {
+                onItemClick = {
+                    if(state.selection.isSelecting){
+                        searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
+                    }else{
+                        searchViewModel.onAction(SearchAction.ViewResult(it))
+                    }
+                              },
+                onLongItemClick = {
                     searchViewModel.onAction(SearchAction.ToggleSelectionMode)
+                    searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
                     offset = 0
                 },
                 onOffsetChange = { offset = it },

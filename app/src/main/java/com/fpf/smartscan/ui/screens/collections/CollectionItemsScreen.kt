@@ -315,22 +315,16 @@ fun CollectionItemsScreen(
                     selectAll = state.selection.selectAll,
                     excludedItems = state.selection.excludedItems,
                     selectedItems = state.selection.selectedItems,
-                    onItemClick = { item ->
-                        viewModel.onAction(
-                            CollectionItemAction.SetMediaToView(
-                                item,
-                            )
-                        )
+                    onItemClick = {
+                        if(state.selection.isSelecting){
+                            viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                        }else {
+                            viewModel.onAction(CollectionItemAction.SetMediaToView(it))
+                        }
                     },
-                    onToggleSelected = {
-                        viewModel.onAction(
-                            CollectionItemAction.ToggleSelectedMedia(
-                                it
-                            )
-                        )
-                    },
-                    onToggleSelectionMode = {
+                    onLongItemClick = {
                         viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                        viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
                         offset = 0
                     },
                     onOffsetChange = { offset = it },

@@ -53,8 +53,7 @@ fun MediaItemsList(
     excludedItems: Set<MediaItem>,
     selectAll: Boolean,
     onItemClick: (item: MediaItem) -> Unit,
-    onToggleSelected: (MediaItem) -> Unit,
-    onToggleSelectionMode: () -> Unit,
+    onLongItemClick: (item: MediaItem) -> Unit,
     onOffsetChange: (Int) -> Unit,
     numGridColumns: Int = 3,
     maxCollapsePx: Int = 0,
@@ -167,8 +166,7 @@ fun MediaItemsList(
                     MediaItemCard(
                         item=item,
                         onItemClick=onItemClick,
-                        onToggleSelected = onToggleSelected,
-                        onToggleSelectionMode = onToggleSelectionMode,
+                        onLongItemClick = onLongItemClick,
                         isSelecting = isSelecting,
                         isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
                         onError=onError
