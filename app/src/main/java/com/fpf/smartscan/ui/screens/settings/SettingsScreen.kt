@@ -130,7 +130,6 @@ fun SettingsScreen(
             label=stringResource(R.string.setting_hide_duplicates),
             checked = appSettings.enableDedupe,
             onCheckedChange = viewModel::updateEnableDedupe,
-            description = stringResource(R.string.setting_hide_duplicates_description)
         ),
     )
 

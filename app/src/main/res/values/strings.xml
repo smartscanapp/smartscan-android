@@ -164,7 +164,6 @@
     <string name="setting_strictness_description">Higher values filter out less similar matches.</string>
     <string name="setting_max_search_results">Max search results</string>
     <string name="setting_hide_duplicates">Hide duplicates</string>
-    <string name="setting_hide_duplicates_description">Hide near identical search results.</string>
     <string name="setting_allowed_folders">Allowed folders</string>
     <string name="setting_searchable_folders_description">Manually select folders which can be scanned. All images and videos are scanned by default.</string>
 
