@@ -1,6 +1,8 @@
 package com.fpf.smartscan.ui.components.media
 
 import android.net.Uri
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -58,19 +60,16 @@ fun MediaViewer(
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
 
-    var scale by remember(currentItem.id) { mutableFloatStateOf(1f) }
-    var offset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
+    var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
+    var targetOffset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
+
+    val scale by animateFloatAsState(targetScale, label = "scale")
+    val offset by animateOffsetAsState(targetOffset, label = "offset")
 
     val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
-        val newScale = (scale * zoomChange).coerceIn(1f, 5f)
-
-        scale = newScale
-
-        offset = if (newScale <= 1f) {
-            Offset.Zero
-        } else {
-            offset + panChange
-        }
+        val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
+        targetScale = newScale
+        targetOffset = if (newScale <= 1f) Offset.Zero else targetOffset + panChange
     }
 
     val collectionCache = remember { mutableStateMapOf<Pair<Long, CollectionType>, Map<Long, String>>() }
@@ -137,12 +136,12 @@ fun MediaViewer(
                         isZoomed = scale > 1f,
                         onTap = { isActionsVisible = !isActionsVisible },
                         onDoubleTap = {
-                            if (scale > 1f) {
-                                scale = 1f
-                                offset = Offset.Zero
+                            if (targetScale > 1f) {
+                                targetScale = 1f
+                                targetOffset = Offset.Zero
                             } else {
-                                scale = 3f
-                                offset = Offset.Zero
+                                targetScale = 3f
+                                targetOffset = Offset.Zero
                             }
                         },
                         onSwipeLeft = { showNextItem() },
