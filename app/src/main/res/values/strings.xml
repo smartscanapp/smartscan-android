@@ -89,6 +89,7 @@
     <string name="search_video_scan_progress_bar_label">Scanning videos</string>
     <string name="search_tags_label">Tags</string>
     <string name="search_recent_searches_label">Recent searches</string>
+    <string name="search_date_range_label">Date range</string>
     <string name="search_start_date_label">Start date</string>
     <string name="search_end_date_label">End date</string>
     <string name="search_any_time_label">Any time</string>

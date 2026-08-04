@@ -16,7 +16,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -29,10 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalClipboard
@@ -43,7 +39,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
@@ -68,10 +63,9 @@ import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.media.MediaItemsList
-import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
+import com.fpf.smartscan.ui.components.search.SearchFilterControls
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.formatDate
 import com.fpf.smartscan.utils.toEpochSeconds
 import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
@@ -119,7 +113,6 @@ fun SearchScreen(
 
     var isAddingTag by remember { mutableStateOf(false) }
     var tagAutoCompleteTagResults by remember { mutableStateOf<List<String>>(emptyList()) }
-    var isSelectingMediaType by remember { mutableStateOf(false) }
     var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
     var showMoreActions by remember { mutableStateOf(false) }
     var showRecentSearches by remember { mutableStateOf(false) }
@@ -365,26 +358,7 @@ fun SearchScreen(
                                     searchViewModel.onAction(SearchAction.Reset)
                                 },
                                 onFocusedChange = {showRecentSearches = it},
-                                trailingIcon = {
-                                    IconButton (
-                                        onClick = { isSelectingMediaType = true }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = "Dropdown",
-                                            tint =  MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
                             )
-                        }
-                        if(state.filter.startDate != null || state.filter.endDate != null){
-                            TextButton(
-                                onClick = { searchViewModel.onAction(SearchAction.ClearDateFilters) },
-                                modifier = Modifier.align(Alignment.End)
-                            ) {
-                                Text(stringResource(R.string.reset_filters_action))
-                            }
                         }
                     }
                 }
@@ -548,47 +522,16 @@ fun SearchScreen(
         show = showFilters,
         onDismiss = { showFilters = false }
     ) {
-        Text(stringResource(R.string.filter_action), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-
-        Spacer(Modifier.height(16.dp))
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(stringResource(R.string.search_start_date_label))
-                TextButton(onClick = { showStartDatePicker = true }) {
-                    Text(state.filter.startDate?.let { formatDate(it) } ?: stringResource(R.string.search_any_time_label))
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(stringResource(R.string.search_end_date_label))
-                TextButton(onClick = { showEndDatePicker = true }) {
-                    Text(state.filter.endDate?.let { formatDate(it) } ?: stringResource(R.string.search_any_time_label))
-                }
-            }
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            OutlinedButton (
-                onClick = {
-                    searchViewModel.onAction(SearchAction.ClearDateFilters)
-                }
-            ) {
-                Text(stringResource(R.string.reset_filters_action))
-            }
-        }
+        SearchFilterControls(
+            filter = state.filter,
+            label = stringResource(R.string.filter_action),
+            onSetMediaType = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))},
+            onSelectStartDate = {showStartDatePicker = true},
+            onSelectEndDate = {showEndDatePicker = true},
+            onRemoveStartDate = {searchViewModel.onAction(SearchAction.ClearStartDateFilter)},
+            onRemoveEndDate = {searchViewModel.onAction(SearchAction.ClearEndDateFilter)},
+            onResetFilters = { searchViewModel.onAction(SearchAction.ResetFilters)}
+        )
     }
 
     TagAdder(
@@ -601,19 +544,6 @@ fun SearchScreen(
             isAddingTag = false
         },
         onCheckAutoCompletion = searchViewModel::handleAutoCompletionCheck
-    )
-
-    OptionPicker(
-        isVisible = isSelectingMediaType,
-        title = stringResource(R.string.media_type_title),
-        options = mediaTypeOptions.values.toList(),
-        selectedOption = mediaTypeOptions[state.mediaType]!!,
-        onSelect = { selected ->
-            val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key ?: MediaType.IMAGE
-            searchViewModel.onAction(SearchAction.SetMediaTypeFilter(mediaType))
-            isSelectingMediaType = false
-        },
-        onClose = { isSelectingMediaType = false }
     )
 }
 

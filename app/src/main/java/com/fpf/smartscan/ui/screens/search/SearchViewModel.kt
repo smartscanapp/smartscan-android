@@ -145,7 +145,7 @@ class SearchViewModel(
 
     fun onAction(action: SearchAction){
         when(action){
-            is SearchAction.ClearDateFilters -> clearDateFilters()
+            is SearchAction.ResetFilters -> resetFilters()
             is SearchAction.CopyResult -> copyItem(action.clipboard, action.context)
             is SearchAction.SetQueryImageAndSearch -> {
                 setQueryImage(action.image)
@@ -169,6 +169,8 @@ class SearchViewModel(
             is SearchAction.Delete -> deleteFromDevice(action.onDelete)
             is SearchAction.ClearRecentSearches -> clearRecentSearches()
             is SearchAction.RemoveRecentSearch -> removeRecentSearch(action.query)
+            is SearchAction.ClearStartDateFilter -> setStartDateFilter(null)
+            is SearchAction.ClearEndDateFilter -> setEndDateFilter(null)
         }
     }
 
@@ -325,7 +327,7 @@ class SearchViewModel(
 
     private fun setEndDateFilter(date: Long?) = _state.update {it.copy(filter = it.filter.copy(endDate = date))}
 
-    private fun clearDateFilters() = _state.update {it.copy(filter = it.filter.copy(endDate = null, startDate = null))}
+    private fun resetFilters() = _state.update {it.copy(filter = it.filter.copy(endDate = null, startDate = null, mediaType = defaultMediaType))}
 
     private fun removeUploadedImage(){
         reset()

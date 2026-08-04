@@ -23,7 +23,9 @@ sealed interface SearchAction {
     data class RemoveRecentSearch(val query: String): SearchAction
     data object RemoveUploadedImage: SearchAction
     data object ClearRecentSearches: SearchAction
-    data object ClearDateFilters: SearchAction
+    data object ResetFilters: SearchAction
+    data object ClearStartDateFilter: SearchAction
+    data object ClearEndDateFilter: SearchAction
     data object Reset: SearchAction
     data object ClearResultView: SearchAction
     data object ToggleSelectionMode: SearchAction
