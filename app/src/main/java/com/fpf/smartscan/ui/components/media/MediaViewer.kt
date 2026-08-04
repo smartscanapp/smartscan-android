@@ -193,20 +193,6 @@ fun MediaViewer(
                                 uri = currentItem.uri,
                                 modifier = Modifier.fillMaxSize(),
                                 onTap = { isActionsVisible = !isActionsVisible },
-                                onSwipeLeft = { showNextItem() },
-                                onSwipeRight = { showPreviousItem() },
-                                onSwipeUp = {
-                                    if (scale <= 1f) {
-                                        descriptionExpanded = true
-                                        isActionsVisible = false
-                                    }
-                                },
-                                onSwipeDown = {
-                                    if (scale <= 1f) {
-                                        descriptionExpanded = false
-                                        isActionsVisible = true
-                                    }
-                                }
                             )
                         }
                     }

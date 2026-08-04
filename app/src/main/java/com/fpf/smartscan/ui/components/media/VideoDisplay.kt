@@ -23,10 +23,6 @@ fun VideoDisplay(
     pause: Boolean = false,
     onPlaybackPositionChanged: ((Long) -> Unit)? = null,
     onTap: () -> Unit = {},
-    onSwipeLeft: () -> Unit = {},
-    onSwipeRight: () -> Unit = {},
-    onSwipeUp: () -> Unit = {},
-    onSwipeDown: () -> Unit = {},
     ) {
     val context = LocalContext.current
 
@@ -62,10 +58,6 @@ fun VideoDisplay(
                 useController = true
 
                 this.onTap = onTap
-                this.onSwipeLeft = onSwipeLeft
-                this.onSwipeRight = onSwipeRight
-                this.onSwipeUp = onSwipeUp
-                this.onSwipeDown = onSwipeDown
 
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -78,11 +70,9 @@ fun VideoDisplay(
                 view.player = exoPlayer
             }
             view.onTap = onTap
-            view.onSwipeLeft = onSwipeLeft
-            view.onSwipeRight = onSwipeRight
         },
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Transparent)
     )
 }
