@@ -235,7 +235,7 @@ fun SettingsScreen(
                 )
 
                 SettingSection(
-                    stringResource(id = R.string.search_settings),
+                    stringResource(id = R.string.media_settings),
                     settingActionConfigs = searchSettingActions
                 )
 
@@ -245,7 +245,7 @@ fun SettingsScreen(
                 )
 
                 SettingSection(
-                    "Cloud processing",
+                    stringResource(id = R.string.cloud_processing_settings),
                     settingActionConfigs = cloudProcessingSettingActions
                 )
 
