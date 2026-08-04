@@ -220,14 +220,6 @@ fun SettingsScreen(
         ),
     )
 
-    val modelsSettingActions: List<SettingActionConfig> = listOf(
-        SettingActionConfig.Button(
-            label = stringResource(R.string.setting_manage_models),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.MODELS)) },
-        ),
-    )
-
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -251,11 +243,6 @@ fun SettingsScreen(
                 SettingSection(
                     stringResource(id = R.string.scan_action),
                     settingActionConfigs = scanSettingActions
-                )
-
-                SettingSection(
-                    stringResource(id = R.string.setting_models),
-                    settingActionConfigs = modelsSettingActions
                 )
 
                 SettingSection(
