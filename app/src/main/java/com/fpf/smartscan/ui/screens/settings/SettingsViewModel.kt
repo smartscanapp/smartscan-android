@@ -131,10 +131,6 @@ class SettingsViewModel(application: Application, private val modelRepository: M
         }
     }
 
-    fun updateEnableDirectionGalleryOpen(enable: Boolean){
-        _appSettings.update{currentSettings -> currentSettings.copy(enableDirectGalleryOpen = enable)}
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
     fun updateResultsPerRow(n: Int){
         _appSettings.update{currentSettings -> currentSettings.copy(resultsPerRow = n)}
         saveSettings(sharedPrefs, _appSettings.value)

@@ -158,7 +158,7 @@ class SearchViewModel(
             is SearchAction.ShareResults -> shareItems(action.context)
             is SearchAction.TagItems -> tagItems(action.tag)
             is SearchAction.Search -> search(action.searchOptions)
-            is SearchAction.ViewResult -> viewResult(action.context, action.item, action.autoOpenInGallery)
+            is SearchAction.ViewResult -> viewResult(action.item)
             is SearchAction.ToggleSelectedResult -> toggleSelectedResult(action.item)
             is SearchAction.Reset -> reset()
             is SearchAction.ClearResultView -> clearResultView()
@@ -294,20 +294,12 @@ class SearchViewModel(
         }
     }
 
-    private fun viewResult(context: Context, item: MediaItem, autoOpenInGallery: Boolean? = null){
-        if(!canOpenUri(context, item.uri)){
+    private fun viewResult(item: MediaItem){
+        if(!canOpenUri(getApplication(), item.uri)){
             _state.update { currentState -> currentState.copy(resultIds = currentState.resultIds.filter{it != item.id}.toSet()) }
             return
         }
-
-        if(autoOpenInGallery == true) {
-            when(_state.value.mediaType){
-                MediaType.IMAGE -> openImageInGallery(context, item.uri)
-                MediaType.VIDEO -> openVideoInGallery(context, item.uri)
-            }
-        }else{
-            _state.update{it.copy(resultToView = item)}
-        }
+        _state.update{it.copy(resultToView = item)}
     }
 
     private fun deleteFromDevice(onDelete: (List<MediaItem>) -> Unit){

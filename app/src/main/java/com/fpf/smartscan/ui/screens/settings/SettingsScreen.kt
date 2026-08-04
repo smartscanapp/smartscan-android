@@ -122,11 +122,6 @@ fun SettingsScreen(
 
     val searchSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Switch(
-            label=stringResource(R.string.setting_auto_open_gallery),
-            checked = appSettings.enableDirectGalleryOpen,
-            onCheckedChange = viewModel::updateEnableDirectionGalleryOpen,
-        ),
-        SettingActionConfig.Switch(
             label=stringResource(R.string.setting_hide_duplicates),
             checked = appSettings.enableDedupe,
             onCheckedChange = viewModel::updateEnableDedupe,
@@ -162,14 +157,7 @@ fun SettingsScreen(
             enabled = !isBackupLoading && !isRestoreLoading,
             label = stringResource(id = R.string.setting_restore),
             description = stringResource(R.string.setting_backup_restore_description, "Import"),
-            onClick = {
-                restoreLauncher.launch(
-                    arrayOf(
-                        "application/zip",
-                        "application/octet-stream"
-                    )
-                )
-            },
+            onClick = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
         )
     )
 
@@ -214,7 +202,7 @@ fun SettingsScreen(
 
     val cloudProcessingSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
-            label = "LLM provider API keys",
+            label = stringResource(R.string.setting_api_keys),
             onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.API)) },
         ),
     )

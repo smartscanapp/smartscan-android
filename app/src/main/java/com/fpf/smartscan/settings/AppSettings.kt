@@ -10,7 +10,6 @@ data class AppSettings(
     val searchableVideoDirectories: List<String> = emptyList(),
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val color: ColorSchemeType = ColorSchemeType.SMARTSCAN,
-    val enableDirectGalleryOpen: Boolean = false,
     val resultsPerRow: Int = 4,
     val enableDedupe: Boolean = false,
     val openaiApiKey: String? = null
