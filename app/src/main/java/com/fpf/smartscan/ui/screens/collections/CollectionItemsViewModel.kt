@@ -27,9 +27,6 @@ import com.fpf.smartscan.events.CollectionItemEvent
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
-import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.media.openImageInGallery
-import com.fpf.smartscan.core.media.openVideoInGallery
 import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
@@ -161,7 +158,7 @@ class CollectionItemsViewModel(
             is CollectionItemAction.CopyMedia -> copyItem(action.clipboard, action.context)
             is CollectionItemAction.CreateNewCollectionAndMove -> createNewCollectionAndMove(action.newName)
             is CollectionItemAction.RemoveTag -> removeTag()
-            is CollectionItemAction.SetMediaToView -> setMediaToView(action.context, action.item, autoOpenInGallery = action.autoOpenInGallery)
+            is CollectionItemAction.SetMediaToView -> setMediaToView(action.item)
             is CollectionItemAction.ShareMedia -> shareItems(action.context)
             is CollectionItemAction.ToggleSelectedMedia -> toggleSelectedItem(action.item)
             is CollectionItemAction.SetCollectionToView -> setCollection(action.collection)
@@ -333,19 +330,7 @@ class CollectionItemsViewModel(
     }
 
     private fun setCollection(collection: MediaCollection?) = _state.update { it.copy(collection=collection) }
-
-    private fun setMediaToView(context: Context, item: MediaItem?, autoOpenInGallery: Boolean? = null){
-        if(autoOpenInGallery == true) {
-            when(item?.type){
-                MediaType.IMAGE -> openImageInGallery(context, item.uri)
-                MediaType.VIDEO -> openVideoInGallery(context, item.uri)
-                else -> {}
-            }
-        }else{
-            _state.update { it.copy(mediaToView =item) }
-        }
-    }
-
+    private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setFilters(filter: SearchFilter) = _state.update { it.copy(filter =filter) }
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }

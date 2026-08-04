@@ -142,13 +142,12 @@
     <string name="donate_kofi_url">https://ko-fi.com/d41dev/tip</string>
     <string name="donate_support_message">The app is free and open-source. If you enjoy using it, you can support the development with a tip. </string>
 
-    <!-- Settings-Screen -->
-    <string name="search_settings">Search</string>
+    <!--Settings screen-->
+    <string name="media_settings">Media</string>
     <string name="advanced_settings">Advanced</string>
     <string name="other_settings">Other</string>
     <string name="general_settings">General</string>
-
-    <!--General Settings-->
+    <string name="cloud_processing_settings">Cloud processing</string>
     <string name="setting_theme">Theme</string>
     <string name="setting_color">Color</string>
     <string name="setting_backup_restore">Backup &amp; Restore</string>
@@ -156,26 +155,15 @@
     <string name="setting_restore">Restore</string>
     <string name="setting_backup_restore_description">%1$s index files and database</string>
     <string name="setting_grid_columns">Items per row</string>
-
-    <!--Search Settings-->
-    <string name="setting_auto_open_gallery">Auto-open in gallery</string>
-    <string name="setting_strictness">Strictness</string>
-    <string name="setting_strictness_threshold_label">Strictness (%1$s)</string>
-    <string name="setting_strictness_description">Higher values filter out less similar matches.</string>
-    <string name="setting_max_search_results">Max search results</string>
     <string name="setting_hide_duplicates">Hide duplicates</string>
-    <string name="setting_hide_duplicates_description">Hide near identical search results.</string>
     <string name="setting_allowed_folders">Allowed folders</string>
     <string name="setting_searchable_folders_description">Manually select folders which can be scanned. All images and videos are scanned by default.</string>
-
-    <!--Advanced Settings-->
     <string name="setting_models">Models</string>
     <string name="setting_models_description">Download models for additional search and organisation features.</string>
     <string name="setting_manage_models">Manage models</string>
-
-    <!--Other Settings-->
     <string name="setting_source_code">Source code</string>
     <string name="setting_social_reddit">Reddit</string>
+    <string name="setting_api_keys">API keys</string>
 
     <!--Model Manager-->
     <string name="delete_model_alert_title">Delete model</string>

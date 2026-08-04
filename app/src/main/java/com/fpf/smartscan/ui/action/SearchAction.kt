@@ -10,7 +10,7 @@ import com.fpf.smartscan.core.search.SearchOptions
 sealed interface SearchAction {
     data class Search(val searchOptions: SearchOptions): SearchAction
     data class SetQueryImageAndSearch(val image: Uri, val searchOptions: SearchOptions): SearchAction
-    data class ViewResult(val context: Context, val item: MediaItem, val autoOpenInGallery: Boolean? = null): SearchAction
+    data class ViewResult(val item: MediaItem): SearchAction
     data class ToggleSelectedResult(val item: MediaItem): SearchAction
     data class TagItems(val tag: String): SearchAction
     data class SetStartDateFilter(val date: Long?): SearchAction

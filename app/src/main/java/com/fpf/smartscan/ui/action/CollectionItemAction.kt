@@ -13,7 +13,7 @@ sealed interface CollectionItemAction {
     data class ShareMedia(val context: Context): CollectionItemAction
     data class CreateNewCollectionAndMove(val newName: String): CollectionItemAction
     data class ToggleSelectedMedia(val item: MediaItem): CollectionItemAction
-    data class SetMediaToView(val context: Context, val item: MediaItem?, val autoOpenInGallery: Boolean? = null, val isSelecting: Boolean = false): CollectionItemAction
+    data class SetMediaToView(val item: MediaItem?): CollectionItemAction
     data class SetCollectionToView(val collection: MediaCollection): CollectionItemAction
     data class Tag(val tag: String): CollectionItemAction
     data class SetSelectAll(val selectAll: Boolean): CollectionItemAction

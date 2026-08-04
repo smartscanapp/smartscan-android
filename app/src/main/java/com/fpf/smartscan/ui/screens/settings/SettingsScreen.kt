@@ -121,21 +121,10 @@ fun SettingsScreen(
     )
 
     val searchSettingActions: List<SettingActionConfig> = listOf(
-        SettingActionConfig.Button(
-            label = stringResource(id = R.string.setting_allowed_folders),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
-            description = stringResource(R.string.setting_searchable_folders_description)
-        ),
-        SettingActionConfig.Switch(
-            label=stringResource(R.string.setting_auto_open_gallery),
-            checked = appSettings.enableDirectGalleryOpen,
-            onCheckedChange = viewModel::updateEnableDirectionGalleryOpen,
-        ),
         SettingActionConfig.Switch(
             label=stringResource(R.string.setting_hide_duplicates),
             checked = appSettings.enableDedupe,
             onCheckedChange = viewModel::updateEnableDedupe,
-            description = stringResource(R.string.setting_hide_duplicates_description)
         ),
     )
 
@@ -168,14 +157,7 @@ fun SettingsScreen(
             enabled = !isBackupLoading && !isRestoreLoading,
             label = stringResource(id = R.string.setting_restore),
             description = stringResource(R.string.setting_backup_restore_description, "Import"),
-            onClick = {
-                restoreLauncher.launch(
-                    arrayOf(
-                        "application/zip",
-                        "application/octet-stream"
-                    )
-                )
-            },
+            onClick = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
         )
     )
 
@@ -202,6 +184,11 @@ fun SettingsScreen(
 
     val scanSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
+            label = stringResource(id = R.string.setting_allowed_folders),
+            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
+            description = stringResource(R.string.setting_searchable_folders_description)
+        ),
+        SettingActionConfig.Button(
             label = stringResource(id = R.string.scan_action),
             onClick = { onScanRefresh() },
             description = stringResource(R.string.alert_scan_refresh_description)
@@ -215,18 +202,10 @@ fun SettingsScreen(
 
     val cloudProcessingSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
-            label = "LLM provider API keys",
+            label = stringResource(R.string.setting_api_keys),
             onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.API)) },
         ),
     )
-
-    val modelsSettingActions: List<SettingActionConfig> = listOf(
-        SettingActionConfig.Button(
-            label = stringResource(R.string.setting_manage_models),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.MODELS)) },
-        ),
-    )
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -244,7 +223,7 @@ fun SettingsScreen(
                 )
 
                 SettingSection(
-                    stringResource(id = R.string.search_settings),
+                    stringResource(id = R.string.media_settings),
                     settingActionConfigs = searchSettingActions
                 )
 
@@ -254,12 +233,7 @@ fun SettingsScreen(
                 )
 
                 SettingSection(
-                    stringResource(id = R.string.setting_models),
-                    settingActionConfigs = modelsSettingActions
-                )
-
-                SettingSection(
-                    "Cloud processing",
+                    stringResource(id = R.string.cloud_processing_settings),
                     settingActionConfigs = cloudProcessingSettingActions
                 )
 

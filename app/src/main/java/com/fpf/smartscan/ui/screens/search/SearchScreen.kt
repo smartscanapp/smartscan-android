@@ -401,22 +401,8 @@ fun SearchScreen(
                 selectAll = state.selection.selectAll,
                 excludedItems = state.selection.excludedItems,
                 selectedItems = state.selection.selectedItems,
-                onItemClick = { item ->
-                    searchViewModel.onAction(
-                        SearchAction.ViewResult(
-                            context,
-                            item,
-                            appSettings.enableDirectGalleryOpen
-                        )
-                    )
-                },
-                onToggleSelected = {
-                    searchViewModel.onAction(
-                        SearchAction.ToggleSelectedResult(
-                            it
-                        )
-                    )
-                },
+                onItemClick = { item -> searchViewModel.onAction(SearchAction.ViewResult(item)) },
+                onToggleSelected = { searchViewModel.onAction(SearchAction.ToggleSelectedResult(it)) },
                 onToggleSelectionMode = {
                     searchViewModel.onAction(SearchAction.ToggleSelectionMode)
                     offset = 0

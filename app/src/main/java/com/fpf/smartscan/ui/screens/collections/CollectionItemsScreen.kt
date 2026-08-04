@@ -318,9 +318,7 @@ fun CollectionItemsScreen(
                     onItemClick = { item ->
                         viewModel.onAction(
                             CollectionItemAction.SetMediaToView(
-                                context,
                                 item,
-                                appSettings.enableDirectGalleryOpen
                             )
                         )
                     },
@@ -366,7 +364,7 @@ fun CollectionItemsScreen(
                     items = mediaItems,
                     initialIndex = mediaItems.indexOf(item),
                     onClose = {
-                        viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))
+                        viewModel.onAction(CollectionItemAction.SetMediaToView(null))
                     },
                     onUpdateSearchImage = null,
                     onLoadMore = {
