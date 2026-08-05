@@ -44,6 +44,7 @@ import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import kotlin.math.abs
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +67,9 @@ fun MediaViewer(
     var detailsExpanded by remember { mutableStateOf(false) }
 
     val currentItem = items[currentIndex]
+
+    var currentItemWidth by remember(currentItem.id) { mutableIntStateOf(0) }
+    var currentItemHeight by remember(currentItem.id) { mutableIntStateOf(0) }
 
     var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
     var targetOffset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
@@ -128,6 +132,12 @@ fun MediaViewer(
         }
     }
 
+    fun calculateMediaScale(expanded: Boolean, width: Int, height: Int): Float {
+        if (!expanded || width <= 0 || height <= 0) return 1f
+        val aspect = width.toFloat() / height.toFloat()
+        return max(aspect, 1f / aspect)
+    }
+
     Dialog(
         onDismissRequest = {
             if (detailsExpanded) {
@@ -188,6 +198,11 @@ fun MediaViewer(
                 ) {
 
                     val mediaHeight = maxHeight * (1f - (progress * 0.5f))
+                    val detailsExpandedScale by animateFloatAsState(
+                        targetValue = calculateMediaScale(expanded = detailsExpanded, width = currentItemWidth, height = currentItemHeight),
+                        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                        label = "detailsScale"
+                    )
 
                     Box(
                         Modifier
@@ -203,22 +218,36 @@ fun MediaViewer(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .graphicsLayer {
-                                            scaleX = scale
-                                            scaleY = scale
+                                            scaleX = scale * detailsExpandedScale
+                                            scaleY = scale * detailsExpandedScale
                                             translationX = offset.x
                                             translationY = offset.y
                                         },
                                     contentScale = ContentScale.FillWidth,
                                     maxSize = maxSize,
-                                    mediaType = currentItem.type
+                                    mediaType = currentItem.type,
+                                    onSizeChanged = { width, height ->
+                                        currentItemWidth = width
+                                        currentItemHeight = height
+                                    }
                                 )
                             }
 
                             MediaType.VIDEO -> {
                                 VideoDisplay(
                                     uri = currentItem.uri,
-                                    modifier = Modifier.fillMaxSize(),
-                                    onTap = { isActionsVisible = !isActionsVisible }
+                                    showControls = !detailsExpanded,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            scaleX = detailsExpandedScale
+                                            scaleY = detailsExpandedScale
+                                        },
+                                    onTap = { isActionsVisible = !isActionsVisible },
+                                    onSizeChanged = { width, height ->
+                                        currentItemWidth = width
+                                        currentItemHeight = height
+                                    }
                                 )
                             }
                         }
@@ -230,10 +259,7 @@ fun MediaViewer(
                             .fillMaxWidth()
                             .height(maxHeight * 0.5f)
                             .align(Alignment.BottomCenter)
-                            .graphicsLayer {
-                                translationY =
-                                    maxHeight.toPx() * 0.5f * (1f - progress)
-                            }
+                            .graphicsLayer { translationY = maxHeight.toPx() * 0.5f * (1f - progress) }
                     ) {
 
                         if (progress > 0f) {
@@ -255,13 +281,9 @@ fun MediaViewer(
                 item = currentItem,
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
-                toggleMenu = {
-                    showMenu = !showMenu
-                },
+                toggleMenu = { showMenu = !showMenu },
                 showMenu = showMenu,
-                onViewDescription = {
-                    detailsExpanded = true
-                },
+                onViewDescription = { detailsExpanded = true },
                 isVisible = isActionsVisible
             )
         }
