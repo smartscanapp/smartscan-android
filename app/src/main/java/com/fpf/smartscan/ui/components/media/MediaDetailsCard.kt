@@ -85,8 +85,7 @@ fun MediaDetailsCard(
 
             if (editing) {
                 TextButton(
-                    enabled = editedDescription.text.isNotBlank() &&
-                            description != editedDescription.text.trim(),
+                    enabled = editedDescription.text.isNotBlank() && description != editedDescription.text.trim(),
                     onClick = {
                         onSave(editedDescription.text.trim())
                         editing = false
@@ -115,13 +114,10 @@ fun MediaDetailsCard(
         if (editing) {
             BasicTextField(
                 value = editedDescription,
-                onValueChange = {
-                    editedDescription = it
-                },
+                onValueChange = { editedDescription = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                minLines = 4,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
                 ),
@@ -147,40 +143,27 @@ fun MediaDetailsCard(
         }
 
         if (collections.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(20.dp))
-
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 16.dp)
             ) {
                 collections.forEach { (id, name, type) ->
-
                     AssistChip(
-                        onClick = {
-                            onCollectionClick(id, type)
-                        },
-                        label = {
-                            Text("#$name")
-                        },
+                        onClick = { onCollectionClick(id, type) },
+                        label = { Text("#$name") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = when (type) {
-                                CollectionType.CLUSTER ->
-                                    MaterialTheme.colorScheme.primaryContainer
-
-                                CollectionType.TAG ->
-                                    MaterialTheme.colorScheme.secondaryContainer
+                                CollectionType.CLUSTER -> MaterialTheme.colorScheme.primaryContainer
+                                CollectionType.TAG -> MaterialTheme.colorScheme.secondaryContainer
                             }
                         ),
                         shape=MaterialTheme.shapes.extraLarge,
                         border = AssistChipDefaults.assistChipBorder(
                             enabled = true,
                             borderColor = when (type) {
-                                CollectionType.CLUSTER ->
-                                    MaterialTheme.colorScheme.primary
-
-                                CollectionType.TAG ->
-                                    MaterialTheme.colorScheme.secondary
-                            }
+                                CollectionType.CLUSTER -> MaterialTheme.colorScheme.primary
+                                CollectionType.TAG -> MaterialTheme.colorScheme.secondary }
                         )
                     )
                 }
