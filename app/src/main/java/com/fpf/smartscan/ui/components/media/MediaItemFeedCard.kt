@@ -23,7 +23,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun ConceptMediaItemCard(
+fun MediaItemFeedCard(
     item: MediaItem,
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,

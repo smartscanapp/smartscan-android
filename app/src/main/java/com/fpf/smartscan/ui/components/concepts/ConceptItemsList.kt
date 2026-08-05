@@ -42,7 +42,7 @@ import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.ui.components.media.ConceptMediaItemCard
+import com.fpf.smartscan.ui.components.media.MediaItemFeedCard
 import com.fpf.smartscan.ui.components.media.ImageDisplay
 import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.ui.components.media.VideoDisplay
@@ -179,7 +179,7 @@ fun ConceptItemsList(
             ) { index ->
                 val item = items[index] ?: return@items
 
-                ConceptMediaItemCard(
+                MediaItemFeedCard(
                     item = item,
                     onItemClick = {
                         onItemClick(it)
