@@ -3,7 +3,13 @@ package com.fpf.smartscan.ui.components.media
 import android.content.ClipData
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -81,7 +87,10 @@ fun MediaViewerActionRow(
         ),
     )
 
-    ActionRowWithFade(visible = isVisible) {
+    ActionRowWithFade(
+        visible = isVisible,
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+    ) {
         IconButton(onClick = { onClose() }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,

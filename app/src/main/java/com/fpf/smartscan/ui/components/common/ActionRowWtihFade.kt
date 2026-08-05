@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,11 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 
 @Composable
 fun ActionRowWithFade(
     visible: Boolean,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     val alpha by animateFloatAsState(
@@ -31,19 +32,23 @@ fun ActionRowWithFade(
     )
 
     if (alpha > 0f) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .graphicsLayer {
                     this.alpha = alpha
                     this.translationY = translationY
                 }
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f))
                 .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
         ) {
-            content()
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                content()
+            }
         }
     }
 }
