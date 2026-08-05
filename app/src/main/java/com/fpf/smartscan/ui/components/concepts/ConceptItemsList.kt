@@ -168,7 +168,12 @@ fun ConceptItemsList(
 
                 ConceptMediaItemCard(
                     item = item,
-                    onItemClick = onItemClick,
+                    onItemClick = {
+                        onItemClick(it)
+                        if(item.type == MediaType.VIDEO){
+                            playerPool.get(item.id)?.pause()
+                        }
+                    },
                     isSelecting = isSelecting,
                     onItemLongClick = onItemLongClick,
                     isChecked = {
