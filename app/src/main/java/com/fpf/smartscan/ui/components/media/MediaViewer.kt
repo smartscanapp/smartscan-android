@@ -55,7 +55,7 @@ fun MediaViewer(
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
     onSaveUpdatedItem: (MediaItem) -> Unit,
-    maxSize: Int? = 1024
+    maxSize: Int? = 1728
 ) {
     if (items.isEmpty()) return
 
@@ -243,7 +243,7 @@ fun MediaViewer(
                                             translationY = offset.y
                                         },
                                     contentScale = ContentScale.Fit,
-                                    maxSize = null,
+                                    maxSize = maxSize,
                                     mediaType = currentItem.type,
                                     onSizeChanged = { width, height ->
                                         currentItemWidth = width
