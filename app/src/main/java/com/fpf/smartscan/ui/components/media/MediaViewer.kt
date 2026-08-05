@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -38,8 +39,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.media3.common.MediaItem as ExoMediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
@@ -61,23 +65,29 @@ fun MediaViewer(
 ) {
     if (items.isEmpty()) return
 
+    val context = LocalContext.current
+    val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
+
     var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
-    var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     var detailsExpanded by remember { mutableStateOf(false) }
 
+    var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
-
     var currentItemWidth by remember(currentItem.id) { mutableIntStateOf(0) }
     var currentItemHeight by remember(currentItem.id) { mutableIntStateOf(0) }
 
+    // Scaling
     var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
     var targetOffset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
-
     val scale by animateFloatAsState(targetScale, label = "scale")
     val offset by animateOffsetAsState(targetOffset, label = "offset")
-
     val transitionProgress = remember { Animatable(0f) }
+
+
+    DisposableEffect(Unit) {
+        onDispose { videoPlayer.release() }
+    }
 
     LaunchedEffect(detailsExpanded) {
         transitionProgress.animateTo(
@@ -87,6 +97,16 @@ fun MediaViewer(
                 easing = FastOutSlowInEasing
             )
         )
+    }
+
+    LaunchedEffect(currentItem.uri) {
+        if (currentItem.type == MediaType.VIDEO) {
+            videoPlayer.setMediaItem(ExoMediaItem.fromUri(currentItem.uri))
+            videoPlayer.prepare()
+            videoPlayer.playWhenReady = true
+        }else{
+            videoPlayer.clearMediaItems()
+        }
     }
 
     val progress = transitionProgress.value
@@ -106,6 +126,9 @@ fun MediaViewer(
     }
 
     LaunchedEffect(currentItem.id) {
+        currentItemWidth = 0
+        currentItemHeight = 0
+
         tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
         clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
         targetScale = 1f
@@ -235,7 +258,8 @@ fun MediaViewer(
 
                             MediaType.VIDEO -> {
                                 VideoDisplay(
-                                    uri = currentItem.uri,
+                                    videoId = currentItem.id,
+                                    player = videoPlayer,
                                     showControls = !detailsExpanded,
                                     modifier = Modifier
                                         .fillMaxSize()
