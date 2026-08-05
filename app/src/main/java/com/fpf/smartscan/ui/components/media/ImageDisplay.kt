@@ -29,6 +29,7 @@ fun ImageDisplay(
     contentScale: ContentScale = ContentScale.Crop,
     mediaType: MediaType? = null,
     maxSize:Int? = 512,
+    onSizeChanged: ((Int, Int) -> Unit)? = null,
     onError: ((error:  AsyncImagePainter.State.Error)-> Unit)? = null
     ) {
     val context = LocalContext.current
@@ -59,7 +60,13 @@ fun ImageDisplay(
             contentDescription = "Displayed image",
             contentScale = contentScale,
             modifier = modifier.fillMaxWidth(),
-            onError = { onError?.invoke(it) }
+            onError = { onError?.invoke(it) },
+            onSuccess = {
+                onSizeChanged?.invoke(
+                    it.result.image.width,
+                    it.result.image.height
+                )
+            }
         )
     }
 }

@@ -7,10 +7,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FloatingActionButton
@@ -19,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,45 +30,52 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.ui.components.media.ConceptMediaItemCard
+import com.fpf.smartscan.ui.components.media.ImageDisplay
+import com.fpf.smartscan.core.media.PlayerPool
+import com.fpf.smartscan.ui.components.media.VideoDisplay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
 fun ConceptItemsList(
     isVisible: Boolean,
+    playerPool: PlayerPool,
     items: LazyPagingItems<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
     onOffsetChange: (Int) -> Unit,
-    onGetPlaybackPosition: (Long) -> Long,
-    onSavePlaybackPosition: (itemId: Long, pos: Long) -> Unit,
     maxCollapsePx: Int = 0,
-    expandedMedia: MediaItem? = null,
     isSelecting: Boolean = false,
     selectAll: Boolean = false,
     selectedItems: Set<MediaItem> = emptySet(),
     excludedItems: Set<MediaItem> = emptySet(),
-    onItemLongClick: ((MediaItem) -> Unit)? =null,
+    onItemLongClick: ((MediaItem) -> Unit)? = null,
     onToggleSelected: ((MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null
 ) {
-    if (!isVisible) return
+    if (!isVisible || playerPool.isEmpty()) return
 
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
+    val playbackPositions = remember { mutableStateMapOf<Long, Long>() }
 
-    val connection = remember {
+    val connection = remember(maxCollapsePx) {
         object : NestedScrollConnection {
             override fun onPreScroll(
                 available: Offset,
@@ -80,36 +91,68 @@ fun ConceptItemsList(
         }
     }
 
-    LaunchedEffect(listState) {
+    LaunchedEffect(listState, items.itemCount) {
         var previousIndex = 0
         var previousOffset = 0
 
         snapshotFlow {
-            listState.firstVisibleItemIndex to
-                    listState.firstVisibleItemScrollOffset
-        }.collect { (index, offset) ->
+            val layoutInfo = listState.layoutInfo
 
-            val movedDown =
-                index > previousIndex || (index == previousIndex && offset > previousOffset)
+            val visibleVideos = layoutInfo.visibleItemsInfo
+                .mapNotNull { info ->
+                    items[info.index]
+                }
+                .filter { it.type == MediaType.VIDEO }
 
-            val movedUp =
-                index < previousIndex || (index == previousIndex && offset < previousOffset)
-
-            showScrollToTop = when {
-                index == 0 && offset == 0 -> false
-                movedUp -> false
-                movedDown -> true
-                else -> showScrollToTop
-            }
-
-            previousIndex = index
-            previousOffset = offset
+            Triple(
+                listState.firstVisibleItemIndex,
+                listState.firstVisibleItemScrollOffset,
+                visibleVideos
+            )
         }
+            .distinctUntilChanged()
+            .collect { (index, offset, visibleVideos) ->
+
+                val movedDown = index > previousIndex || (index == previousIndex && offset > previousOffset)
+                val movedUp = index < previousIndex || (index == previousIndex && offset < previousOffset)
+
+                showScrollToTop = when {
+                    index == 0 && offset == 0 -> false
+                    movedUp -> false
+                    movedDown -> true
+                    else -> showScrollToTop
+                }
+
+                previousIndex = index
+                previousOffset = offset
+
+                val visibleIds = visibleVideos.map { it.id }.toSet()
+
+                playerPool.assignedIds
+                    .filter { it !in visibleIds }
+                    .toList()
+                    .forEach { id ->
+                        playerPool.get(id)?.let { player ->
+                            playbackPositions[id] = player.currentPosition
+                        }
+                        playerPool.release(id)
+                    }
+
+                visibleVideos.forEach { video ->
+                    playerPool.assign(video.id)?.let { player ->
+                        if (player.currentMediaItem?.localConfiguration?.uri != video.uri) {
+                            player.setMediaItem(ExoMediaItem.fromUri(video.uri))
+                            player.prepare()
+                            player.seekTo(playbackPositions[video.id] ?: 0L)
+                            player.playWhenReady = true
+                        }
+                    }
+                }
+            }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-
-        LazyColumn (
+        LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
@@ -117,27 +160,72 @@ fun ConceptItemsList(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(0.dp)
         ) {
-
             items(
                 count = items.itemCount,
                 key = { index -> items[index]?.id ?: index }
             ) { index ->
-                val item = items[index]
+                val item = items[index] ?: return@items
 
-                if (item != null) {
-                    ConceptMediaItemCard(
-                        item=item,
-                        onItemClick= onItemClick,
-                        onItemLongClick = onItemLongClick,
-                        onToggleSelected = onToggleSelected,
-                        isSelecting = isSelecting,
-                        isChecked = { item in selectedItems || (selectAll && item !in excludedItems)},
-                        onError=onError,
-                        onSavePlaybackPosition= { onSavePlaybackPosition(item.id, it) },
-                        playbackPosition = onGetPlaybackPosition(item.id),
-                        pausePlayback=expandedMedia == item
-                    )
-                }
+                ConceptMediaItemCard(
+                    item = item,
+                    onItemClick = {
+                        onItemClick(it)
+                        if(item.type == MediaType.VIDEO){
+                            playerPool.get(item.id)?.pause()
+                        }
+                    },
+                    isSelecting = isSelecting,
+                    onItemLongClick = onItemLongClick,
+                    isChecked = {
+                        item in selectedItems ||
+                                (selectAll && item !in excludedItems)
+                    },
+                    onToggleSelected = onToggleSelected,
+                    content = {
+                        when (item.type) {
+                            MediaType.IMAGE -> {
+                                ImageDisplay(
+                                    maxSize = 864,
+                                    uri = item.uri,
+                                    mediaType = item.type,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .aspectRatio(1.25f),
+                                    onError = onError
+                                )
+                            }
+
+                            MediaType.VIDEO -> {
+                                val player = playerPool.get(item.id)
+
+                                if (player != null) {
+                                    VideoDisplay(
+                                        videoId = item.id,
+                                        player = player,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .aspectRatio(1.25f)
+                                    )
+                                } else {
+                                    ImageDisplay(
+                                        maxSize = 864,
+                                        uri = item.uri,
+                                        mediaType = MediaType.VIDEO,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .aspectRatio(1.25f),
+                                        onError = onError
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
             }
         }
 
@@ -149,16 +237,20 @@ fun ConceptItemsList(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
-            FloatingActionButton(onClick = {
-                scope.launch {
-                    showScrollToTop = false
-                    onOffsetChange(0)
-                    listState.scrollToItem(0)
+            FloatingActionButton(
+                onClick = {
+                    scope.launch {
+                        showScrollToTop = false
+                        onOffsetChange(0)
+                        listState.scrollToItem(0)
+                    }
                 }
-            }) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+            ) {
+                Icon(
+                    Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Scroll to Top"
+                )
             }
         }
     }
 }
-

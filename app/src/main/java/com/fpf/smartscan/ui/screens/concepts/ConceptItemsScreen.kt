@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -27,14 +28,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.ui.action.ConceptItemsAction
@@ -58,8 +62,16 @@ fun ConceptItemsScreen(
 ) {
     if(concept == null) return
 
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val conceptItems = viewModel.conceptItems.collectAsLazyPagingItems()
+    val playerPool = remember(context) {
+        PlayerPool(
+            List(2) {
+                ExoPlayer.Builder(context).build()
+            }
+        )
+    }
 
     // For dynamic smooth hiding effect of action bars and other components
     var offset by remember { mutableIntStateOf(0) }
@@ -119,6 +131,11 @@ fun ConceptItemsScreen(
         )
     }
 
+    DisposableEffect(playerPool) {
+        onDispose {
+            playerPool.releaseAll()
+        }
+    }
 
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(ConceptItemsAction.ResetSelection)
@@ -132,15 +149,13 @@ fun ConceptItemsScreen(
             verticalArrangement = Arrangement.Top
         ) {
             ConceptItemsList(
-                onSavePlaybackPosition = viewModel::savePlaybackPosition,
-                onGetPlaybackPosition = viewModel::getPlaybackPosition,
                 isVisible = conceptItems.itemCount > 0,
                 items = conceptItems,
-                expandedMedia = state.mediaToView,
+                playerPool = playerPool,
                 onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
-//                onError = viewModel::onErrorAsyncImage
+                onError = mediaViewModel::onErrorAsyncImage
             )
 
             EmptyItemsScreen(
