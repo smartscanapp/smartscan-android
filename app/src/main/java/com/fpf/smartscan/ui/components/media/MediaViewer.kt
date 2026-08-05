@@ -106,7 +106,6 @@ fun MediaViewer(
         clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
         targetScale = 1f
         targetOffset = Offset.Zero
-        detailsExpanded = false
     }
 
     fun showNextItem() {
