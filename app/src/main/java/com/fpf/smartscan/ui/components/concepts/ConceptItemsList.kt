@@ -48,6 +48,8 @@ import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.ui.components.media.VideoDisplay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Composable
@@ -70,10 +72,12 @@ fun ConceptItemsList(
 
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val playbackPositions = remember { mutableStateMapOf<Long, Long>() }
+    val minimumVisibilityFraction = 0.2f
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
-    val playbackPositions = remember { mutableStateMapOf<Long, Long>() }
+    var playingVideoId by remember { mutableStateOf<Long?>(null) }
 
     val connection = remember(maxCollapsePx) {
         object : NestedScrollConnection {
@@ -98,11 +102,17 @@ fun ConceptItemsList(
         snapshotFlow {
             val layoutInfo = listState.layoutInfo
 
-            val visibleVideos = layoutInfo.visibleItemsInfo
-                .mapNotNull { info ->
-                    items[info.index]
-                }
-                .filter { it.type == MediaType.VIDEO }
+            val visibleVideos = layoutInfo.visibleItemsInfo.mapNotNull { info ->
+                val item = items[info.index] ?: return@mapNotNull null
+                if (item.type != MediaType.VIDEO) return@mapNotNull null
+
+                val visibleStart = max(info.offset, layoutInfo.viewportStartOffset)
+                val visibleEnd = min(info.offset + info.size, layoutInfo.viewportEndOffset)
+                val visibleFraction =
+                    (visibleEnd - visibleStart).coerceAtLeast(0).toFloat() / info.size
+
+                item to visibleFraction
+            }
 
             Triple(
                 listState.firstVisibleItemIndex,
@@ -112,7 +122,6 @@ fun ConceptItemsList(
         }
             .distinctUntilChanged()
             .collect { (index, offset, visibleVideos) ->
-
                 val movedDown = index > previousIndex || (index == previousIndex && offset > previousOffset)
                 val movedUp = index < previousIndex || (index == previousIndex && offset < previousOffset)
 
@@ -126,31 +135,35 @@ fun ConceptItemsList(
                 previousIndex = index
                 previousOffset = offset
 
-                val visibleIds = visibleVideos.map { it.id }.toSet()
+                val visibleIds = visibleVideos.map { it.first.id }.toSet()
 
                 playerPool.assignedIds
                     .filter { it !in visibleIds }
                     .toList()
                     .forEach { id ->
-                        playerPool.get(id)?.let { player ->
-                            playbackPositions[id] = player.currentPosition
-                        }
+                        playerPool.get(id)?.let { player -> playbackPositions[id] = player.currentPosition }
                         playerPool.release(id)
                     }
 
-                visibleVideos.forEach { video ->
+                val currentVisibleFraction = visibleVideos.firstOrNull { it.first.id == playingVideoId }?.second ?: 0f
+                val mostVisibleVideo = visibleVideos.maxByOrNull { it.second }
+
+                if (playingVideoId == null || currentVisibleFraction < minimumVisibilityFraction || (movedUp && mostVisibleVideo != null && mostVisibleVideo.first.id != playingVideoId)){
+                    playingVideoId = mostVisibleVideo?.first?.id
+                }
+
+                visibleVideos.forEach { (video, _) ->
                     playerPool.assign(video.id)?.let { player ->
                         if (player.currentMediaItem?.localConfiguration?.uri != video.uri) {
                             player.setMediaItem(ExoMediaItem.fromUri(video.uri))
                             player.prepare()
                             player.seekTo(playbackPositions[video.id] ?: 0L)
-                            player.playWhenReady = true
                         }
+                        player.playWhenReady = video.id == playingVideoId
                     }
                 }
             }
     }
-
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
