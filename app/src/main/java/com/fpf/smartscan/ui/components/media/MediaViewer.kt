@@ -7,9 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.layout.Box
@@ -36,8 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
@@ -47,7 +42,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import kotlin.math.abs
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,24 +60,55 @@ fun MediaViewer(
     if (items.isEmpty()) return
 
     val context = LocalContext.current
-    val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
 
     var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
     var detailsExpanded by remember { mutableStateOf(false) }
 
+    // Media details
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
     val currentItem = items[currentIndex]
     var currentItemWidth by remember(currentItem.id) { mutableIntStateOf(0) }
     var currentItemHeight by remember(currentItem.id) { mutableIntStateOf(0) }
+    val collectionCache = remember { mutableStateMapOf<Pair<Long, CollectionType>, Map<Long, String>>() }
+    var tags by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    var clusters by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    val collections = buildList {
+        tags.forEach { (id, name) -> add(Triple(id, name, CollectionType.TAG)) }
+        clusters.forEach { (id, name) -> add(Triple(id, name, CollectionType.CLUSTER)) }
+    }
+    val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
 
-    // Scaling
+    // Pinch to zoom / scaling animations
     var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
     var targetOffset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
     val scale by animateFloatAsState(targetScale, label = "scale")
     val offset by animateOffsetAsState(targetOffset, label = "offset")
     val transitionProgress = remember { Animatable(0f) }
+    val progress = transitionProgress.value
+    val detailsExpandedScale by animateFloatAsState(
+        targetValue = calculateMediaScale(expanded = detailsExpanded, width = currentItemWidth, height = currentItemHeight),
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "detailsExpandedScale"
+    )
+    val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
+        val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
+        targetScale = newScale
 
+        if (newScale <= 1f || currentItemWidth <= 0 || currentItemHeight <= 0) {
+            targetOffset = Offset.Zero
+        } else {
+            val scaledWidth = currentItemWidth * newScale * detailsExpandedScale
+            val scaledHeight = currentItemHeight * newScale * detailsExpandedScale
+            val maxX = ((scaledWidth - currentItemWidth) / 2f).coerceAtLeast(0f)
+            val maxY = ((scaledHeight - currentItemHeight) / 2f).coerceAtLeast(0f)
+
+            targetOffset = Offset(
+                x = (targetOffset.x + panChange.x).coerceIn(-maxX, maxX),
+                y = (targetOffset.y + panChange.y).coerceIn(-maxY, maxY)
+            )
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose { videoPlayer.release() }
@@ -109,26 +134,7 @@ fun MediaViewer(
         }
     }
 
-    val progress = transitionProgress.value
-    val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
-        val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
-        targetScale = newScale
-        targetOffset = if (newScale <= 1f) Offset.Zero else targetOffset + panChange
-    }
-
-    val collectionCache = remember { mutableStateMapOf<Pair<Long, CollectionType>, Map<Long, String>>() }
-    var tags by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
-    var clusters by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
-
-    val collections = buildList {
-        tags.forEach { (id, name) -> add(Triple(id, name, CollectionType.TAG)) }
-        clusters.forEach { (id, name) -> add(Triple(id, name, CollectionType.CLUSTER)) }
-    }
-
     LaunchedEffect(currentItem.id) {
-        currentItemWidth = 0
-        currentItemHeight = 0
-
         tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
         clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
         targetScale = 1f
@@ -155,12 +161,6 @@ fun MediaViewer(
         }
     }
 
-    fun calculateMediaScale(expanded: Boolean, width: Int, height: Int): Float {
-        if (!expanded || width <= 0 || height <= 0) return 1f
-        val aspect = width.toFloat() / height.toFloat()
-        return max(aspect, 1f / aspect)
-    }
-
     Dialog(
         onDismissRequest = {
             if (detailsExpanded) {
@@ -172,7 +172,9 @@ fun MediaViewer(
         },
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = false
+            dismissOnClickOutside = false,
+            decorFitsSystemWindows = false,
+            usePlatformDefaultWidth = false
         )
     ) {
 
@@ -216,19 +218,13 @@ fun MediaViewer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .clipToBounds()
-                        .transformable(transformableState)
                 ) {
 
                     val mediaHeight = maxHeight * (1f - (progress * 0.5f))
-                    val detailsExpandedScale by animateFloatAsState(
-                        targetValue = calculateMediaScale(expanded = detailsExpanded, width = currentItemWidth, height = currentItemHeight),
-                        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-                        label = "detailsScale"
-                    )
 
                     Box(
                         Modifier
+                            .transformable(transformableState)
                             .fillMaxWidth()
                             .height(mediaHeight)
                             .align(Alignment.TopCenter)
@@ -246,8 +242,8 @@ fun MediaViewer(
                                             translationX = offset.x
                                             translationY = offset.y
                                         },
-                                    contentScale = ContentScale.FillWidth,
-                                    maxSize = maxSize,
+                                    contentScale = ContentScale.Fit,
+                                    maxSize = null,
                                     mediaType = currentItem.type,
                                     onSizeChanged = { width, height ->
                                         currentItemWidth = width
@@ -314,97 +310,8 @@ fun MediaViewer(
     }
 }
 
-fun Modifier.mediaViewerGestures(
-    gestureKey: Long,
-    isZoomed: Boolean,
-    onTap: () -> Unit = {},
-    onDoubleTap: () -> Unit = {},
-    onSwipeLeft: () -> Unit = {},
-    onSwipeRight: () -> Unit = {},
-    onSwipeUp: () -> Unit = {},
-    onSwipeDown: () -> Unit = {},
-    threshold: Float = 100f
-): Modifier {
-    return this
-        .pointerInput(gestureKey) {
-            detectTapGestures(
-                onTap = { onTap() },
-                onDoubleTap = { onDoubleTap() }
-            )
-        }
-        .pointerInput(isZoomed, threshold) {
-            awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                val startPosition = down.position
-                var endPosition = startPosition
-                var hasMovedEnough = false
-                var hasMultiplePointers = false
-
-                while (true) {
-                    val event = awaitPointerEvent()
-
-                    if (event.changes.count { it.pressed } > 1) {
-                        hasMultiplePointers = true
-                    }
-
-                    val change = event.changes.firstOrNull {
-                        it.id == down.id
-                    }
-
-                    if (change != null) {
-                        endPosition = change.position
-
-                        val dx = endPosition.x - startPosition.x
-                        val dy = endPosition.y - startPosition.y
-
-                        if (
-                            abs(dx) > threshold ||
-                            abs(dy) > threshold
-                        ) {
-                            hasMovedEnough = true
-                        }
-
-                        if (change.changedToUpIgnoreConsumed()) {
-                            break
-                        }
-                    }
-
-                    if (event.changes.none { it.pressed }) {
-                        break
-                    }
-                }
-
-                if (
-                    isZoomed ||
-                    hasMultiplePointers ||
-                    !hasMovedEnough
-                ) {
-                    return@awaitEachGesture
-                }
-
-                val dx = endPosition.x - startPosition.x
-                val dy = endPosition.y - startPosition.y
-
-                val absX = abs(dx)
-                val absY = abs(dy)
-
-                when {
-                    absX > absY && absX > threshold -> {
-                        if (dx < 0f) {
-                            onSwipeLeft()
-                        } else {
-                            onSwipeRight()
-                        }
-                    }
-
-                    absY > absX && absY > threshold -> {
-                        if (dy < 0f) {
-                            onSwipeUp()
-                        } else {
-                            onSwipeDown()
-                        }
-                    }
-                }
-            }
-        }
+fun calculateMediaScale(expanded: Boolean, width: Int, height: Int): Float {
+    if (!expanded || width <= 0 || height <= 0) return 1f
+    val aspect = width.toFloat() / height.toFloat()
+    return max(aspect, 1f / aspect)
 }
