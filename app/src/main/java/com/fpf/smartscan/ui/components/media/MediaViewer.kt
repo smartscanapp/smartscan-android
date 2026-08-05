@@ -1,8 +1,11 @@
 package com.fpf.smartscan.ui.components.media
 
 import android.net.Uri
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -10,9 +13,11 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -25,6 +30,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -56,8 +62,9 @@ fun MediaViewer(
 
     var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
-    var descriptionExpanded by remember { mutableStateOf(false) }
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
+    var detailsExpanded by remember { mutableStateOf(false) }
+
     val currentItem = items[currentIndex]
 
     var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
@@ -66,6 +73,19 @@ fun MediaViewer(
     val scale by animateFloatAsState(targetScale, label = "scale")
     val offset by animateOffsetAsState(targetOffset, label = "offset")
 
+    val transitionProgress = remember { Animatable(0f) }
+
+    LaunchedEffect(detailsExpanded) {
+        transitionProgress.animateTo(
+            targetValue = if (detailsExpanded) 1f else 0f,
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = FastOutSlowInEasing
+            )
+        )
+    }
+
+    val progress = transitionProgress.value
     val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
         val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
         targetScale = newScale
@@ -82,11 +102,11 @@ fun MediaViewer(
     }
 
     LaunchedEffect(currentItem.id) {
-        val tagKey = currentItem.id to CollectionType.TAG
-        val clusterKey = currentItem.id to CollectionType.CLUSTER
-
-        tags = collectionCache.getOrPut(tagKey) { onGetCollections(currentItem, CollectionType.TAG) }
-        clusters = collectionCache.getOrPut(clusterKey) { onGetCollections(currentItem, CollectionType.CLUSTER) }
+        tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
+        clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
+        targetScale = 1f
+        targetOffset = Offset.Zero
+        detailsExpanded = false
     }
 
     fun showNextItem() {
@@ -111,8 +131,8 @@ fun MediaViewer(
 
     Dialog(
         onDismissRequest = {
-            if (descriptionExpanded) {
-                descriptionExpanded = false
+            if (detailsExpanded) {
+                detailsExpanded = false
                 isActionsVisible = true
             } else {
                 onClose()
@@ -123,13 +143,15 @@ fun MediaViewer(
             dismissOnClickOutside = false
         )
     ) {
+
         Box(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+
             Column(
-                modifier = Modifier
+                Modifier
                     .fillMaxSize()
                     .mediaViewerGestures(
                         gestureKey = currentItem.id,
@@ -147,68 +169,84 @@ fun MediaViewer(
                         onSwipeLeft = { showNextItem() },
                         onSwipeRight = { showPreviousItem() },
                         onSwipeUp = {
-                            if (scale <= 1f) {
-                                descriptionExpanded = true
-                                isActionsVisible = false
-                            }
+                            detailsExpanded = true
+                            isActionsVisible = false
                         },
+
                         onSwipeDown = {
-                            if (scale <= 1f) {
-                                descriptionExpanded = false
-                                isActionsVisible = true
-                            }
+                            detailsExpanded = false
+                            isActionsVisible = true
                         }
                     )
             ) {
-                Box(
+
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .clipToBounds()
-                        .transformable(
-                            state = transformableState
-                        )
+                        .transformable(transformableState)
                 ) {
-                    when (currentItem.type) {
-                        MediaType.IMAGE -> {
-                            ImageDisplay(
-                                uri = currentItem.uri,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer {
-                                        scaleX = scale
-                                        scaleY = scale
-                                        translationX = offset.x
-                                        translationY = offset.y
-                                    },
-                                contentScale = ContentScale.FillWidth,
-                                maxSize = maxSize,
-                                mediaType = currentItem.type
-                            )
-                        }
 
-                        MediaType.VIDEO -> {
-                            VideoDisplay(
-                                uri = currentItem.uri,
-                                modifier = Modifier.fillMaxSize(),
-                                onTap = { isActionsVisible = !isActionsVisible },
-                            )
+                    val mediaHeight = maxHeight * (1f - (progress * 0.5f))
+
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(mediaHeight)
+                            .align(Alignment.TopCenter)
+                            .clipToBounds()
+                    ) {
+                        when (currentItem.type) {
+                            MediaType.IMAGE -> {
+                                ImageDisplay(
+                                    uri = currentItem.uri,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                            translationX = offset.x
+                                            translationY = offset.y
+                                        },
+                                    contentScale = ContentScale.FillWidth,
+                                    maxSize = maxSize,
+                                    mediaType = currentItem.type
+                                )
+                            }
+
+                            MediaType.VIDEO -> {
+                                VideoDisplay(
+                                    uri = currentItem.uri,
+                                    modifier = Modifier.fillMaxSize(),
+                                    onTap = { isActionsVisible = !isActionsVisible }
+                                )
+                            }
                         }
                     }
-                }
 
-                if (descriptionExpanded) {
+
                     Box(
-                        modifier = Modifier.fillMaxWidth()
+                        Modifier
+                            .fillMaxWidth()
+                            .height(maxHeight * 0.5f)
+                            .align(Alignment.BottomCenter)
+                            .graphicsLayer {
+                                translationY =
+                                    maxHeight.toPx() * 0.5f * (1f - progress)
+                            }
                     ) {
-                        key(currentItem.id, currentItem.type) {
-                            MediaDetailsCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                description = currentItem.description,
-                                collections = collections,
-                                onCollectionClick = { id, type -> onCollectionClick(id, type) },
-                                onSave = { updated -> onSaveUpdatedItem(currentItem.copy(description = updated)) }
-                            )
+
+                        if (progress > 0f) {
+                            key(currentItem.id, currentItem.type) {
+                                MediaDetailsCard(
+                                    modifier = Modifier.fillMaxSize(),
+                                    description = currentItem.description,
+                                    collections = collections,
+                                    onCollectionClick = { id, type -> onCollectionClick(id, type) },
+                                    onSave = { updated -> onSaveUpdatedItem(currentItem.copy(description = updated)) }
+                                )
+                            }
                         }
                     }
                 }
@@ -218,9 +256,13 @@ fun MediaViewer(
                 item = currentItem,
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
-                toggleMenu = { showMenu = !showMenu },
+                toggleMenu = {
+                    showMenu = !showMenu
+                },
                 showMenu = showMenu,
-                onViewDescription = { descriptionExpanded = true },
+                onViewDescription = {
+                    detailsExpanded = true
+                },
                 isVisible = isActionsVisible
             )
         }
