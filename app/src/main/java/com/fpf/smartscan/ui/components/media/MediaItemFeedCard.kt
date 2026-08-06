@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,7 +25,7 @@ fun MediaItemFeedCard(
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,
     content: @Composable () -> Unit,
-    onItemLongClick: ((MediaItem) -> Unit)? = null,
+    onShowItemMenu: (MediaItem) -> Unit,
 ) {
     val description = remember(item.description) {
         item.description?.trim()?.replaceFirstChar { it.uppercase() }.orEmpty()
@@ -41,9 +42,6 @@ fun MediaItemFeedCard(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = { onItemClick(item) },
-                onLongClick = if ( onItemLongClick != null) {
-                    { onItemLongClick(item) }
-                } else null
             )
     ) {
         Column {
@@ -55,8 +53,8 @@ fun MediaItemFeedCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Lightbulb,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        contentDescription = "Lightbulb icon",
+                        modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
 
@@ -65,6 +63,19 @@ fun MediaItemFeedCard(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(
+                        onClick = { onShowItemMenu(item) },
+                        modifier = Modifier.size(24.dp),
+                        ){
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Item menu icon",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
 
                 if (description.isNotBlank()) {

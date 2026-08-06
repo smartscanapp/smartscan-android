@@ -153,6 +153,7 @@ fun ConceptItemsScreen(
                 items = conceptItems,
                 playerPool = playerPool,
                 onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
+                onShowItemMenu = {}, //TODO: show menu with options to hide etc
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 onError = mediaViewModel::onErrorAsyncImage
