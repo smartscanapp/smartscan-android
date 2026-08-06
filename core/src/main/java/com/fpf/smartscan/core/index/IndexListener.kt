@@ -1,13 +1,14 @@
 package com.fpf.smartscan.core.index
 
 import android.content.Context
+import android.util.Log
 import com.fpf.smartscan.core.media.MediaMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 
-abstract class BaseIndexListener : ProcessorListener<MediaMetadata> {
+abstract class BaseIndexListener(private val tag: String) : ProcessorListener<MediaMetadata> {
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress
 
@@ -39,6 +40,9 @@ abstract class BaseIndexListener : ProcessorListener<MediaMetadata> {
         _result.value = result
     }
 
+    override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
+        Log.e(tag, "Error during processing: ${error.message}", error)
+    }
     fun reset(){
         _indexingStatus.value = IndexingStatus.IDLE
         _progress.value = 0f
@@ -46,10 +50,15 @@ abstract class BaseIndexListener : ProcessorListener<MediaMetadata> {
     }
 }
 
-object ImageIndexListener : BaseIndexListener() {
+object ImageIndexListener : BaseIndexListener(
+    tag = "ImageIndexListener"
+) {
     override val itemName: String = "Image"
 }
 
-object VideoIndexListener : BaseIndexListener() {
+object VideoIndexListener : BaseIndexListener(
+    tag = "VideoIndexListener"
+
+) {
     override val itemName: String = "Video"
 }
