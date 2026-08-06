@@ -30,7 +30,7 @@ class CloudImageIndexer(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean,
     private val maxImageSize: Int = 720,
-    listener: ProcessorListener<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>? = null,
+    listener: ProcessorListener<MediaMetadata>? = null,
     memoryOptions: MemoryOptions = MemoryOptions(),
     batchSize: Int = 10,
 ): BatchProcessor<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>(context, listener, memoryOptions, batchSize){
@@ -43,7 +43,6 @@ class CloudImageIndexer(
         filteredBatch.forEach { (metadata, embed) ->
             mediaJobManager.enqueue(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
         }
-        listener?.onBatchComplete(context, batch)
     }
 
     override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, StoredEmbedding>? {

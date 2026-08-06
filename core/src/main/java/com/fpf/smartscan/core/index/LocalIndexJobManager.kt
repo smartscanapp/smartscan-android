@@ -14,8 +14,8 @@ import com.fpf.smartscan.core.media.MediaStoreHelper
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.ImageEmbeddingProvider
-import com.fpf.smartscansdk.core.indexers.ImageIndexer
-import com.fpf.smartscansdk.core.indexers.VideoIndexer
+import com.fpf.smartscan.core.index.ImageIndexer
+import com.fpf.smartscan.core.index.VideoIndexer
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
@@ -107,7 +107,7 @@ class LocalIndexJobManager(
         context: Context,
         mediaType: MediaType,
         store: FileEmbeddingStore,
-        indexer: BatchProcessor<Long, Pair<Long, Embedding>>,
+        indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>,
         metadataRepo: MediaMetadataRepository,
         allowedDirs: List<Uri> = emptyList()
     ){
@@ -123,6 +123,6 @@ class LocalIndexJobManager(
             MediaMetadata(it, mediaType, date)
         }
         metadataRepo.insert(newMedia)
-        indexer.run(newMediaIds)
+        indexer.run(newMedia)
     }
 }
