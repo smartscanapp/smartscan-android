@@ -60,12 +60,7 @@ fun ConceptItemsList(
     onItemClick: (MediaItem) -> Unit,
     onOffsetChange: (Int) -> Unit,
     maxCollapsePx: Int = 0,
-    isSelecting: Boolean = false,
-    selectAll: Boolean = false,
-    selectedItems: Set<MediaItem> = emptySet(),
-    excludedItems: Set<MediaItem> = emptySet(),
     onItemLongClick: ((MediaItem) -> Unit)? = null,
-    onToggleSelected: ((MediaItem) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null
 ) {
     if (!isVisible || playerPool.isEmpty()) return
@@ -187,13 +182,7 @@ fun ConceptItemsList(
                             playerPool.get(item.id)?.pause()
                         }
                     },
-                    isSelecting = isSelecting,
                     onItemLongClick = onItemLongClick,
-                    isChecked = {
-                        item in selectedItems ||
-                                (selectAll && item !in excludedItems)
-                    },
-                    onToggleSelected = onToggleSelected,
                     content = {
                         when (item.type) {
                             MediaType.IMAGE -> {
