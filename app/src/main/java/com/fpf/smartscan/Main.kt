@@ -109,6 +109,7 @@ fun Main(
                     content?.let {
                         showNotification(context, title = indexCompleteTitle, text = it, 100)
                     }
+                    mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
                 }
                 IndexingStatus.FAILED -> {
                     val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.IMAGE)
