@@ -1,12 +1,13 @@
 package com.fpf.smartscan.core.data.paging
 
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
 class ClusterPagingSource(
-    filter: SearchFilter = SearchFilter(),
+    filter: MediaFilter = MediaFilter(),
     sortBy: SortBy = SortBy.Date(),
     private val clusterId: Long,
     private val mediaMetadataRepository: MediaMetadataRepository,

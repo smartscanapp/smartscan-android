@@ -1,13 +1,14 @@
 package com.fpf.smartscan.core.data.paging
 
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
 class SearchPagingSource(
     private val resultIds: List<Long>,
-    filter: SearchFilter = SearchFilter(),
+    filter: MediaFilter = MediaFilter(),
     sortBy: SortBy = SortBy.Date(),
     private val mediaMetadataRepository: MediaMetadataRepository,
 ) : MediaItemPagingSource(
@@ -16,7 +17,7 @@ class SearchPagingSource(
 ) {
 
     override suspend fun getMediaItems(
-        filter: SearchFilter,
+        filter: MediaFilter,
         sortBy: SortBy,
         pageSize: Int,
         offset: Int
