@@ -229,7 +229,7 @@ fun ConceptItemsScreen(
         selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
         onSelect = { selected ->
             val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(ConceptItemsAction.SetFilter(SearchFilter(mediaType=mediaType)))
+            viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(mediaType))
             showFilters = false
         },
         onClose = {showFilters = false}

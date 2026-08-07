@@ -6,7 +6,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -23,8 +22,8 @@ import com.fpf.smartscan.core.data.paging.ConceptPagingSource
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
@@ -59,7 +58,6 @@ class ConceptItemsViewModel(
             SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
         )
 
-    private val playbackPositions = mutableStateMapOf<Long, Long>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
@@ -109,15 +107,9 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ToggleSelectionMode -> toggleSelectionMode()
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
-            is ConceptItemsAction.SetFilter -> setFilter(action.filter)
+            is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
         }
-    }
-
-    fun getPlaybackPosition(id: Long): Long = playbackPositions[id] ?: 0L
-
-    fun savePlaybackPosition(id: Long, position: Long) {
-        playbackPositions[id] = position
     }
 
     private fun load(){
@@ -132,7 +124,6 @@ class ConceptItemsViewModel(
         viewModelScope.launch {
             val itemToCopy = getSelectedItems().first().uri
             clipboard.nativeClipboard.setPrimaryClip(ClipData.newUri(context.contentResolver, "smartscan_media", itemToCopy))
-//            _event.emit(CollectionItemEvent(CollectionItemEventType.COPY, success = true))
             resetSelection()
         }
     }
@@ -141,7 +132,6 @@ class ConceptItemsViewModel(
         viewModelScope.launch {
             val items = getSelectedItems()
             shareMediaMulti(context, items.map{it.uri})
-//            _event.emit(CollectionItemEvent(CollectionItemEventType.SHARE, success = true))
             resetSelection()
         }
     }
@@ -171,7 +161,7 @@ class ConceptItemsViewModel(
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
-    private fun setFilter(filter: SearchFilter) = _state.update { it.copy(filter = filter) }
+    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(filter = it.filter.copy(mediaType=mediaType)) }
 
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }
@@ -189,15 +179,4 @@ class ConceptItemsViewModel(
         return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
     }
 
-
-    // TODO: update this to be event based
-//    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
-//        viewModelScope.launch (Dispatchers.IO){
-//            onMediaLoadingError(error,
-//                imageEmbedStore = imageEmbedStore,
-//                videoEmbedStore = videoEmbedStore,
-//                mediaMetadataRepository =mediaMetadataRepository
-//            )
-//        }
-//    }
 }
