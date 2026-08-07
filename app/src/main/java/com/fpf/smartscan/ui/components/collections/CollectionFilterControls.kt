@@ -1,32 +1,25 @@
 package com.fpf.smartscan.ui.components.collections
 
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.R
+import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.search.SearchFilter
-import com.fpf.smartscan.utils.formatDate
+
 
 @Composable
 fun CollectionFilterControls(
-    filter: SearchFilter,
+    filter: MediaFilter,
     label: String,
     onSetDuplicateFilter: (Boolean?) -> Unit,
     onSetMediaType: (MediaType?) -> Unit,
