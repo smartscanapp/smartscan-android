@@ -27,7 +27,6 @@ class SearchEngine(
     private val vlmTextSimThreshold: Float = 0.2f,
     private val vlmImageSimThreshold: Float = 0.5f,
     private val conceptSimThreshold: Float = ConceptManager.DEFAULT_SIMILARITY_THRESHOLD,
-    private val dedupeThreshold: Float = 0.95f,
     ) {
 
     companion object {
@@ -48,11 +47,10 @@ class SearchEngine(
         if(!store.exists) return emptyList()
 
         try {
-            val queryResults = when(searchQuery) {
+            return when(searchQuery) {
                 is SearchQuery.ImageQuery -> imageSearch(context, searchQuery)
                 is SearchQuery.TextQuery -> textSearch(searchQuery)
             }
-            return postProcess(queryResults, store, searchQuery.options)
         }catch (e: Exception) {
             Log.e(TAG, "Search engine error", e)
             throw AppException.SearchException(cause = e)
@@ -68,9 +66,6 @@ class SearchEngine(
         return Pair(tag, actualQuery)
     }
 
-    private suspend fun postProcess(results: List<Long>, store: FileEmbeddingStore, options: SearchOptions): List<Long> {
-        return if(options.hideDuplicates) hideDuplicates(results, store) else results
-    }
     private suspend fun textSearch(searchQuery: SearchQuery.TextQuery): List<Long> {
         val query = searchQuery.text
         if (query.isBlank()) {
@@ -116,10 +111,6 @@ class SearchEngine(
         val signals = getSearchSignals(mainSims, itemClusterSims)
         val reranked = Reranker.rerank(signals)
         return reranked
-    }
-
-    private suspend fun hideDuplicates(resultIds: List<Long>, store: FileEmbeddingStore): List<Long> {
-        return dedupe(store.get(resultIds), dedupeThreshold)
     }
 
     private fun getSearchSignals(mainSims: Map<Long, Float>, itemClusterSims: Map<Long, Float>, conceptSims: Map<Long, Float>? = null): List<RerankSignal>{
