@@ -5,7 +5,6 @@ import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
-// TODO: add sort by similarity
 class ClusterPagingSource(
     filter: SearchFilter = SearchFilter(),
     sortBy: SortBy = SortBy.Date(),
@@ -19,5 +18,6 @@ class ClusterPagingSource(
         limit = pageSize + 1,
         offset = offset,
         ascending=sortBy.ascending,
+        isDuplicate = filter.isDuplicate
     )
 }
