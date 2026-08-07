@@ -38,10 +38,12 @@ class CloudImageIndexer(
 
     override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
         val filteredBatch = batch.filterNotNull()
-        store.add(filteredBatch.map{it.second})
-        mediaMetadataRepository.update(filteredBatch.map { it.first })
-        filteredBatch.forEach { (metadata, embed) ->
-            mediaJobManager.enqueue(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
+        withContext(NonCancellable){
+            store.add(filteredBatch.map{it.second})
+            mediaMetadataRepository.update(filteredBatch.map { it.first })
+            filteredBatch.forEach { (metadata, embed) ->
+                mediaJobManager.enqueue(MediaProcessingJob.UpdateConceptLinks(embed, metadata.type))
+            }
         }
     }
 
@@ -51,7 +53,7 @@ class CloudImageIndexer(
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
         if( result.summary.isBlank()) return null
         val formatted = formatOutput(result)
-        val rawEmbedding = withContext(NonCancellable) { embedder.embed(formatted) }
+        val rawEmbedding =  embedder.embed(formatted)
         val embed = if(quantize) rawEmbedding.toQInt8Embed() else rawEmbedding.toF32Embed()
         val storedEmbedding = StoredEmbedding(item.id, item.dateAdded, embed)
         val updatedMetadata = item.copy(description = result.summary)

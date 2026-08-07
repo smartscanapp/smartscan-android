@@ -41,7 +41,7 @@ class ImageIndexer(
     override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding> {
         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, item.id)
         val bitmap = getBitmapFromUri(context, contentUri, maxImageSize)
-        val output = withContext(NonCancellable) { embedder.embed(bitmap) }
+        val output = embedder.embed(bitmap)
         val embedding = if(quantize) Embedding.QInt8(output.toQInt8()) else Embedding.F32(output)
         return Pair(item, embedding)
     }
