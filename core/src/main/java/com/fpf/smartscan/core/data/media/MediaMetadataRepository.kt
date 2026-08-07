@@ -46,7 +46,9 @@ class MediaMetadataRepository(
     }
     suspend fun getByConceptSortedBySimilarity(conceptId: Long, minSimilarity: Float?= null, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByConceptSortedBySimilarity(conceptId, minSimilarity=minSimilarity, mediaType = mediaType).map{it.toDomain()}
 
+    suspend fun markDuplicates(ids: List<Long>, mediaType: MediaType) = dao.markDuplicates(ids, mediaType)
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
 
     suspend fun clear() = dao.clear()
+
 }

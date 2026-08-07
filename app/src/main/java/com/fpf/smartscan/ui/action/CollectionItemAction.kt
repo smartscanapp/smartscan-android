@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.ui.platform.Clipboard
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
@@ -17,9 +18,11 @@ sealed interface CollectionItemAction {
     data class SetCollectionToView(val collection: MediaCollection): CollectionItemAction
     data class Tag(val tag: String): CollectionItemAction
     data class SetSelectAll(val selectAll: Boolean): CollectionItemAction
-    data class SetFilter(val filter: SearchFilter): CollectionItemAction
+    data class SetMediaTypeFilter(val mediaType: MediaType?): CollectionItemAction
+    data class SetDuplicateFilter(val duplicateFilter: Boolean?): CollectionItemAction
     data class SetSortBy(val sortBy: SortBy): CollectionItemAction
     data class Delete(val onDelete: (List<MediaItem>) -> Unit) : CollectionItemAction
+    data object ResetFilters: CollectionItemAction
     data object RemoveTag : CollectionItemAction
     data object ToggleSelectionMode: CollectionItemAction
     data object ClearSelection: CollectionItemAction

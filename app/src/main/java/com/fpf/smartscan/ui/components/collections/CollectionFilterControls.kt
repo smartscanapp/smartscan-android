@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.components.search
+package com.fpf.smartscan.ui.components.collections
 
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
@@ -25,15 +25,11 @@ import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.utils.formatDate
 
 @Composable
-fun SearchFilterControls(
+fun CollectionFilterControls(
     filter: SearchFilter,
     label: String,
-    onSetMediaType: (MediaType) -> Unit,
     onSetDuplicateFilter: (Boolean?) -> Unit,
-    onSelectStartDate: () -> Unit,
-    onSelectEndDate: () -> Unit,
-    onRemoveStartDate: () -> Unit,
-    onRemoveEndDate: () -> Unit,
+    onSetMediaType: (MediaType?) -> Unit,
     onResetFilters: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -55,16 +51,15 @@ fun SearchFilterControls(
                 Text(
                     stringResource(R.string.media_type_title),
                     style = MaterialTheme.typography.labelLarge,
-                    )
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    MediaType.entries.forEach { mediaType ->
-                        val color =
-                            if (filter.mediaType == mediaType) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-                        val textColor =
-                            if (filter.mediaType == mediaType) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface
+                    val mediaOptions = MediaType.entries + null
+                    mediaOptions.forEach { mediaType ->
+                        val color = if (filter.mediaType == mediaType) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
+                        val textColor = if (filter.mediaType == mediaType) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface
 
                         Button(
                             onClick = { onSetMediaType(mediaType) },
@@ -74,7 +69,7 @@ fun SearchFilterControls(
                             modifier = Modifier.padding(bottom = 8.dp)
                         ) {
                             Text(
-                                mediaType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                mediaType?.name?.lowercase()?.replaceFirstChar { it.uppercase() }?: "All",
                                 fontSize = 12.sp,
                                 color = textColor
                             )
@@ -115,85 +110,6 @@ fun SearchFilterControls(
                                 label,
                                 fontSize = 12.sp,
                                 color = textColor
-                            )
-                        }
-                    }
-                }
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    stringResource(R.string.search_date_range_label),
-                    style = MaterialTheme.typography.labelLarge,
-                    )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val shape = MaterialTheme.shapes.extraLarge
-                    Row(
-                        modifier = Modifier
-                            .clip(shape)
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                shape = MaterialTheme.shapes.extraLarge
-                            )
-                            .clickable { onSelectStartDate() }
-                            .padding(ButtonDefaults.ContentPadding),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = filter.startDate?.let { formatDate(it) }
-                                ?: stringResource(R.string.search_start_date_label),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 12.sp
-                        )
-
-                        if (filter.startDate != null) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear start date",
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clickable {
-                                        onRemoveStartDate()
-                                    },
-                                tint = MaterialTheme.colorScheme.onSurface.copy(0.5f)
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier
-                            .clip(shape)
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                shape = MaterialTheme.shapes.extraLarge
-                            )
-                            .clickable { onSelectEndDate() }
-                            .padding(ButtonDefaults.ContentPadding),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            filter.endDate?.let { formatDate(it) }
-                                ?: stringResource(R.string.search_end_date_label),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 12.sp
-                        )
-
-                        if (filter.endDate != null) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear start date",
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clickable {
-                                        onRemoveEndDate()
-                                    },
-                                tint = MaterialTheme.colorScheme.onSurface.copy(0.5f)
                             )
                         }
                     }

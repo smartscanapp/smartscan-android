@@ -31,13 +31,11 @@ class MediaViewModel(
         if(videos.isNotEmpty()) mediaJobManager.delete(videos.map{it.id}, MediaType.VIDEO)
     }
 
-    fun delete(id: Long, mediaType: MediaType){
-        mediaJobManager.delete(listOf(id), mediaType)
-    }
+    fun delete(id: Long, mediaType: MediaType) = mediaJobManager.delete(listOf(id), mediaType)
 
-    fun updateDescription(updatedMedia: MediaItem){
-        mediaJobManager.updateDescription(updatedMedia)
-    }
+    fun updateDescription(updatedMedia: MediaItem) = mediaJobManager.updateDescription(updatedMedia)
+
+    fun findAndMarkDuplicates(mediaType: MediaType) = mediaJobManager.findAndMarkDuplicates(mediaType)
 
     fun viewCollection(collectionId: Long, type: CollectionType, onViewCollection: (MediaCollection) -> Unit){
         viewModelScope.launch(Dispatchers.IO) {
@@ -54,6 +52,7 @@ class MediaViewModel(
             }
         }
     }
+
 
     fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
         viewModelScope.launch (Dispatchers.IO){

@@ -35,7 +35,8 @@ class SearchPagingSource(
 
         val items = mediaMetadataRepository.getByIds(
             mediaIds = pageIds,
-            type = filter.mediaType
+            type = filter.mediaType,
+            isDuplicate = filter.isDuplicate
         )
 
         val itemsById = items.associateBy { it.id }
