@@ -21,6 +21,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
+    }
+
 }
 
 
@@ -54,9 +63,10 @@ dependencies {
     // JVM unit tests
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 
     // Android instrumented tests
     androidTestImplementation(libs.androidx.core)
