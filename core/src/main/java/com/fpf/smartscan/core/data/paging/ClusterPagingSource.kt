@@ -13,22 +13,11 @@ class ClusterPagingSource(
     private val mediaMetadataRepository: MediaMetadataRepository,
 ) : MediaItemPagingSource(filter=filter, sortBy=sortBy) {
 
-    override suspend fun getMediaItems(filter: SearchFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata> = when {
-        filter.mediaType != null -> {
-            mediaMetadataRepository.getByCluster(
-                clusterId,
-                type = filter.mediaType,
-                limit = pageSize + 1,
-                offset = offset,
-                ascending=sortBy.ascending,
-                )
-        }
-        else ->
-            mediaMetadataRepository.getByCluster(
-                clusterId,
-                limit=pageSize + 1,
-                offset=offset,
-                ascending=sortBy.ascending,
-                )
-    }
+    override suspend fun getMediaItems(filter: SearchFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata> =  mediaMetadataRepository.getByCluster(
+        clusterId,
+        type = filter.mediaType,
+        limit = pageSize + 1,
+        offset = offset,
+        ascending=sortBy.ascending,
+    )
 }
