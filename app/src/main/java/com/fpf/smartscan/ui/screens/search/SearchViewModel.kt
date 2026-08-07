@@ -37,6 +37,7 @@ import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.search.SearchEngine
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SearchOptions
+import com.fpf.smartscan.core.search.toMediaFilter
 import com.fpf.smartscan.core.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
@@ -126,7 +127,7 @@ class SearchViewModel(
                     ),
                     pagingSourceFactory = {
                         SearchPagingSource(
-                            filter = filters,
+                            filter = filters.toMediaFilter(),
                             sortBy=sortBy,
                             resultIds = _state.value.resultIds.toList(),
                             mediaMetadataRepository = mediaMetadataRepository,

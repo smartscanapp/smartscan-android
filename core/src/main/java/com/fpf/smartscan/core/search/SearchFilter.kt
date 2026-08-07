@@ -1,9 +1,9 @@
 package com.fpf.smartscan.core.search
 
+import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaType
 
 data class SearchFilter(
-    val similarity: Float? = null,
     val mediaType: MediaType? = null,
     val tag: String? = null,
     val startDate: Long? = null,
@@ -12,3 +12,7 @@ data class SearchFilter(
     val isDuplicate: Boolean? = null,
 )
 
+fun SearchFilter.toMediaFilter() = MediaFilter(
+    mediaType = mediaType,
+    isDuplicate = isDuplicate
+)
