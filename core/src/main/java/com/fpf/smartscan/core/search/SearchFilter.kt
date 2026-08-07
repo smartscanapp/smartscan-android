@@ -9,6 +9,6 @@ data class SearchFilter(
     val startDate: Long? = null,
     val endDate: Long? = null,
     val ids: List<Long> = emptyList(),
-    val duplicatesOnly: Boolean = false
+    val isDuplicate: Boolean? = null,
 )
 
