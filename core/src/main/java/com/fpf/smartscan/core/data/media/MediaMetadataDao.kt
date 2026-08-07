@@ -357,15 +357,21 @@ interface MediaMetadataDao {
         minSimilarity: Float?
     ): List<MediaMetadataEntity>
 
-    @Transaction
     @Query("""
         DELETE FROM media_metadata
         WHERE id IN (:mediaIds)
           AND type = :type
     """)
-
     suspend fun deleteByIds(mediaIds: List<Long>, type: MediaType)
 
     @Query("DELETE FROM media_metadata")
     suspend fun clear()
+
+    @Query("""
+    UPDATE media_metadata
+    SET isDuplicate = 1
+    WHERE id IN (:mediaIds)
+      AND type = :type
+""")
+    suspend fun markDuplicates(mediaIds: List<Long>, type: MediaType)
 }
