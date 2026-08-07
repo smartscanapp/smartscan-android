@@ -15,9 +15,9 @@ class MediaMetadataRepository(
     suspend fun update(items: List<MediaMetadata>) = dao.update(items.map{it.toEntity()})
     suspend fun update(item: MediaMetadata) = dao.update(listOf(item.toEntity()))
     suspend fun getUnclusteredItemIds(): Map<Long, MediaType> = dao.getUnclusteredItemIds().associate { it.id to it.type }
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadata> = dao.getByIds(mediaIds, type).map{it.toDomain()}
-    suspend fun getByType(type: MediaType): List<MediaMetadata> = dao.getByType(type).map{it.toDomain()}
-    suspend fun getIdsByType(type: MediaType): List<Long> = dao.getIdsByType(type)
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean = false): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed).map{it.toDomain()}
+    suspend fun getByType(type: MediaType, isTrashed: Boolean = false): List<MediaMetadata> = dao.getByType(type, isTrashed).map{it.toDomain()}
+    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean = false): List<Long> = dao.getIdsByType(type, isTrashed)
     suspend fun getByTag(tagId: Long, limit: Int, offset: Int, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, ascending: Boolean = false): List<MediaMetadata> = if(ascending){
         dao.getByTagAsc(tagId, mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate).map{it.toDomain()}
     }else{
