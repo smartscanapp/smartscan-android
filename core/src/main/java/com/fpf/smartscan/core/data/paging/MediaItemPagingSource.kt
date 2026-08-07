@@ -3,13 +3,13 @@ package com.fpf.smartscan.core.data.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.fpf.smartscan.core.data.mappers.toItem
+import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaMetadata
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
 abstract class MediaItemPagingSource(
-    private val filter: SearchFilter = SearchFilter(),
+    private val filter: MediaFilter = MediaFilter(),
     private val sortBy: SortBy = SortBy.Date(),
 ) : PagingSource<Int, MediaItem>() {
 
@@ -43,5 +43,5 @@ abstract class MediaItemPagingSource(
         }
     }
 
-    protected abstract suspend fun getMediaItems(filter: SearchFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata>
+    protected abstract suspend fun getMediaItems(filter: MediaFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata>
 }
