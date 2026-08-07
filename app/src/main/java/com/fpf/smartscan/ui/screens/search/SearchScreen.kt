@@ -518,6 +518,7 @@ fun SearchScreen(
             filter = state.filter,
             label = stringResource(R.string.filter_action),
             onSetMediaType = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))},
+            onSetDuplicateFilter = { searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))},
             onSelectStartDate = {showStartDatePicker = true},
             onSelectEndDate = {showEndDatePicker = true},
             onRemoveStartDate = {searchViewModel.onAction(SearchAction.ClearStartDateFilter)},

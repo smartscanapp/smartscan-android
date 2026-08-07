@@ -56,6 +56,13 @@
     <string name="sort_action">Sort</string>
     <string name="reset_filters_action">Reset filters</string>
 
+    <!--Label-->
+    <string name="duplicate_label">Duplicates</string>
+
+    <!--Buttons-->
+    <string name="include_button">Include</string>
+    <string name="exclude_button">Exclude</string>
+    <string name="only_button">Only</string>
 
     <!--Alerts / Message-->
     <string name="alert_space_not_allowed">Spaces are not allowed</string>

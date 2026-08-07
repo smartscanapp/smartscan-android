@@ -27,8 +27,8 @@ import com.fpf.smartscan.events.CollectionItemEvent
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.core.tag.TagManager
 import com.fpf.smartscan.ui.action.CollectionItemAction
@@ -168,7 +168,9 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ToggleSelectionMode -> toggleSelectionMode()
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
-            is CollectionItemAction.SetFilter -> setFilters(action.filter)
+            is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is CollectionItemAction.SetDuplicateFilter -> setDuplicateFilter(action.duplicateFilter)
+            is CollectionItemAction.ResetFilters -> resetFilters()
             is CollectionItemAction.SetSortBy -> setSortBy(action.sortBy)
             is CollectionItemAction.Delete -> deleteFromDevice(action.onDelete)
         }
@@ -331,7 +333,11 @@ class CollectionItemsViewModel(
 
     private fun setCollection(collection: MediaCollection?) = _state.update { it.copy(collection=collection) }
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
-    private fun setFilters(filter: SearchFilter) = _state.update { it.copy(filter =filter) }
+
+    private fun resetFilters() = _state.update {it.copy(filter = it.filter.copy(isDuplicate = null, mediaType = null))}
+    private fun setMediaTypeFilter(type: MediaType?) = _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
+    private fun setDuplicateFilter(duplicateFilter: Boolean?) = _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }
         saveSortByPref(sortBy)

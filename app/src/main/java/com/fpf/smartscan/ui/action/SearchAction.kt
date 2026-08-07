@@ -16,6 +16,7 @@ sealed interface SearchAction {
     data class SetStartDateFilter(val date: Long?): SearchAction
     data class SetEndDateFilter(val date: Long?): SearchAction
     data class SetMediaTypeFilter(val mediaType: MediaType): SearchAction
+    data class SetDuplicateFilter(val duplicateFilter: Boolean?): SearchAction
     data class CopyResult(val clipboard: Clipboard, val context: Context): SearchAction
     data class ShareResults(val context: Context): SearchAction
     data class SetSelectAll(val selectAll: Boolean): SearchAction

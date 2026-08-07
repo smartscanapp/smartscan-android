@@ -50,14 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
@@ -67,9 +65,11 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.components.collections.CollectionFilterControls
 import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
+import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
@@ -488,16 +488,16 @@ fun CollectionItemsScreen(
         onClose = {showSortOptions = false}
     )
 
-    OptionPicker(
-        isVisible = showFilters,
-        title = stringResource(R.string.media_type_title),
-        options =  listOf("All") + mediaTypeOptions.values.toList(),
-        selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
-        onSelect = { selected ->
-            val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(CollectionItemAction.SetFilter(SearchFilter(mediaType=mediaType)))
-            showFilters = false
-        },
-        onClose = {showFilters = false}
-    )
+    BottomSheet(
+        show = showFilters,
+        onDismiss = { showFilters = false }
+    ) {
+        CollectionFilterControls(
+            filter = state.filter,
+            label = stringResource(R.string.filter_action),
+            onSetMediaType = { viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(it))},
+            onSetDuplicateFilter = { viewModel.onAction(CollectionItemAction.SetDuplicateFilter(it))},
+            onResetFilters = { viewModel.onAction(CollectionItemAction.ResetFilters)},
+        )
+    }
 }
