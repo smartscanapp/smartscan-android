@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.fpf.smartscan.core.data.MediaIdType
 import com.fpf.smartscan.core.media.MediaType
 
 @Dao
@@ -17,29 +18,50 @@ interface MediaMetadataDao {
     @Update
     suspend fun update(items: List<MediaMetadataEntity>)
 
-    @Query("SELECT * FROM media_metadata WHERE id IN (:mediaIds) AND type = :type")
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType): List<MediaMetadataEntity>
+    @Query("""
+        SELECT * 
+        FROM media_metadata 
+        WHERE id IN (:mediaIds) 
+            AND type = :type 
+            AND isTrashed = :isTrashed
+            AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
+            """
+    )
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
 
+    @Query("""
+        SELECT * 
+        FROM media_metadata 
+        WHERE type = :type 
+            AND isTrashed = :isTrashed
+            AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
+            """
+    )
+    suspend fun getByType(type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
 
-    @Query("SELECT * FROM media_metadata WHERE type = :type")
-    suspend fun getByType(type: MediaType): List<MediaMetadataEntity>
-
-    @Query("SELECT id FROM media_metadata WHERE type = :type")
-    suspend fun getIdsByType(type: MediaType): List<Long>
-
+    @Query("""
+        SELECT id 
+        FROM media_metadata 
+        WHERE type = :type 
+            AND isTrashed = :isTrashed
+            AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
+            """
+    )
+    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<Long>
 
     @Query("""
         SELECT id, type
         FROM media_metadata
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM media_cluster_crossref c
-            WHERE c.mediaId = media_metadata.id
-              AND c.mediaType = media_metadata.type
+        WHERE isTrashed = 0
+            AND NOT EXISTS (
+                SELECT 1
+                FROM media_cluster_crossref c
+                WHERE c.mediaId = media_metadata.id
+                AND c.mediaType = media_metadata.type
         )
-    """)
-    suspend fun getUnclusteredItemIds(): List<com.fpf.smartscan.core.data.MediaIdType>
-
+        """
+    )
+    suspend fun getUnclusteredItemIds(): List<MediaIdType>
 
     // TAG QUERIES
 
@@ -50,19 +72,22 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.tagId = :tagId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+        AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByTagDesc(
         tagId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         startDate: Long?,
         endDate: Long?,
-        limit: Int,
-        offset: Int
+        isDuplicate: Boolean?
     ): List<MediaMetadataEntity>
 
     @Query("""
@@ -72,19 +97,22 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.tagId = :tagId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+        AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded ASC, m.id ASC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByTagAsc(
         tagId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         startDate: Long?,
         endDate: Long?,
-        limit: Int,
-        offset: Int
+        isDuplicate: Boolean?,
     ): List<MediaMetadataEntity>
 
 
@@ -95,16 +123,19 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.tagId = :tagId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:startDate IS NULL OR m.dateAdded >= :startDate)
-      AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+        AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded DESC, m.id DESC
 """)
     suspend fun getByTag(
         tagId: Long,
         mediaType: MediaType?,
         startDate: Long?,
-        endDate: Long?
+        endDate: Long?,
+        isDuplicate: Boolean?
     ): List<MediaMetadataEntity>
 
 
@@ -115,8 +146,9 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.tagId IN (:tagIds)
-      AND m.description IS NULL
-      AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND m.description IS NULL
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
 """)
     suspend fun getByTagsWithoutDescription(
         tagIds: List<Long>,
@@ -132,15 +164,18 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.clusterId = :clusterId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByClusterDesc(
         clusterId: Long,
-        mediaType: MediaType?,
         limit: Int,
-        offset: Int
+        offset: Int,
+        mediaType: MediaType?,
+        isDuplicate: Boolean?
     ): List<MediaMetadataEntity>
 
     @Query("""
@@ -150,18 +185,19 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.clusterId = :clusterId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded ASC, m.id ASC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByClusterAsc(
         clusterId: Long,
-        mediaType: MediaType?,
         limit: Int,
-        offset: Int
+        offset: Int,
+        mediaType: MediaType?,
+        isDuplicate: Boolean?
     ): List<MediaMetadataEntity>
-
-
 
     @Query("""
     SELECT m.*
@@ -170,12 +206,15 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.clusterId = :clusterId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
     ORDER BY m.dateAdded DESC, m.id DESC
 """)
     suspend fun getByCluster(
         clusterId: Long,
-        mediaType: MediaType?
+        mediaType: MediaType?,
+        isDuplicate: Boolean?
     ): List<MediaMetadataEntity>
 
 
@@ -186,8 +225,9 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.clusterId IN (:clusterIds)
-      AND m.description IS NULL
-      AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND m.isTrashed = 0
+        AND m.description IS NULL
+        AND (:mediaType IS NULL OR m.type = :mediaType)
 """)
     suspend fun getByClustersWithoutDescription(
         clusterIds: List<Long>,
@@ -202,8 +242,9 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
@@ -222,17 +263,18 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded ASC, m.id ASC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByConceptSortedByDateAsc(
         conceptId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        limit: Int,
-        offset: Int
     ): List<MediaMetadataEntity>
 
 
@@ -261,17 +303,18 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY c.similarity DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByConceptSortedBySimilarityDesc(
         conceptId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        limit: Int,
-        offset: Int
     ): List<MediaMetadataEntity>
 
     @Query("""
@@ -281,17 +324,18 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY c.similarity ASC, m.id ASC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByConceptSortedBySimilarityAsc(
         conceptId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        limit: Int,
-        offset: Int
     ): List<MediaMetadataEntity>
 
 
@@ -302,8 +346,9 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY c.similarity DESC, m.id DESC
 """)
     suspend fun getByConceptSortedBySimilarity(

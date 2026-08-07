@@ -16,20 +16,27 @@ fun MediaMetadata.toEntity(): MediaMetadataEntity =
         id = id,
         type = type,
         dateAdded = dateAdded,
-        description = description
+        description = description,
+        isTrashed = isTrashed,
+        isDuplicate = isDuplicate
+
     )
 
 fun MediaMetadata.toItem(): MediaItem = MediaItem(
     id=id,
     type=type,
     dateAdded=dateAdded,
-    description=description
+    description=description,
+    isTrashed = isTrashed,
+    isDuplicate = isDuplicate
 )
 
 fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
     id=id,
     type=type,
     dateAdded=dateAdded,
-    description=description
+    description=description,
+    isTrashed = isTrashed,
+    isDuplicate = isDuplicate
 )
 

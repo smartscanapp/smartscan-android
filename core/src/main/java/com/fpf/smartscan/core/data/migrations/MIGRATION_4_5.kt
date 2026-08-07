@@ -7,6 +7,28 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
+            ALTER TABLE media_metadata ADD COLUMN isDuplicate INTEGER NOT NULL DEFAULT 0
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            ALTER TABLE media_metadata ADD COLUMN isTrashed INTEGER NOT NULL DEFAULT 0
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE INDEX index_media_metadata_isDuplicate
+            ON media_metadata(isDuplicate)
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE INDEX index_media_metadata_isTrashed
+            ON media_metadata(isTrashed)
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
             CREATE TABLE concept (
                 id INTEGER NOT NULL,
                 description TEXT NOT NULL,
@@ -16,7 +38,6 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
             )
             """.trimIndent()
         )
-
         db.execSQL(
             """
             CREATE TABLE concept_crossref (
