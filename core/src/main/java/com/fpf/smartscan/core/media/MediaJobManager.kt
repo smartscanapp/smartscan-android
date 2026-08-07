@@ -80,7 +80,7 @@ class MediaJobManager(
             val nonDuplicateEmbeds = mutableListOf<Embedding>()
             val duplicateIds = mutableListOf<Long>()
             val store = getVlmEmbedStore(mediaType)
-            val storedEmbeds = store.get()
+            val storedEmbeds = store.get().sortedBy { it.date }
 
             for (storedEmbed in storedEmbeds) {
                 var isDuplicate = false
