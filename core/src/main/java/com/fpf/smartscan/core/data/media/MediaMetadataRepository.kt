@@ -15,21 +15,21 @@ class MediaMetadataRepository(
     suspend fun update(items: List<MediaMetadata>) = dao.update(items.map{it.toEntity()})
     suspend fun update(item: MediaMetadata) = dao.update(listOf(item.toEntity()))
     suspend fun getUnclusteredItemIds(): Map<Long, MediaType> = dao.getUnclusteredItemIds().associate { it.id to it.type }
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean = false): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed).map{it.toDomain()}
-    suspend fun getByType(type: MediaType, isTrashed: Boolean = false): List<MediaMetadata> = dao.getByType(type, isTrashed).map{it.toDomain()}
-    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean = false): List<Long> = dao.getIdsByType(type, isTrashed)
-    suspend fun getByTag(tagId: Long, limit: Int, offset: Int, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, ascending: Boolean = false): List<MediaMetadata> = if(ascending){
-        dao.getByTagAsc(tagId, mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate).map{it.toDomain()}
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
+    suspend fun getByType(type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByType(type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
+    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<Long> = dao.getIdsByType(type, isTrashed=isTrashed, isDuplicate=isDuplicate)
+    suspend fun getByTag(tagId: Long, limit: Int, offset: Int, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, ascending: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = if(ascending){
+        dao.getByTagAsc(tagId, mediaType=mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
     }else{
-        dao.getByTagDesc(tagId, mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate).map{it.toDomain()}
+        dao.getByTagDesc(tagId, mediaType=mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
     }
-    suspend fun getByTag(tagId: Long, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null): List<MediaMetadata> = dao.getByTag(tagId, mediaType, startDate=startDate, endDate=endDate).map{it.toDomain()}
+    suspend fun getByTag(tagId: Long, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByTag(tagId, mediaType, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
     suspend fun getByTagsWithoutDescription(tagIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByTagsWithoutDescription(tagIds, mediaType).map{it.toDomain()}
-    suspend fun getByCluster(clusterId: Long, mediaType: MediaType?=null): List<MediaMetadata> = dao.getByCluster(clusterId, mediaType).map{it.toDomain()}
-    suspend fun getByCluster(clusterId: Long, type: MediaType?=null, limit: Int, offset: Int, ascending: Boolean = false): List<MediaMetadata> = if(ascending){
-        dao.getByClusterAsc(clusterId, type,limit=limit, offset=offset).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, mediaType: MediaType?=null, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByCluster(clusterId, mediaType, isDuplicate).map{it.toDomain()}
+    suspend fun getByCluster(clusterId: Long, type: MediaType?=null, limit: Int, offset: Int, ascending: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = if(ascending){
+        dao.getByClusterAsc(clusterId, mediaType=type,limit=limit, offset=offset, isDuplicate=isDuplicate).map{it.toDomain()}
     }else{
-        dao.getByClusterDesc(clusterId, type,limit=limit, offset=offset).map{it.toDomain()}
+        dao.getByClusterDesc(clusterId, mediaType=type,limit=limit, offset=offset, isDuplicate=isDuplicate).map{it.toDomain()}
     }
     suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByClustersWithoutDescription(clusterIds, mediaType).map{it.toDomain()}
 
