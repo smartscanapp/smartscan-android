@@ -21,12 +21,12 @@ interface MediaMetadataDao {
         SELECT * 
         FROM media_metadata 
         WHERE id IN (:mediaIds) 
-            AND type = :type 
+            AND (:mediaType IS NULL OR type = :mediaType)
             AND isTrashed = :isTrashed
             AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
             """
     )
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
+    suspend fun getByIds(mediaIds: List<Long>, mediaType: MediaType?, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
 
     @Query("""
         SELECT * 
