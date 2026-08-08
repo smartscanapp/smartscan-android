@@ -1,6 +1,5 @@
 package com.fpf.smartscan.core.data.paging
 
-
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.media.MediaFilter
@@ -33,7 +32,8 @@ class BinPagingSource(
 
         val items = mediaMetadataRepository.getByIds(
             mediaIds = pageIds,
-            type = filter.mediaType
+            type = filter.mediaType,
+            isTrashed = true
         )
 
         val itemsById = items.associateBy { it.id }
