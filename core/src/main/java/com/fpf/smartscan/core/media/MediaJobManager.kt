@@ -30,7 +30,7 @@ class MediaJobManager(
 
     companion object {
         private const val TAG = "MediaJobManager"
-        private const val DEDUPE_THRESHOLD = 0.95f
+        private const val DEDUPE_THRESHOLD = 0.985f
     }
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 
