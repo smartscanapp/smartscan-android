@@ -120,7 +120,6 @@ fun BinScreen(
                     deleteLauncher.launch(createDeleteRequest(context, items.map{it.uri}))
                 }
             )},
-            enabled = !state.loading,
         ),
     )
 
