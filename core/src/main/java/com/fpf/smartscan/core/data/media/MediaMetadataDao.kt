@@ -62,6 +62,16 @@ interface MediaMetadataDao {
     )
     suspend fun getUnclusteredItemIds(): List<MediaIdType>
 
+    @Query("""
+    SELECT COUNT(*)
+    FROM media_metadata
+    WHERE id IN (:mediaIds)
+      AND type = :type
+      AND isDuplicate = 1
+      AND isTrashed = 0
+""")
+    suspend fun countDuplicatesByIds(mediaIds: List<Long>, type: MediaType): Int
+
     // TAG QUERIES
 
     @Query("""
@@ -154,6 +164,18 @@ interface MediaMetadataDao {
         mediaType: MediaType?
     ): List<MediaMetadataEntity>
 
+    @Query("""
+    SELECT COUNT(*)
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+      AND m.isDuplicate = 1
+      AND m.isTrashed = 0
+""")
+    suspend fun countDuplicatesInTag(tagId: Long): Int
+
     // CLUSTER QUERIES
 
     @Query("""
@@ -232,6 +254,19 @@ interface MediaMetadataDao {
         clusterIds: List<Long>,
         mediaType: MediaType?
     ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT COUNT(*)
+    FROM media_metadata m
+    INNER JOIN media_cluster_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.clusterId = :clusterId
+      AND m.isDuplicate = 1
+      AND m.isTrashed = 0
+""")
+    suspend fun countDuplicatesInCluster(clusterId: Long): Int
+
 
     // Concept queries
     @Query("""
@@ -373,4 +408,5 @@ interface MediaMetadataDao {
       AND type = :type
 """)
     suspend fun markDuplicates(mediaIds: List<Long>, type: MediaType)
+
 }
