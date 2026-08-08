@@ -318,7 +318,10 @@ class SearchViewModel(
     private fun setStartDateFilter(date: Long?) = _state.update {it.copy(filter = it.filter.copy(startDate = date))}
 
     private fun setEndDateFilter(date: Long?) = _state.update {it.copy(filter = it.filter.copy(endDate = date))}
-    private fun setDuplicateFilter(duplicateFilter: Boolean?) = _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+    private fun setDuplicateFilter(duplicateFilter: Boolean?) {
+        _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+        resetSelection()
+    }
     private fun resetFilters() = _state.update {it.copy(filter = it.filter.copy(endDate = null, startDate = null, mediaType = defaultMediaType, isDuplicate = null, ids=emptyList()))}
 
     private fun removeUploadedImage(){
