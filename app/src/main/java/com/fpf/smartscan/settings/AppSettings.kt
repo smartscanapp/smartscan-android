@@ -11,6 +11,5 @@ data class AppSettings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val color: ColorSchemeType = ColorSchemeType.SMARTSCAN,
     val resultsPerRow: Int = 4,
-    val enableDedupe: Boolean = false,
     val openaiApiKey: String? = null
 )
