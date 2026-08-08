@@ -66,6 +66,11 @@ class MediaJobManager(
         mediaMetadataRepository.update(trashedItems.map{it.toMetadata()})
     }
 
+    suspend fun restore(items: List<MediaItem>){
+        val trashedItems = items.map{it.copy(isTrashed = false)}
+        mediaMetadataRepository.update(trashedItems.map{it.toMetadata()})
+    }
+
     private suspend fun updateDescriptionAndConceptLinksJob(updatedMedia: MediaItem){
         mediaMetadataRepository.update(listOf(updatedMedia.toMetadata()))
 

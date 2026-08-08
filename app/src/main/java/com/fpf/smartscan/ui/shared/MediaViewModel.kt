@@ -44,6 +44,12 @@ class MediaViewModel(
             mediaJobManager.trash(items)
         }
     }
+
+    fun restore(items: List<MediaItem>){
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaJobManager.restore(items)
+        }
+    }
     fun updateDescription(updatedMedia: MediaItem) = mediaJobManager.updateDescription(updatedMedia)
 
     fun findAndMarkDuplicates(mediaType: MediaType) = mediaJobManager.findAndMarkDuplicates(mediaType)
