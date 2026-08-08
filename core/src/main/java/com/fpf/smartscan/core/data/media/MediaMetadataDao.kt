@@ -149,6 +149,30 @@ interface MediaMetadataDao {
 
 
     @Query("""
+    SELECT m.id
+    FROM media_metadata m
+    INNER JOIN tag_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.tagId = :tagId
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:startDate IS NULL OR m.dateAdded >= :startDate)
+        AND (:endDate IS NULL OR m.dateAdded <= :endDate)
+        AND (:isDuplicate IS NULL OR m.isDuplicate = :isDuplicate)
+    ORDER BY m.dateAdded DESC, m.id DESC
+""")
+    suspend fun getIdsByTag(
+        tagId: Long,
+        mediaType: MediaType?,
+        startDate: Long?,
+        endDate: Long?,
+        isDuplicate: Boolean?
+    ): List<Long>
+
+
+
+    @Query("""
     SELECT DISTINCT m.*
     FROM media_metadata m
     INNER JOIN tag_crossref c

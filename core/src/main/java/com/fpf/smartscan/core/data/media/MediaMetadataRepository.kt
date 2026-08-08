@@ -27,6 +27,9 @@ class MediaMetadataRepository(
         dao.getByTagDesc(tagId, mediaType=mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
     }
     suspend fun getByTag(tagId: Long, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByTag(tagId, mediaType, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
+
+    suspend fun getIdsByTag(tagId: Long, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, isDuplicate: Boolean? = null): List<Long> = dao.getIdsByTag(tagId, mediaType, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate)
+
     suspend fun getByTagsWithoutDescription(tagIds: List<Long>, mediaType: MediaType): List<MediaMetadata> = dao.getByTagsWithoutDescription(tagIds, mediaType).map{it.toDomain()}
     suspend fun countDuplicatesInTag(tagId: Long): Int = dao.countDuplicatesInTag(tagId)
     // CLUSTER

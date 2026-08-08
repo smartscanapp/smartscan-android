@@ -379,9 +379,9 @@ class SearchViewModel(
         tagName?: return emptyList()
         val tag = tagManager.getTagByName(tagName)
         return if(endDateFilter != null || startDateFilter != null){
-            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType,startDateFilter, endDateFilter).map{it.id}  }?: emptyList()
+            tag?.let { tag-> mediaMetadataRepository.getIdsByTag(tag.id, mediaType,startDateFilter, endDateFilter)}?: emptyList()
         }else{
-            tag?.let { tag-> mediaMetadataRepository.getByTag(tag.id, mediaType).map{it.id}  }?: emptyList()
+            tag?.let { tag-> mediaMetadataRepository.getIdsByTag(tag.id, mediaType)}?: emptyList()
         }
     }
 
