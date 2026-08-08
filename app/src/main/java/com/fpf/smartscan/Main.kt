@@ -219,8 +219,9 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
-                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
-                        )
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onNavigateToRecyclingBin = { navController.navigate(Routes.BIN) },
+                            )
                     }
                     composable(Routes.COLLECTIONS) {
                         CollectionsScreen(

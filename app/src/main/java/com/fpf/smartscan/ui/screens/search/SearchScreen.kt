@@ -87,6 +87,7 @@ fun SearchScreen(
     onIndex: (mediaType: MediaType?) -> Unit,
     onOpenSettings: () -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
+    onNavigateToRecyclingBin: () -> Unit,
     onTopBarChange: (TopBarState) -> Unit,
     intentSearchQuery: SearchQuery? = null,
     searchViewModel: SearchViewModel = koinViewModel(),
@@ -95,6 +96,7 @@ fun SearchScreen(
     val appSettings by appSettings.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
+    val screenTitle = stringResource(R.string.title_explore)
 
     // Search state
     val searchResults = searchViewModel.searchResults.collectAsLazyPagingItems()
@@ -110,11 +112,27 @@ fun SearchScreen(
     )
     val searchResultsVisible = searchResults.itemCount > 0
 
+    // Dynamic hide animation
+    val isActionBarVisible =  state.selection.isSelecting && state.selection.selectedCount > 0
+    var offset by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val actionBarHeight = 70
+    val actionBarHeightPx = with(density) {actionBarHeight.dp.toPx() }
+    val searchBarHeightPx = with(density) { (if(state.queryImage != null) 200 else 120).dp.toPx() }
+    val maxCollapsePx = max(actionBarHeightPx, searchBarHeightPx).toInt()
+
+    var showMenu by remember { mutableStateOf(false) }
     var isAddingTag by remember { mutableStateOf(false) }
     var tagAutoCompleteTagResults by remember { mutableStateOf<List<String>>(emptyList()) }
     var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
     var showMoreActions by remember { mutableStateOf(false) }
     var showRecentSearches by remember { mutableStateOf(false) }
+
+    // Filters
+    var showFilters by remember { mutableStateOf(false) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+
 
     val trashLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -127,6 +145,18 @@ fun SearchScreen(
             pendingDeleteItems = null
         }
     }
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.filter_action),
+            onClick = { showFilters = true }
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_recycle_bin),
+            onClick = { onNavigateToRecyclingBin() },
+        ),
+    )
+
 
     // action bar actions
     val actionBarActions: List<ActionConfig> = listOf(
@@ -173,22 +203,6 @@ fun SearchScreen(
         ),
     )
 
-    // Dynamic hide animation
-    val isActionBarVisible =  state.selection.isSelecting && state.selection.selectedCount > 0
-    var offset by remember { mutableIntStateOf(0) }
-    val density = LocalDensity.current
-    val actionBarHeight = 70
-    val actionBarHeightPx = with(density) {actionBarHeight.dp.toPx() }
-    val searchBarHeightPx = with(density) { (if(state.queryImage != null) 200 else 120).dp.toPx() }
-    val maxCollapsePx = max(actionBarHeightPx, searchBarHeightPx).toInt()
-
-    // Filters
-    var showFilters by remember { mutableStateOf(false) }
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-
-    val screenTitle = stringResource(R.string.title_explore)
-
     LaunchedEffect(Unit) {
         when {
             hasIndexedImages ==true && hasIndexedVideos==false -> searchViewModel.onAction(SearchAction.SetMediaTypeFilter(MediaType.IMAGE))
@@ -230,12 +244,17 @@ fun SearchScreen(
                             contentDescription = "settings"
                         )
                     }
-                    IconButton(
-                        onClick = {showFilters = true}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = null
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
                         )
                     }
                 }
