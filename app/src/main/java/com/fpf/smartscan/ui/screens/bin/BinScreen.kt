@@ -267,17 +267,9 @@ fun BinScreen(
                         val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
                         items[lastIndex]
                     },
-                    //TODO: Make these function optional
-                    onSaveUpdatedItem = { updatedMedia->
-                        mediaViewModel.updateDescription(updatedMedia)
-                        items.refresh()
-                    },
-                    onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
-                    onCollectionClick = { id, type ->
-                        mediaViewModel.viewCollection(id, type) { collection ->
-//                            onViewCollection(collection)
-                        }
-                    }
+                    onSaveUpdatedItem = null,
+                    onGetCollections =null,
+                    onCollectionClick = null
                 )
             }
         }

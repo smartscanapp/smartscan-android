@@ -50,12 +50,12 @@ fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
-    onGetCollections: suspend (MediaItem, type: CollectionType) -> Map<Long, String>,
-    onCollectionClick: (itemId: Long, type: CollectionType) -> Unit,
+    size: Int? = 1728,
+    onGetCollections: (suspend (MediaItem, type: CollectionType) -> Map<Long, String>)? = null,
+    onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
-    onSaveUpdatedItem: (MediaItem) -> Unit,
-    maxSize: Int? = 1728
+    onSaveUpdatedItem: ((MediaItem) -> Unit)? = null,
 ) {
     if (items.isEmpty()) return
 
@@ -135,8 +135,10 @@ fun MediaViewer(
     }
 
     LaunchedEffect(currentItem.id) {
-        tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
-        clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
+        onGetCollections?.let{
+            tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
+            clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
+        }
         targetScale = 1f
         targetOffset = Offset.Zero
     }
@@ -243,7 +245,7 @@ fun MediaViewer(
                                             translationY = offset.y
                                         },
                                     contentScale = ContentScale.Fit,
-                                    maxSize = maxSize,
+                                    maxSize = size,
                                     mediaType = currentItem.type,
                                     onSizeChanged = { width, height ->
                                         currentItemWidth = width
@@ -279,7 +281,9 @@ fun MediaViewer(
                             .fillMaxWidth()
                             .height(maxHeight * 0.5f)
                             .align(Alignment.BottomCenter)
-                            .graphicsLayer { translationY = maxHeight.toPx() * 0.5f * (1f - progress) }
+                            .graphicsLayer {
+                                translationY = maxHeight.toPx() * 0.5f * (1f - progress)
+                            }
                     ) {
 
                         if (progress > 0f) {
@@ -288,8 +292,10 @@ fun MediaViewer(
                                     modifier = Modifier.fillMaxSize(),
                                     description = currentItem.description,
                                     collections = collections,
-                                    onCollectionClick = { id, type -> onCollectionClick(id, type) },
-                                    onSave = { updated -> onSaveUpdatedItem(currentItem.copy(description = updated)) }
+                                    onCollectionClick = onCollectionClick,
+                                    onSaveDescription = onSaveUpdatedItem?.let {
+                                        { onSaveUpdatedItem(currentItem.copy(description = it)) }
+                                    },
                                 )
                             }
                         }
