@@ -56,11 +56,14 @@ class MediaJobManager(
         queue.submit(MediaProcessingJob.UpdateDescriptionAndConceptLinks(updatedMedia))
     }
 
-    fun delete(ids: List<Long>, mediaType: MediaType){
+    suspend fun delete(ids: List<Long>, mediaType: MediaType){
         val stores = getEmbedStores(mediaType)
-        scope.launch(Dispatchers.IO) {
-            removeStaleMedia(ids, mediaType, stores, mediaMetadataRepository)
-        }
+        removeStaleMedia(ids, mediaType, stores, mediaMetadataRepository)
+    }
+
+    suspend fun trash(items: List<MediaItem>){
+        val trashedItems = items.map{it.copy(isTrashed = true)}
+        mediaMetadataRepository.update(trashedItems.map{it.toMetadata()})
     }
 
     private suspend fun updateDescriptionAndConceptLinksJob(updatedMedia: MediaItem){
