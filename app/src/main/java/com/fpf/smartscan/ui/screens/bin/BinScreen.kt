@@ -60,6 +60,7 @@ import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.createDeleteRequest
+import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -83,17 +84,29 @@ fun BinScreen(
     // actions
     var showMenu by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
-    var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
+    var itemPendingAction by remember { mutableStateOf<List<MediaItem>?>(null) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            pendingDeleteItems?.let{mediaViewModel.delete(it)}
+            itemPendingAction?.let{mediaViewModel.delete(it)}
             items.refresh()
-            pendingDeleteItems = null
+            itemPendingAction = null
         }else{
-            pendingDeleteItems = null
+            itemPendingAction = null
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            itemPendingAction?.let{mediaViewModel.restore(it)}
+            items.refresh()
+            itemPendingAction = null
+        }else{
+            itemPendingAction = null
         }
     }
 
@@ -109,7 +122,7 @@ fun BinScreen(
         ActionConfig(
             label = stringResource(R.string.delete_action),
             onClick = { viewModel.onAction(BinAction.Delete{ items ->
-                pendingDeleteItems = items
+                itemPendingAction = items
                 deleteLauncher.launch(
                     createDeleteRequest(context, items.map{it.uri})
                 )
@@ -118,7 +131,12 @@ fun BinScreen(
         ),
         ActionConfig(
             label = stringResource(R.string.restore_action),
-            onClick = {  },
+            onClick = { viewModel.onAction(BinAction.Restore{ items ->
+                itemPendingAction = items
+                restoreLauncher.launch(
+                    createTrashRequest(context, items.map{it.uri}, false)
+                )
+            })},
             icon=Icons.Filled.Restore
         ),
     )

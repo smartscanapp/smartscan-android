@@ -92,7 +92,7 @@ class BinViewModel(
             is BinAction.ClearSelection -> clearSelection()
             is BinAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
             is BinAction.Delete -> deleteFromDevice(action.onDelete)
-            is BinAction.Restore -> {}
+            is BinAction.Restore -> restore(action.onRestore)
         }
     }
 
@@ -110,9 +110,14 @@ class BinViewModel(
         }
     }
 
-    private fun restore(){
-        // TODO
-        resetSelection()
+    private fun restore(onRestore: (List<MediaItem>) -> Unit){
+        viewModelScope.launch{
+            val items = withContext(Dispatchers.IO) {
+                getSelectedItems().toList()
+            }
+            onRestore(items)
+            resetSelection()
+        }
     }
     private fun toggleSelectedItem(item: MediaItem){
         _state.update {

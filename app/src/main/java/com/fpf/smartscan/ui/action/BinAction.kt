@@ -10,7 +10,7 @@ sealed interface BinAction {
     data class SetSelectAll(val selectAll: Boolean): BinAction
     data class SetMediaTypeFilter(val mediaType: MediaType?): BinAction
     data class Delete(val onDelete: (List<MediaItem>) -> Unit) : BinAction
-    data object Restore : BinAction
+    data class Restore(val onRestore: (List<MediaItem>) -> Unit) : BinAction
     data object ToggleSelectionMode: BinAction
     data object ClearSelection: BinAction
     data object ResetSelection: BinAction
