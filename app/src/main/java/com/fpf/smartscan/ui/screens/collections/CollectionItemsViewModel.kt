@@ -301,15 +301,12 @@ class CollectionItemsViewModel(
 
    private fun toggleSelectedItem(item: MediaItem){
        _state.update {
-           val collection = it.collection ?: return
-           it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, collection.size))
+           it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, it.totalItems))
        }
    }
 
     private fun setSelectAll(selectAll: Boolean) {
-        val currentState = _state.value
-        val collection = currentState.collection?: return
-        _state.update { it.copy(selection = SelectionUtils.setSelectAll(it.selection, selectAll, collection.size))}
+        _state.update { it.copy(selection = SelectionUtils.setSelectAll(it.selection, selectAll, it.totalItems))}
 
     }
 
@@ -331,12 +328,28 @@ class CollectionItemsViewModel(
         }
     }
 
-    private fun setCollection(collection: MediaCollection?) = _state.update { it.copy(collection=collection) }
+    private fun setCollection(collection: MediaCollection) {
+        _state.update { it.copy(collection = collection) }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val duplicateCount = when (collection.type) {
+                CollectionType.CLUSTER -> mediaMetadataRepository.countDuplicatesInCluster(collection.id)
+                CollectionType.TAG -> mediaMetadataRepository.countDuplicatesInTag(collection.id)
+            }
+            _state.update { it.copy(duplicateCount = duplicateCount) }
+        }
+    }
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
 
     private fun resetFilters() = _state.update {it.copy(filter = it.filter.copy(isDuplicate = null, mediaType = null))}
-    private fun setMediaTypeFilter(type: MediaType?) = _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
-    private fun setDuplicateFilter(duplicateFilter: Boolean?) = _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+    private fun setMediaTypeFilter(type: MediaType?) {
+        _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
+        resetSelection()
+    }
+    private fun setDuplicateFilter(duplicateFilter: Boolean?) {
+        _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+        resetSelection()
+    }
 
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }

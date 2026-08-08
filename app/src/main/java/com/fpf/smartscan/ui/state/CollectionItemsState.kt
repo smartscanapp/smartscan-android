@@ -13,5 +13,16 @@ data class CollectionItemsState(
     val sortBy: SortBy = SortBy.Date(),
     val loading: Boolean = false,
     val mediaToView: MediaItem? = null,
-    val selection: SelectionState<MediaItem> = SelectionState()
-)
+    val selection: SelectionState<MediaItem> = SelectionState(),
+    val duplicateCount: Int = 0
+){
+    val collectionSize: Int
+        get() = collection?.size?: 0
+
+    val totalItems: Int
+        get() = when(filter.isDuplicate){
+            true -> duplicateCount
+            false -> (collectionSize - duplicateCount).coerceAtLeast(0)
+            else -> collectionSize
+        }
+}
