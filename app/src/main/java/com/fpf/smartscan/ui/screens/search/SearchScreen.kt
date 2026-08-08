@@ -44,7 +44,6 @@ import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.core.search.SearchOptions
 import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.action.SearchAction
@@ -140,11 +139,8 @@ fun SearchScreen(
         ),
         ActionConfig(
             label = stringResource(R.string.search_action),
-            onClick = { searchViewModel.onAction(
-                SearchAction.SetQueryImageAndSearch(
-                    state.selection.selectedItems.first().uri,
-                    SearchOptions( hideDuplicates = appSettings.enableDedupe ))
-            )
+            onClick = {
+                searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(state.selection.selectedItems.first().uri))
                       },
             enabled = state.selection.selectedItems.size == 1 && state.mediaType == MediaType.IMAGE,
             icon = Icons.Filled.Search
@@ -218,10 +214,7 @@ fun SearchScreen(
     }
 
     LaunchedEffect(Unit) {
-        intentSearchQuery?.let {
-            val options =  SearchOptions(hideDuplicates = appSettings.enableDedupe )
-            searchViewModel.externalSearch(it, options)
-        }
+        intentSearchQuery?.let { searchViewModel.externalSearch(it) }
     }
 
     LaunchedEffect(Unit) {
@@ -311,7 +304,7 @@ fun SearchScreen(
                             mediaType = state.mediaType,
                             imageSize = 140.dp,
                             onSearch = {
-                                searchViewModel.onAction(SearchAction.Search(SearchOptions(hideDuplicates = appSettings.enableDedupe)))
+                                searchViewModel.onAction(SearchAction.Search)
                             },
                             onMediaTypeChange = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it)) },
                             onRemoveImage = {
@@ -348,15 +341,9 @@ fun SearchScreen(
                                 searchFieldState = searchViewModel.searchFieldState,
                                 enabled = hasStoragePermission && !state.loading ,
                                 placeholders = searchBarPlaceholders,
-                                onSearch = {
-                                    searchViewModel.onAction(SearchAction.Search(SearchOptions(hideDuplicates = appSettings.enableDedupe)))
-                                },
-                                onSearchImage = {
-                                    searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it, SearchOptions(hideDuplicates = appSettings.enableDedupe)))
-                                },
-                                onClearResults = {
-                                    searchViewModel.onAction(SearchAction.Reset)
-                                },
+                                onSearch = { searchViewModel.onAction(SearchAction.Search) },
+                                onSearchImage = { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) },
+                                onClearResults = { searchViewModel.onAction(SearchAction.Reset) },
                                 onFocusedChange = {showRecentSearches = it},
                             )
                         }
@@ -367,7 +354,7 @@ fun SearchScreen(
                     recentSearches = state.recentSearches.toList(),
                     onSelect = {
                         searchViewModel.searchFieldState.edit { replace(0, searchViewModel.searchFieldState.text.length, it) }
-                        searchViewModel.onAction(SearchAction.Search(SearchOptions(hideDuplicates = appSettings.enableDedupe)))
+                        searchViewModel.onAction(SearchAction.Search)
                     },
                     onRemoveRecentSearch = {searchViewModel.onAction(SearchAction.RemoveRecentSearch(it))},
                     onClearAll = {searchViewModel.onAction(SearchAction.ClearRecentSearches)},
@@ -436,7 +423,7 @@ fun SearchScreen(
                     onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
                     onUpdateSearchImage = {
                         searchViewModel.onAction(SearchAction.ClearResultView)
-                        searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri, SearchOptions(hideDuplicates = appSettings.enableDedupe)))
+                        searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri))
                     },
                     onSaveUpdatedItem = { updatedMedia ->
                         mediaViewModel.updateDescription(updatedMedia)

@@ -28,15 +28,12 @@ import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.utils.canOpenUri
-import com.fpf.smartscan.core.media.openImageInGallery
-import com.fpf.smartscan.core.media.openVideoInGallery
 import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.core.tag.TagManager
 import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.search.SearchEngine
 import com.fpf.smartscan.core.search.SearchFilter
-import com.fpf.smartscan.core.search.SearchOptions
 import com.fpf.smartscan.core.search.toMediaFilter
 import com.fpf.smartscan.core.tag.Tag
 import com.fpf.smartscan.ui.action.SearchAction
@@ -150,7 +147,7 @@ class SearchViewModel(
             is SearchAction.CopyResult -> copyItem(action.clipboard, action.context)
             is SearchAction.SetQueryImageAndSearch -> {
                 setQueryImage(action.image)
-                search(action.searchOptions)
+                search()
             }
             is SearchAction.RemoveUploadedImage -> removeUploadedImage()
             is SearchAction.SetEndDateFilter -> setEndDateFilter(action.date)
@@ -158,7 +155,7 @@ class SearchViewModel(
             is SearchAction.SetStartDateFilter -> setStartDateFilter(action.date)
             is SearchAction.ShareResults -> shareItems(action.context)
             is SearchAction.TagItems -> tagItems(action.tag)
-            is SearchAction.Search -> search(action.searchOptions)
+            is SearchAction.Search -> search()
             is SearchAction.ViewResult -> viewResult(action.item)
             is SearchAction.ToggleSelectedResult -> toggleSelectedResult(action.item)
             is SearchAction.Reset -> reset()
@@ -176,21 +173,21 @@ class SearchViewModel(
         }
     }
 
-    fun externalSearch(intentSearchQuery: SearchQuery?, searchOptions: SearchOptions){
+    fun externalSearch(intentSearchQuery: SearchQuery?){
         if(intentSearchQuery == null || hasHandledExternalSearch) return
 
         when(intentSearchQuery) {
             is SearchQuery.ImageQuery -> {
                 setMediaType(intentSearchQuery.filter.mediaType?: MediaType.IMAGE)
                 setQueryImage(intentSearchQuery.uri)
-                search(searchOptions)
+                search()
                 hasHandledExternalSearch = true
             }
 
             is SearchQuery.TextQuery -> {
                 setMediaType(intentSearchQuery.filter.mediaType?: MediaType.IMAGE)
                 searchFieldState.edit { replace(0, searchFieldState.text.length, intentSearchQuery.text) }
-                search( searchOptions)
+                search()
                 hasHandledExternalSearch = true
             }
         }
@@ -246,7 +243,7 @@ class SearchViewModel(
         ) }
     }
 
-    private fun search(searchOptions: SearchOptions){
+    private fun search(){
         reset()
         _state.update { it.copy(loading = true) }
 
@@ -264,13 +261,13 @@ class SearchViewModel(
                 val queryResults =  when{
                     tagOnlySearch -> state.filter.ids.toList()
                     state.queryImage != null -> {
-                        val searchQuery =  SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter, options = searchOptions)
+                        val searchQuery =  SearchQuery.ImageQuery(uri = state.queryImage, filter = state.filter)
                         val results = searchEngine.search(getApplication(), searchQuery)
                         _event.emit(SearchEvent(SearchEventType.IMAGE_QUERY, success = true))
                         results
                     }
                     searchFieldState.text.toString().isNotBlank() -> {
-                        val searchQuery = SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter, options = searchOptions)
+                        val searchQuery = SearchQuery.TextQuery(text = searchFieldState.text.toString(), filter = state.filter)
                         val results = searchEngine.search(getApplication(), searchQuery)
                         addRecentSearch(searchQuery.text)
                         _event.emit(SearchEvent(SearchEventType.TEXT_QUERY, success = true))

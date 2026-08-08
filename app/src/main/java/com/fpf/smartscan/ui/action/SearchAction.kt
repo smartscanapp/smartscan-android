@@ -5,11 +5,10 @@ import android.net.Uri
 import androidx.compose.ui.platform.Clipboard
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.search.SearchOptions
 
 sealed interface SearchAction {
-    data class Search(val searchOptions: SearchOptions): SearchAction
-    data class SetQueryImageAndSearch(val image: Uri, val searchOptions: SearchOptions): SearchAction
+    data object Search: SearchAction
+    data class SetQueryImageAndSearch(val image: Uri): SearchAction
     data class ViewResult(val item: MediaItem): SearchAction
     data class ToggleSelectedResult(val item: MediaItem): SearchAction
     data class TagItems(val tag: String): SearchAction

@@ -120,14 +120,6 @@ fun SettingsScreen(
         ),
     )
 
-    val searchSettingActions: List<SettingActionConfig> = listOf(
-        SettingActionConfig.Switch(
-            label=stringResource(R.string.setting_hide_duplicates),
-            checked = appSettings.enableDedupe,
-            onCheckedChange = viewModel::updateEnableDedupe,
-        ),
-    )
-
     val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let { selectedUri ->
             context.contentResolver.takePersistableUriPermission(selectedUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -221,27 +213,18 @@ fun SettingsScreen(
                     stringResource(id = R.string.general_settings),
                     settingActionConfigs = generalSettingActions
                 )
-
-                SettingSection(
-                    stringResource(id = R.string.media_settings),
-                    settingActionConfigs = searchSettingActions
-                )
-
                 SettingSection(
                     stringResource(id = R.string.scan_action),
                     settingActionConfigs = scanSettingActions
                 )
-
                 SettingSection(
                     stringResource(id = R.string.cloud_processing_settings),
                     settingActionConfigs = cloudProcessingSettingActions
                 )
-
                 SettingSection(
                     stringResource(id = R.string.setting_backup_restore),
                     settingActionConfigs = backupSettingActions
                 )
-
                 SettingSection(
                     stringResource(id = R.string.other_settings),
                     settingActionConfigs = otherSettingActions
