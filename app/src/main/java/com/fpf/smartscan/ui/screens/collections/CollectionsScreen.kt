@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Merge
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
@@ -63,6 +64,8 @@ import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import org.koin.compose.viewmodel.koinViewModel
 
 
@@ -74,6 +77,7 @@ fun CollectionsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
     onOpenSettings: () -> Unit,
+    onNavigateToRecyclingBin: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
 
@@ -92,6 +96,7 @@ fun CollectionsScreen(
     val context = LocalContext.current
 
     // actions
+    var showMenu by remember { mutableStateOf(false) }
     var isRenamingCollection by remember { mutableStateOf(false) }
     var isMergingCollections by remember { mutableStateOf(false) }
     var isDeletingCollection by remember { mutableStateOf(false) }
@@ -101,6 +106,13 @@ fun CollectionsScreen(
         ActionConfig(label = stringResource(R.string.merge_action), { isMergingCollections = true }, enabled = !state.loading, icon = Icons.Filled.Merge),
         ActionConfig( label = stringResource(R.string.rename_action), { isRenamingCollection = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
         ActionConfig(label = stringResource(R.string.delete_action), { isDeletingCollection = true }, enabled = state.collectionType == CollectionType.TAG, icon = Icons.Filled.Delete)
+    )
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_recycle_bin),
+            onClick = { onNavigateToRecyclingBin() },
+        ),
     )
 
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
@@ -140,6 +152,7 @@ fun CollectionsScreen(
 
     val screenTitle = stringResource(R.string.title_collections)
 
+
     LaunchedEffect(state.collectionType) {
         onTopBarChange(
             TopBarState(
@@ -151,6 +164,19 @@ fun CollectionsScreen(
                         Icon(
                             imageVector = Icons.Filled.Settings,
                             contentDescription = "settings"
+                        )
+                    }
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
                         )
                     }
                 }
