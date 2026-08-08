@@ -113,9 +113,9 @@ class LocalIndexJobManager(
             MediaType.IMAGE -> MediaStoreHelper.queryImageIdDateMap(context, allowedDirs)
             MediaType.VIDEO ->  MediaStoreHelper.queryVideoIdDateMap(context, allowedDirs)
         }
-        val existingMediaIdsInEmbedStore =( if(store.exists) store.get() else emptyList()).map{it.id}.toSet()
-        val existingMediaMap = metadataRepo.get(mediaType).associateBy { it.id }
-        val newMediaIds = idToDateMap.keys.filterNot { existingMediaMap.containsKey(it) && existingMediaIdsInEmbedStore.contains(it) }
+        val existingMediaIdsInEmbedStore = store.get().map{it.id}.toSet()
+        val existingMediaIdsFromRoom = metadataRepo.getIds(mediaType).toSet()
+        val newMediaIds = idToDateMap.keys.filterNot { existingMediaIdsFromRoom.contains(it) && existingMediaIdsInEmbedStore.contains(it) }
         val newMedia = newMediaIds.mapNotNull{
             val date = idToDateMap[it]?: return@mapNotNull null
             MediaMetadata(it, mediaType, date)
