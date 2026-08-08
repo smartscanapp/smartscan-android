@@ -14,8 +14,6 @@ import com.fpf.smartscan.core.media.MediaStoreHelper
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.ImageEmbeddingProvider
-import com.fpf.smartscan.core.index.ImageIndexer
-import com.fpf.smartscan.core.index.VideoIndexer
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
@@ -116,7 +114,7 @@ class LocalIndexJobManager(
             MediaType.VIDEO ->  MediaStoreHelper.queryVideoIdDateMap(context, allowedDirs)
         }
         val existingMediaIdsInEmbedStore =( if(store.exists) store.get() else emptyList()).map{it.id}.toSet()
-        val existingMediaMap = metadataRepo.getByType(mediaType).associateBy { it.id }
+        val existingMediaMap = metadataRepo.get(mediaType).associateBy { it.id }
         val newMediaIds = idToDateMap.keys.filterNot { existingMediaMap.containsKey(it) && existingMediaIdsInEmbedStore.contains(it) }
         val newMedia = newMediaIds.mapNotNull{
             val date = idToDateMap[it]?: return@mapNotNull null

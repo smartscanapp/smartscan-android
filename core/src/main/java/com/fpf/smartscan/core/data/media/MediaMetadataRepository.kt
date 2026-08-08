@@ -16,8 +16,8 @@ class MediaMetadataRepository(
     suspend fun update(item: MediaMetadata) = dao.update(listOf(item.toEntity()))
     suspend fun getUnclusteredItemIds(): Map<Long, MediaType> = dao.getUnclusteredItemIds().associate { it.id to it.type }
     suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
-    suspend fun getByType(type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByType(type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
-    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<Long> = dao.getIdsByType(type, isTrashed=isTrashed, isDuplicate=isDuplicate)
+    suspend fun get(type: MediaType? = null, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.get(type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
+    suspend fun getIds(type: MediaType? = null, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<Long> = dao.getIds(type, isTrashed=isTrashed, isDuplicate=isDuplicate)
     suspend fun getByTag(tagId: Long, limit: Int, offset: Int, mediaType: MediaType?=null, startDate: Long? = null, endDate: Long? = null, ascending: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = if(ascending){
         dao.getByTagAsc(tagId, mediaType=mediaType, limit = limit, offset=offset, startDate=startDate, endDate=endDate, isDuplicate=isDuplicate).map{it.toDomain()}
     }else{

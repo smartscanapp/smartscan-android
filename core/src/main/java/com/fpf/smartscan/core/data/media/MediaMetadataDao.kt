@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import com.fpf.smartscan.core.data.MediaIdType
 import com.fpf.smartscan.core.media.MediaType
@@ -32,22 +31,22 @@ interface MediaMetadataDao {
     @Query("""
         SELECT * 
         FROM media_metadata 
-        WHERE type = :type 
+        WHERE (:type IS NULL OR type = :type)
             AND isTrashed = :isTrashed
             AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
             """
     )
-    suspend fun getByType(type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
+    suspend fun get(type: MediaType?, isTrashed: Boolean, isDuplicate: Boolean?): List<MediaMetadataEntity>
 
     @Query("""
         SELECT id 
         FROM media_metadata 
-        WHERE type = :type 
+        WHERE (:type IS NULL OR type = :type)
             AND isTrashed = :isTrashed
             AND (:isDuplicate IS NULL OR isDuplicate = :isDuplicate)
             """
     )
-    suspend fun getIdsByType(type: MediaType, isTrashed: Boolean, isDuplicate: Boolean?): List<Long>
+    suspend fun getIds(type: MediaType?, isTrashed: Boolean, isDuplicate: Boolean?): List<Long>
 
     @Query("""
         SELECT id, type

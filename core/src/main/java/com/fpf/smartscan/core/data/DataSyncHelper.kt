@@ -61,7 +61,7 @@ object DataSyncHelper {
         mediaType: MediaType
     ) {
         try {
-            val existingIdsFromMetadata = mediaMetadataRepository.getIdsByType(mediaType)
+            val existingIdsFromMetadata = mediaMetadataRepository.getIds(mediaType)
             if (existingIdsFromMetadata.isEmpty()) return
 
             val accessibleMediaIds = when (mediaType) {
