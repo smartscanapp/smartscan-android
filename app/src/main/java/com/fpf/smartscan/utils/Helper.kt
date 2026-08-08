@@ -85,8 +85,16 @@ fun isServiceRunning(context: Context, serviceClass: Class<out Service>): Boolea
     }
 }
 
-fun createTrashRequest(context: Context, uris: Collection<Uri>, trash: Boolean = true): IntentSenderRequest {
-    val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, uris.toList(), trash)
+fun createTrashRequest(context: Context, uris: List<Uri>, trash: Boolean = true): IntentSenderRequest {
+    val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, uris, trash)
+    return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+}
+
+fun createDeleteRequest(context: Context, uris: List<Uri>): IntentSenderRequest {
+    val pendingIntent = MediaStore.createDeleteRequest(
+        context.contentResolver,
+        uris
+    )
     return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
 }
 

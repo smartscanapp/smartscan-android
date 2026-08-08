@@ -55,6 +55,7 @@
     <string name="filter_action">Filter</string>
     <string name="sort_action">Sort</string>
     <string name="reset_filters_action">Reset filters</string>
+    <string name="restore_action">Restore</string>
 
     <!--Label-->
     <string name="duplicate_label">Duplicates</string>

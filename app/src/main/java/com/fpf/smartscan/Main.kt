@@ -36,6 +36,7 @@ import com.fpf.smartscan.ui.components.modals.ProgressModal
 import com.fpf.smartscan.ui.permissions.RequestPermissions
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
+import com.fpf.smartscan.ui.screens.bin.BinScreen
 import com.fpf.smartscan.ui.screens.collections.CollectionItemsScreen
 import com.fpf.smartscan.ui.screens.collections.CollectionsScreen
 import com.fpf.smartscan.ui.screens.concepts.ConceptItemsScreen
@@ -327,6 +328,14 @@ fun Main(
                     }
                     composable(Routes.DONATE) {
                         DonateScreen(
+                            onTopBarChange = { topBarState.value = it },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Routes.BIN) {
+                        BinScreen(
+                            appSettings = settingsViewModel.appSettings,
+                            mediaViewModel = mediaViewModel,
                             onTopBarChange = { topBarState.value = it },
                             onBack = { navController.popBackStack() }
                         )
