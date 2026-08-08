@@ -83,7 +83,6 @@ fun BinScreen(
 
     // actions
     var showMenu by remember { mutableStateOf(false) }
-    var showFilters by remember { mutableStateOf(false) }
     var itemPendingAction by remember { mutableStateOf<List<MediaItem>?>(null) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
@@ -112,8 +111,15 @@ fun BinScreen(
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = stringResource(R.string.filter_action),
-            onClick = { showFilters = true },
+            label = stringResource(R.string.empty_bin_action),
+            onClick = {
+                viewModel.onAction(BinAction.SetSelectAll(true))
+                viewModel.onAction(
+                BinAction.Delete{ items ->
+                    itemPendingAction = items
+                    deleteLauncher.launch(createDeleteRequest(context, items.map{it.uri}))
+                }
+            )},
             enabled = !state.loading,
         ),
     )
@@ -121,12 +127,12 @@ fun BinScreen(
     val actionBarActions: List<ActionConfig> = listOf(
         ActionConfig(
             label = stringResource(R.string.delete_action),
-            onClick = { viewModel.onAction(BinAction.Delete{ items ->
-                itemPendingAction = items
-                deleteLauncher.launch(
-                    createDeleteRequest(context, items.map{it.uri})
-                )
-            })},
+            onClick = { viewModel.onAction(
+                BinAction.Delete{ items ->
+                    itemPendingAction = items
+                    deleteLauncher.launch(createDeleteRequest(context, items.map{it.uri}))
+                }
+            ) },
             icon=Icons.Filled.Delete
         ),
         ActionConfig(
@@ -203,13 +209,7 @@ fun BinScreen(
                 SelectionHeaderRow(
                     selectedCount = state.selection.selectedCount,
                     checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.trashedIds.size),
-                    onSelectAllChange = {
-                        viewModel.onAction(
-                            BinAction.SetSelectAll(
-                                it
-                            )
-                        )
-                    }
+                    onSelectAllChange = { viewModel.onAction(BinAction.SetSelectAll(it)) }
                 )
             }
             MediaItemsList(
