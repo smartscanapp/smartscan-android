@@ -116,11 +116,11 @@ fun SearchScreen(
     var showMoreActions by remember { mutableStateOf(false) }
     var showRecentSearches by remember { mutableStateOf(false) }
 
-    val deleteLauncher = rememberLauncherForActivityResult(
+    val trashLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            pendingDeleteItems?.let{mediaViewModel.delete(it)}
+            pendingDeleteItems?.let{mediaViewModel.trash(it)}
             searchResults.refresh()
             pendingDeleteItems = null
         }else{
@@ -166,7 +166,7 @@ fun SearchScreen(
             label = stringResource(R.string.delete_action),
             onClick = { searchViewModel.onAction(SearchAction.Delete{ items ->
                 pendingDeleteItems = items
-                deleteLauncher.launch(
+                trashLauncher.launch(
                     createTrashRequest(context, items.map{it.uri})
                 )
             }) },
