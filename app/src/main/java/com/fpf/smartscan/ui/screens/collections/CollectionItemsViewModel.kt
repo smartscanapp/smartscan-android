@@ -320,12 +320,12 @@ class CollectionItemsViewModel(
         val currentCollection = currentState.collection ?: return mutableSetOf()
         return when (currentCollection.type) {
             CollectionType.CLUSTER -> {
-                val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id)
+                val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id, isDuplicate = currentState.filter.isDuplicate)
                 itemsMatchingCluster.map { it.toItem() }.toMutableSet()
             }
 
             CollectionType.TAG -> {
-                val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id)
+                val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id, isDuplicate = currentState.filter.isDuplicate)
                 itemsMatchingTag.map { it.toItem() }.toMutableSet()
             }
         }

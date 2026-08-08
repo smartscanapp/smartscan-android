@@ -367,7 +367,8 @@ class SearchViewModel(
     private suspend fun getSelectedResults(): Set<MediaItem> = SelectionUtils.getSelectedItems(_state.value.selection){getAllResults()}
 
     private suspend fun getAllResults(): MutableSet<MediaItem> {
-        val mediaMetadataList = mediaMetadataRepository.getByIds(_state.value.resultIds.toList(), _state.value.mediaType)
+        val currentState = _state.value
+        val mediaMetadataList = mediaMetadataRepository.getByIds(currentState.resultIds.toList(), currentState.mediaType, isDuplicate = currentState.filter.isDuplicate)
         return  mediaMetadataList.map { it.toItem() }.toMutableSet()
     }
     private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{
