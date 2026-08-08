@@ -127,7 +127,7 @@ fun BinScreen(
     var offset by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val maxCollapsablePx = with(density) { 70.dp.toPx() }.toInt()
-    val screenTitle = "Recycle bin"
+    val screenTitle = stringResource(R.string.title_recycle_bin)
 
     LaunchedEffect(Unit) {
         onTopBarChange(

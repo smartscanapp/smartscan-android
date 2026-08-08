@@ -12,6 +12,8 @@
     <string name="title_collections">Collections</string>
     <string name="title_settings">Settings</string>
     <string name="title_donate">Donate</string>
+    <string name="title_recycle_bin">Recycle bin</string>
+
 
     <!-- Notifications -->
     <string name="worker_channel_id">Background Tasks</string>
