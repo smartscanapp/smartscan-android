@@ -233,13 +233,13 @@ class SearchViewModel(
 
     private fun reset(){
         _state.update{ it.copy(
-            totalResults = 0,
             resultIds = emptySet(),
             selection = SelectionState(),
             resultToView = null,
             error = null,
             filter = it.filter.copy(tag = null, ids = emptyList()),
-            tagOnlySearch = false
+            tagOnlySearch = false,
+            duplicateCount = 0
         ) }
     }
 
@@ -285,11 +285,12 @@ class SearchViewModel(
         }
     }
 
-    private fun handleSearchResult(queryResults: List<Long>) {
+    private suspend fun handleSearchResult(queryResults: List<Long>) {
         if (queryResults.isEmpty()) {
             _state.update{it.copy(error = getApplication<Application>().getString(R.string.search_error_no_results))}
         }else{
-            _state.update{ it.copy(totalResults = queryResults.size, resultIds = queryResults.toSet())}
+            val duplicateCount = mediaMetadataRepository.countDuplicatesByIds(queryResults, _state.value.mediaType)
+            _state.update{ it.copy(resultIds = queryResults.toSet(), duplicateCount=duplicateCount)}
         }
     }
 
@@ -367,7 +368,8 @@ class SearchViewModel(
     private suspend fun getSelectedResults(): Set<MediaItem> = SelectionUtils.getSelectedItems(_state.value.selection){getAllResults()}
 
     private suspend fun getAllResults(): MutableSet<MediaItem> {
-        val mediaMetadataList = mediaMetadataRepository.getByIds(_state.value.resultIds.toList(), _state.value.mediaType)
+        val currentState = _state.value
+        val mediaMetadataList = mediaMetadataRepository.getByIds(currentState.resultIds.toList(), currentState.mediaType, isDuplicate = currentState.filter.isDuplicate)
         return  mediaMetadataList.map { it.toItem() }.toMutableSet()
     }
     private suspend fun getMediaMatchingTag(tagName: String?, mediaType: MediaType, startDateFilter: Long? = null, endDateFilter: Long? = null): List<Long>{

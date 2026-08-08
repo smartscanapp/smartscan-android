@@ -9,7 +9,6 @@ import com.fpf.smartscan.ui.state.common.SelectionState
 
 data class SearchState(
     val resultIds: Set<Long> = emptySet(),
-    val totalResults: Int = 0,
     val queryImage: Uri? = null,
     val loading: Boolean = false,
     val error: String? = null,
@@ -18,8 +17,15 @@ data class SearchState(
     val selection: SelectionState<MediaItem> = SelectionState(),
     val filter: SearchFilter = SearchFilter(mediaType = MediaType.IMAGE),
     val sortBy: SortBy = SortBy.Date(),
-    val recentSearches: Set<String> = emptySet()
+    val recentSearches: Set<String> = emptySet(),
+    val duplicateCount: Int = 0
 ){
     val mediaType: MediaType
         get()=filter.mediaType?: MediaType.IMAGE
+    val totalResults: Int
+        get()=when(filter.isDuplicate){
+            true -> duplicateCount
+            false -> (resultIds.size - duplicateCount).coerceAtLeast(0)
+            else -> resultIds.size
+        }
 }
