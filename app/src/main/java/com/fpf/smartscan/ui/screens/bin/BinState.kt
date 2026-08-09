@@ -2,7 +2,7 @@ package com.fpf.smartscan.ui.screens.bin
 
 import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 data class BinState(
     val filter: MediaFilter = MediaFilter(),

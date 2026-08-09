@@ -3,7 +3,7 @@ package com.fpf.smartscan.ui.screens.concepts
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 data class ConceptsState(
     val selectedCollectionType: CollectionType? = null,

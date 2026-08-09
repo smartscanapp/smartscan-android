@@ -5,7 +5,7 @@ import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 data class SearchState(
     val resultIds: Set<Long> = emptySet(),

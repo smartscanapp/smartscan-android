@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.state.common
+package com.fpf.smartscan.ui.shared.state
 
 data class SelectionState<T> (
     val selectedItems: Set<T> = emptySet(),

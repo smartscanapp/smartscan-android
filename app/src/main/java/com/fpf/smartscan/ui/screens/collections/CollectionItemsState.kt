@@ -4,7 +4,7 @@ import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.search.SortBy
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 data class CollectionItemsState(
     val collection: MediaCollection? = null,

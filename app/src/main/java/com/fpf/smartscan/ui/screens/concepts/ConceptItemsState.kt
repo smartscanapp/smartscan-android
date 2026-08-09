@@ -4,7 +4,7 @@ import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.search.SortBy
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 data class ConceptItemsState(
     val concept: Concept? = null,
