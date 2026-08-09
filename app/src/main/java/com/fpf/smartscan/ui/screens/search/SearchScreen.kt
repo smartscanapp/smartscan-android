@@ -16,7 +16,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -46,7 +45,6 @@ import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
-import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow

@@ -13,7 +13,6 @@ import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.paging.BinPagingSource
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.ui.action.BinAction
 import com.fpf.smartscan.ui.state.BinState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.Dispatchers

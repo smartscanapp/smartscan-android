@@ -48,7 +48,6 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.settings.AppSettings
-import com.fpf.smartscan.ui.action.BinAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper

@@ -25,7 +25,6 @@ import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.search.SortBy
-import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.state.ConceptItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi

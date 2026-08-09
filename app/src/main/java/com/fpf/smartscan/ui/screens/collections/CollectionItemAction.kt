@@ -1,11 +1,10 @@
-package com.fpf.smartscan.ui.action
+package com.fpf.smartscan.ui.screens.collections
 
 import android.content.Context
 import androidx.compose.ui.platform.Clipboard
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 
 sealed interface CollectionItemAction {

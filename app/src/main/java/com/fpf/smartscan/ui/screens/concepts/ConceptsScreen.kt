@@ -59,7 +59,6 @@ import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.action.ConceptAction
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.buttons.CustomFloatingActionButton
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker

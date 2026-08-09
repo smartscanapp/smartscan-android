@@ -40,8 +40,6 @@ import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.core.search.SearchFilter
-import com.fpf.smartscan.ui.action.ConceptItemsAction
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList

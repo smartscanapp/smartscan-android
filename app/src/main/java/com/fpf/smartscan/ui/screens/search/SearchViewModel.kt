@@ -36,7 +36,6 @@ import com.fpf.smartscan.core.search.SearchEngine
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.toMediaFilter
 import com.fpf.smartscan.core.tag.Tag
-import com.fpf.smartscan.ui.action.SearchAction
 import com.fpf.smartscan.ui.state.SearchState
 import com.fpf.smartscan.ui.state.common.SelectionState
 import com.fpf.smartscan.ui.utils.SelectionUtils

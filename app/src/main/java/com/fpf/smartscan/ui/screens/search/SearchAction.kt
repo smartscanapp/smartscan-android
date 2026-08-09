@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.action
+package com.fpf.smartscan.ui.screens.search
 
 import android.content.Context
 import android.net.Uri

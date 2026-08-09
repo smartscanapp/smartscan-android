@@ -11,7 +11,6 @@ import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.events.CollectionEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.tag.TagManager
-import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.state.CollectionsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.Dispatchers

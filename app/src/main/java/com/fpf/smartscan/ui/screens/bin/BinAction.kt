@@ -1,8 +1,7 @@
-package com.fpf.smartscan.ui.action
+package com.fpf.smartscan.ui.screens.bin
 
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-
 
 sealed interface BinAction {
     data class ToggleSelectedMedia(val item: MediaItem): BinAction
