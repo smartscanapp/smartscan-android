@@ -28,67 +28,85 @@ interface ClusterMetadataDao {
     suspend fun getClustersForMedia(mediaId: Long, mediaType: MediaType): List<ClusterMetadataEntity>
 
     @Query("""
-    SELECT 
-        c.clusterId,
-        c.label,
-        COUNT(ref.mediaId) AS prototypeSize,
-        latest.mediaId AS thumbNailId,
-        latest.mediaType AS thumbNailType
-    FROM cluster_metadata c
-    JOIN media_cluster_crossref ref
-        ON ref.clusterId = c.clusterId
-    JOIN (
-        SELECT
-            ref.clusterId,
-            m.id AS mediaId,
-            m.type AS mediaType,
-            ROW_NUMBER() OVER (
-                PARTITION BY ref.clusterId
-                ORDER BY m.dateAdded DESC, m.id DESC
-            ) AS rowNum
-        FROM media_cluster_crossref ref
-        JOIN media_metadata m
-            ON m.id = ref.mediaId
-            AND m.type = ref.mediaType
-    ) latest
-        ON latest.clusterId = c.clusterId
-        AND latest.rowNum = 1
-    GROUP BY c.clusterId
-    ORDER BY prototypeSize DESC
+WITH active_media AS (
+    SELECT id, type, dateAdded
+    FROM media_metadata
+    WHERE isTrashed = 0
+)
+SELECT 
+    c.clusterId,
+    c.label,
+    COUNT(ref.mediaId) AS prototypeSize,
+    latest.mediaId AS thumbNailId,
+    latest.mediaType AS thumbNailType
+FROM cluster_metadata c
+JOIN media_cluster_crossref ref
+    ON ref.clusterId = c.clusterId
+JOIN active_media m
+    ON m.id = ref.mediaId
+    AND m.type = ref.mediaType
+JOIN (
+    SELECT
+        ref.clusterId,
+        m.id AS mediaId,
+        m.type AS mediaType,
+        ROW_NUMBER() OVER (
+            PARTITION BY ref.clusterId
+            ORDER BY m.dateAdded DESC, m.id DESC
+        ) AS rowNum
+    FROM media_cluster_crossref ref
+    JOIN active_media m
+        ON m.id = ref.mediaId
+        AND m.type = ref.mediaType
+) latest
+    ON latest.clusterId = c.clusterId
+    AND latest.rowNum = 1
+GROUP BY c.clusterId
+ORDER BY prototypeSize DESC
 """)
     fun getCollections(): Flow<List<AutoCollectionData>>
 
     @Query("""
-    SELECT 
-        c.clusterId,
-        c.label,
-        COUNT(ref.mediaId) AS prototypeSize,
-        latest.mediaId AS thumbNailId,
-        latest.mediaType AS thumbNailType
-    FROM cluster_metadata c
-    JOIN media_cluster_crossref ref
-        ON ref.clusterId = c.clusterId
-    JOIN (
-        SELECT
-            ref.clusterId,
-            m.id AS mediaId,
-            m.type AS mediaType,
-            ROW_NUMBER() OVER (
-                PARTITION BY ref.clusterId
-                ORDER BY m.dateAdded DESC, m.id DESC
-            ) AS rowNum
-        FROM media_cluster_crossref ref
-        JOIN media_metadata m
-            ON m.id = ref.mediaId
-            AND m.type = ref.mediaType
-    ) latest
-        ON latest.clusterId = c.clusterId
-        AND latest.rowNum = 1
-    WHERE c.clusterId IN (:clusterIds)
-    GROUP BY c.clusterId
-    ORDER BY prototypeSize DESC
+WITH active_media AS (
+    SELECT id, type, dateAdded
+    FROM media_metadata
+    WHERE isTrashed = 0
+)
+SELECT 
+    c.clusterId,
+    c.label,
+    COUNT(ref.mediaId) AS prototypeSize,
+    latest.mediaId AS thumbNailId,
+    latest.mediaType AS thumbNailType
+FROM cluster_metadata c
+JOIN media_cluster_crossref ref
+    ON ref.clusterId = c.clusterId
+JOIN active_media m
+    ON m.id = ref.mediaId
+    AND m.type = ref.mediaType
+JOIN (
+    SELECT
+        ref.clusterId,
+        m.id AS mediaId,
+        m.type AS mediaType,
+        ROW_NUMBER() OVER (
+            PARTITION BY ref.clusterId
+            ORDER BY m.dateAdded DESC, m.id DESC
+        ) AS rowNum
+    FROM media_cluster_crossref ref
+    JOIN active_media m
+        ON m.id = ref.mediaId
+        AND m.type = ref.mediaType
+) latest
+    ON latest.clusterId = c.clusterId
+    AND latest.rowNum = 1
+WHERE c.clusterId IN (:clusterIds)
+GROUP BY c.clusterId
+ORDER BY prototypeSize DESC
 """)
     fun getCollections(clusterIds: List<Long>): List<AutoCollectionData>
+
+
 
     @Query("""
     SELECT metadata.*, COUNT(crossRef.mediaId) AS prototypeSize
