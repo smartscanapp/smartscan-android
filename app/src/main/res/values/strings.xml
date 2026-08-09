@@ -79,7 +79,7 @@
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>
     <string name="media_type_title">Media type</string>
     <string name="sort_title">Sort by</string>
-    <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your library first.</string>
+    <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your media.</string>
     <string name="download_model_message">A new model is required to use the app. Download it now to continue.</string>
 
     <!--Sort Options-->
