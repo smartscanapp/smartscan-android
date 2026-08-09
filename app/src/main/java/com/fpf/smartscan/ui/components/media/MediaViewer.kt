@@ -51,6 +51,7 @@ fun MediaViewer(
     initialIndex: Int,
     onClose: () -> Unit,
     size: Int? = 1728,
+    actionsEnabled: Boolean = true,
     onGetCollections: (suspend (MediaItem, type: CollectionType) -> Map<Long, String>)? = null,
     onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
@@ -310,7 +311,8 @@ fun MediaViewer(
                 toggleMenu = { showMenu = !showMenu },
                 showMenu = showMenu,
                 onViewDescription = { detailsExpanded = true },
-                isVisible = isActionsVisible
+                isVisible = isActionsVisible,
+                actionsEnabled = actionsEnabled
             )
         }
     }

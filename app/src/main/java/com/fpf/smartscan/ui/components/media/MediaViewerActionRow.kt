@@ -38,11 +38,12 @@ import com.fpf.smartscan.core.utils.canOpenUri
 fun MediaViewerActionRow(
     item: MediaItem,
     showMenu: Boolean,
+    isVisible: Boolean,
+    actionsEnabled: Boolean = true,
     toggleMenu: () -> Unit,
     onClose: () -> Unit,
     onViewDescription: () -> Unit,
     onUpdateSearchImage: ((uri: Uri) -> Unit)?,
-    isVisible: Boolean
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
@@ -56,7 +57,8 @@ fun MediaViewerActionRow(
         MenuActionConfig.Button(
             label = stringResource(R.string.share_action),
             onClick = { shareMedia(context, item.uri) },
-            enabled = isUriAccessible,
+            enabled = isUriAccessible && actionsEnabled,
+            hideIfDisabled = true
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.open_in_gallery_action),
@@ -67,7 +69,8 @@ fun MediaViewerActionRow(
                     openVideoInGallery(context, item.uri)
                 }
                      },
-            enabled = isUriAccessible,
+            enabled = isUriAccessible && actionsEnabled,
+            hideIfDisabled = true
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.copy_to_clipboard_action),
@@ -76,13 +79,13 @@ fun MediaViewerActionRow(
                     ClipData.newUri(context.contentResolver, "smartscan_media", item.uri)
                 )
             },
-            enabled = isUriAccessible && item.type == MediaType.IMAGE,
+            enabled = isUriAccessible && item.type == MediaType.IMAGE&& actionsEnabled,
             hideIfDisabled = true
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.search_action),
             onClick = { onUpdateSearchImage?.invoke(item.uri) },
-            enabled = isUriAccessible && item.type == MediaType.IMAGE && onUpdateSearchImage != null,
+            enabled = isUriAccessible && item.type == MediaType.IMAGE && onUpdateSearchImage != null && actionsEnabled,
             hideIfDisabled = true
         ),
     )
