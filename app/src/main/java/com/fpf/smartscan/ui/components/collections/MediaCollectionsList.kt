@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -188,13 +189,21 @@ fun MediaCollectionsList(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
-            FloatingActionButton(onClick = {
+            FloatingActionButton(
+                onClick = {
                 scope.launch {
                     showScrollToTop = false
                     onOffsetChange?.invoke(0)
                     gridState.scrollToItem(0)
                 }
-            }) {
+            },
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    focusedElevation = 0.dp,
+                    hoveredElevation = 0.dp
+                )
+            ) {
                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
             }
         }

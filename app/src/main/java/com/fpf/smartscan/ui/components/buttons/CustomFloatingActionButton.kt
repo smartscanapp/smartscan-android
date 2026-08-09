@@ -38,8 +38,6 @@ fun CustomFloatingActionButton(
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         },
-        shadowElevation = if (enabled) 6.dp else 0.dp,
-        tonalElevation = if (enabled) 6.dp else 0.dp
     ) {
         Box(
             modifier = Modifier
