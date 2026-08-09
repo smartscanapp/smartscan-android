@@ -268,7 +268,8 @@ fun BinScreen(
                     },
                     onSaveUpdatedItem = null,
                     onGetCollections =null,
-                    onCollectionClick = null
+                    onCollectionClick = null,
+                    actionsEnabled = false
                 )
             }
         }
