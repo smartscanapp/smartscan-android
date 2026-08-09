@@ -135,14 +135,9 @@ fun CollectionsScreen(
                 CollectionEventType.MERGE -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
-                CollectionEventType.COPY -> {
-                    event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
-                }
-
                 CollectionEventType.RENAME -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
-
                 CollectionEventType.DELETE -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
