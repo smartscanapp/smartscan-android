@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.state
+package com.fpf.smartscan.ui.screens.collections
 
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection

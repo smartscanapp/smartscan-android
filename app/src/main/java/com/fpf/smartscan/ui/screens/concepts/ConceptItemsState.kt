@@ -1,9 +1,8 @@
-package com.fpf.smartscan.ui.state
+package com.fpf.smartscan.ui.screens.concepts
 
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
-import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.ui.state.common.SelectionState
 

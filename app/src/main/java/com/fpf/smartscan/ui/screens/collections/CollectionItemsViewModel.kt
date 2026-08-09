@@ -31,7 +31,6 @@ import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.search.SortBy
 import com.fpf.smartscan.core.tag.TagManager
-import com.fpf.smartscan.ui.state.CollectionItemsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

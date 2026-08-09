@@ -1,4 +1,4 @@
-package com.fpf.smartscan.ui.state
+package com.fpf.smartscan.ui.screens.search
 
 import android.net.Uri
 import com.fpf.smartscan.core.media.MediaItem

@@ -16,7 +16,6 @@ import com.fpf.smartscan.core.data.tags.TagRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
-import com.fpf.smartscan.ui.state.ConceptsState
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import kotlinx.coroutines.Dispatchers
