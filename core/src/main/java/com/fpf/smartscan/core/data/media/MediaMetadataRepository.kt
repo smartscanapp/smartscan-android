@@ -15,7 +15,7 @@ class MediaMetadataRepository(
     suspend fun update(items: List<MediaMetadata>) = dao.update(items.map{it.toEntity()})
     suspend fun update(item: MediaMetadata) = dao.update(listOf(item.toEntity()))
     suspend fun getUnclusteredItemIds(): Map<Long, MediaType> = dao.getUnclusteredItemIds().associate { it.id to it.type }
-    suspend fun getByIds(mediaIds: List<Long>, type: MediaType, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
+    suspend fun getByIds(mediaIds: List<Long>, type: MediaType?, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.getByIds(mediaIds, type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
     suspend fun get(type: MediaType? = null, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<MediaMetadata> = dao.get(type, isTrashed=isTrashed, isDuplicate=isDuplicate).map{it.toDomain()}
     suspend fun getIds(type: MediaType? = null, isTrashed: Boolean = false, isDuplicate: Boolean? = null): List<Long> = dao.getIds(type, isTrashed=isTrashed, isDuplicate=isDuplicate)
     suspend fun countDuplicatesByIds(ids: List<Long>, mediaType: MediaType): Int = dao.countDuplicatesByIds(ids, mediaType)

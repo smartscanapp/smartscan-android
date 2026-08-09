@@ -2,6 +2,7 @@ package com.fpf.smartscan.di
 
 import org.koin.core.module.dsl.viewModel
 import com.fpf.smartscan.MainViewModel
+import com.fpf.smartscan.ui.screens.bin.BinViewModel
 import com.fpf.smartscan.ui.screens.collections.CollectionItemsViewModel
 import com.fpf.smartscan.ui.screens.collections.CollectionsViewModel
 import com.fpf.smartscan.ui.screens.concepts.ConceptItemsViewModel
@@ -84,6 +85,12 @@ val viewModelModule = module {
             mediaJobManager = get(),
             tagRepository = get(),
             clusterMetadataRepository = get()
+        )
+    }
+    viewModel {
+        BinViewModel(
+            application = get(),
+            mediaMetadataRepository = get(),
         )
     }
 }

@@ -41,78 +41,93 @@ interface TagDao {
     // Crossref count used as size to always use crossrefs as source of truth
     // and importantly so Flow automatically retriggers when crossrefs change
     @Query("""
+WITH active_media AS (
+    SELECT id, type, dateAdded
+    FROM media_metadata
+    WHERE isTrashed = 0
+)
+SELECT
+    t.id AS tagId,
+    t.name,
+    counts.size,
+    latest.thumbNailId,
+    latest.thumbNailType
+FROM media_tag t
+JOIN (
     SELECT
-        t.id AS tagId,
-        t.name,
-        counts.size,
-        latest.thumbNailId,
-        latest.thumbNailType
-    FROM media_tag t
-    JOIN (
-        SELECT
-            tagId,
-            COUNT(*) AS size
-        FROM tag_crossref
-        GROUP BY tagId
-    ) counts
-        ON counts.tagId = t.id
-    JOIN (
-        SELECT
-            c.tagId,
-            m.id AS thumbNailId,
-            m.type AS thumbNailType,
-            ROW_NUMBER() OVER (
-                PARTITION BY c.tagId
-                ORDER BY m.dateAdded DESC, m.id DESC
-            ) AS rn
-        FROM tag_crossref c
-        JOIN media_metadata m
-            ON m.id = c.mediaId
-            AND m.type = c.mediaType
-    ) latest
-        ON latest.tagId = t.id
-        AND latest.rn = 1
-    ORDER BY counts.size DESC
+        c.tagId,
+        COUNT(*) AS size
+    FROM tag_crossref c
+    JOIN active_media m
+        ON m.id = c.mediaId
+        AND m.type = c.mediaType
+    GROUP BY c.tagId
+) counts
+    ON counts.tagId = t.id
+JOIN (
+    SELECT
+        c.tagId,
+        m.id AS thumbNailId,
+        m.type AS thumbNailType,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.tagId
+            ORDER BY m.dateAdded DESC, m.id DESC
+        ) AS rn
+    FROM tag_crossref c
+    JOIN active_media m
+        ON m.id = c.mediaId
+        AND m.type = c.mediaType
+) latest
+    ON latest.tagId = t.id
+    AND latest.rn = 1
+ORDER BY counts.size DESC
 """)
     fun getCollections(): Flow<List<TagCollectionData>>
 
     @Query("""
+WITH active_media AS (
+    SELECT id, type, dateAdded
+    FROM media_metadata
+    WHERE isTrashed = 0
+)
+SELECT
+    t.id AS tagId,
+    t.name,
+    counts.size,
+    latest.thumbNailId,
+    latest.thumbNailType
+FROM media_tag t
+JOIN (
     SELECT
-        t.id AS tagId,
-        t.name,
-        counts.size,
-        latest.thumbNailId,
-        latest.thumbNailType
-    FROM media_tag t
-    JOIN (
-        SELECT
-            tagId,
-            COUNT(*) AS size
-        FROM tag_crossref
-        GROUP BY tagId
-    ) counts
-        ON counts.tagId = t.id
-    JOIN (
-        SELECT
-            c.tagId,
-            m.id AS thumbNailId,
-            m.type AS thumbNailType,
-            ROW_NUMBER() OVER (
-                PARTITION BY c.tagId
-                ORDER BY m.dateAdded DESC, m.id DESC
-            ) AS rn
-        FROM tag_crossref c
-        JOIN media_metadata m
-            ON m.id = c.mediaId
-            AND m.type = c.mediaType
-    ) latest
-        ON latest.tagId = t.id
-        AND latest.rn = 1
-    WHERE t.id IN (:tagIds)
-    ORDER BY counts.size DESC
+        c.tagId,
+        COUNT(*) AS size
+    FROM tag_crossref c
+    JOIN active_media m
+        ON m.id = c.mediaId
+        AND m.type = c.mediaType
+    GROUP BY c.tagId
+) counts
+    ON counts.tagId = t.id
+JOIN (
+    SELECT
+        c.tagId,
+        m.id AS thumbNailId,
+        m.type AS thumbNailType,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.tagId
+            ORDER BY m.dateAdded DESC, m.id DESC
+        ) AS rn
+    FROM tag_crossref c
+    JOIN active_media m
+        ON m.id = c.mediaId
+        AND m.type = c.mediaType
+) latest
+    ON latest.tagId = t.id
+    AND latest.rn = 1
+WHERE t.id IN (:tagIds)
+ORDER BY counts.size DESC
 """)
     suspend fun getCollections(tagIds: List<Long>): List<TagCollectionData>
-
 
     // MUST use ignore. Using replace will cause cascading deletes of cross refs
     @Transaction

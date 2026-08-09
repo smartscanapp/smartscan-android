@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.data.tags.TagRepository
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
@@ -27,12 +28,28 @@ class MediaViewModel(
 
     fun delete(items: List<MediaItem>){
         val (images, videos) = items.partition { it.type == MediaType.IMAGE }
-        if(images.isNotEmpty()) mediaJobManager.delete(images.map{it.id}, MediaType.IMAGE)
-        if(videos.isNotEmpty()) mediaJobManager.delete(videos.map{it.id}, MediaType.VIDEO)
+        viewModelScope.launch(Dispatchers.IO) {
+            if(images.isNotEmpty()) mediaJobManager.delete(images.map{it.id}, MediaType.IMAGE)
+            if(videos.isNotEmpty()) mediaJobManager.delete(videos.map{it.id}, MediaType.VIDEO)
+        }
     }
 
-    fun delete(id: Long, mediaType: MediaType) = mediaJobManager.delete(listOf(id), mediaType)
+    fun delete(id: Long, mediaType: MediaType){
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaJobManager.delete(listOf(id), mediaType)
+        }
+    }
+    fun trash(items: List<MediaItem>){
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaJobManager.trash(items)
+        }
+    }
 
+    fun restore(items: List<MediaItem>){
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaJobManager.restore(items)
+        }
+    }
     fun updateDescription(updatedMedia: MediaItem) = mediaJobManager.updateDescription(updatedMedia)
 
     fun findAndMarkDuplicates(mediaType: MediaType) = mediaJobManager.findAndMarkDuplicates(mediaType)

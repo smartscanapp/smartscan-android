@@ -124,11 +124,11 @@ fun CollectionItemsScreen(
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
     var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
 
-    val deleteLauncher = rememberLauncherForActivityResult(
+    val trashLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            pendingDeleteItems?.let{mediaViewModel.delete(it)}
+            pendingDeleteItems?.let{mediaViewModel.trash(it)}
             items.refresh()
             pendingDeleteItems = null
         }else{
@@ -190,7 +190,7 @@ fun CollectionItemsScreen(
             label = stringResource(R.string.delete_action),
             onClick = { viewModel.onAction(CollectionItemAction.Delete{ items ->
                 pendingDeleteItems = items
-                deleteLauncher.launch(
+                trashLauncher.launch(
                     createTrashRequest(context, items.map{it.uri})
                 )
             }) },

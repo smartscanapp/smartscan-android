@@ -12,6 +12,8 @@
     <string name="title_collections">Collections</string>
     <string name="title_settings">Settings</string>
     <string name="title_donate">Donate</string>
+    <string name="title_recycle_bin">Recycle bin</string>
+
 
     <!-- Notifications -->
     <string name="worker_channel_id">Background Tasks</string>
@@ -55,6 +57,8 @@
     <string name="filter_action">Filter</string>
     <string name="sort_action">Sort</string>
     <string name="reset_filters_action">Reset filters</string>
+    <string name="restore_action">Restore</string>
+    <string name="empty_bin_action">Empty</string>
 
     <!--Label-->
     <string name="duplicate_label">Duplicates</string>

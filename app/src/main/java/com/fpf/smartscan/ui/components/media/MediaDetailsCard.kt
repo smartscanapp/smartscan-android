@@ -38,9 +38,12 @@ fun MediaDetailsCard(
     description: String?,
     collections: List<Triple<Long, String, CollectionType>>,
     modifier: Modifier = Modifier,
-    onCollectionClick: (Long, CollectionType) -> Unit,
-    onSave: (String) -> Unit
+    onCollectionClick: ((Long, CollectionType) -> Unit)? = null,
+    onSaveDescription: ((String) -> Unit)? = null,
 ) {
+    val saveEnabled = onSaveDescription != null
+    val viewCollectionEnabled = onCollectionClick != null
+
     var editing by remember {
         mutableStateOf(description.isNullOrBlank())
     }
@@ -72,7 +75,8 @@ fun MediaDetailsCard(
     ) {
 
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 8.dp)
         ) {
 
             Text(
@@ -83,36 +87,37 @@ fun MediaDetailsCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            if (editing) {
-                TextButton(
-                    enabled = editedDescription.text.isNotBlank() && description != editedDescription.text.trim(),
-                    onClick = {
-                        onSave(editedDescription.text.trim())
-                        editing = false
+            if(saveEnabled) {
+                if (editing) {
+                    TextButton(
+                        enabled = editedDescription.text.isNotBlank() && description != editedDescription.text.trim(),
+                        onClick = {
+                            onSaveDescription(editedDescription.text.trim())
+                            editing = false
+                        }
+                    ) {
+                        Text("Save")
                     }
-                ) {
-                    Text("Save")
-                }
-            } else {
-                TextButton(
-                    onClick = {
-                        editedDescription = editedDescription.copy(
-                            selection = TextRange(editedDescription.text.length)
-                        )
-                        editing = true
+                } else {
+                    TextButton(
+                        onClick = {
+                            editedDescription = editedDescription.copy(
+                                selection = TextRange(editedDescription.text.length)
+                            )
+                            editing = true
+                        }
+                    ) {
+                        Text("Edit")
                     }
-                ) {
-                    Text("Edit")
                 }
             }
         }
 
-        HorizontalDivider()
-
-        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(modifier = Modifier.padding(bottom=12.dp))
 
         if (editing) {
             BasicTextField(
+                enabled = saveEnabled,
                 value = editedDescription,
                 onValueChange = { editedDescription = it },
                 modifier = Modifier
@@ -150,7 +155,11 @@ fun MediaDetailsCard(
             ) {
                 collections.forEach { (id, name, type) ->
                     AssistChip(
-                        onClick = { onCollectionClick(id, type) },
+                        onClick = {
+                            if(viewCollectionEnabled){
+                                onCollectionClick(id, type)
+                            }
+                                  },
                         label = { Text("#$name") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = when (type) {
