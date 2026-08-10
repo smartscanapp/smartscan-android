@@ -23,8 +23,7 @@ val viewModelModule = module {
             imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
             videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
             clusterEmbedStore = get(CLUSTER_EMBED_STORE),
-            clusterCrossRefRepository = get(),
-            clusterMetadataRepository = get(),
+            clusterManager = get(),
             modelRepository = get()
         )
     }

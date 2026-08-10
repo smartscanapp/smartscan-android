@@ -11,6 +11,7 @@ import com.fpf.smartscan.cloud.index.CloudImageIndexListener
 import com.fpf.smartscan.core.embeds.EmbeddingStoresFiles
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
+import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.data.DataSyncHelper
 import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.models.ModelRepository
@@ -48,8 +49,7 @@ class MainViewModel(
     private val clusterEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
+    private val clusterManager: ClusterManager,
     private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
 
@@ -127,7 +127,8 @@ class MainViewModel(
                 videoEmbedStores = listOf(videoEmbedStore, videoConceptEmbedStore),
                 allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()},
                 allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()},
-                mediaMetadataRepository = MediaMetadataRepository(db.metadataDao())
+                mediaMetadataRepository = MediaMetadataRepository(db.metadataDao()),
+                clusterManager = clusterManager
             )
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
@@ -160,7 +161,7 @@ class MainViewModel(
             }
             viewModelScope.launch {
                 _runningMediaTypes.update { mediaTypes.toSet()}
-                rebuildIndex(getApplication(), mediaTypeToEmbedStore, clusterCrossRefRepository, clusterMetadataRepository)
+                rebuildIndex(getApplication(), mediaTypeToEmbedStore, clusterManager)
             }
         }
     }
@@ -178,7 +179,6 @@ class MainViewModel(
         resetConceptIndexingState(mediaType)
         _runningMediaTypes.update { it - mediaType}
     }
-
 
     fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
