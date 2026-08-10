@@ -2,9 +2,8 @@ package com.fpf.smartscan.services
 
 import android.content.Context
 import android.content.Intent
+import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.embeds.EmbeddingStoresFilesQuant
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.utils.isServiceRunning
@@ -31,7 +30,7 @@ fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJ
     startIndexing(context.applicationContext, mediaTypes, indexJob)
 }
 
-suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<MediaType, FileEmbeddingStore>>, clusterCrossRefRepository: ClusterCrossRefRepository, clusterMetadataRepository: ClusterMetadataRepository) {
+suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<MediaType, FileEmbeddingStore>>, clusterManager: ClusterManager) {
     mediaEmbeddingStores.forEach { typeToStore ->
         when(typeToStore.first){
             MediaType.IMAGE -> {
@@ -44,8 +43,6 @@ suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<Media
             }
         }
     }
-    File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER).delete()
-    clusterCrossRefRepository.clear()
-    clusterMetadataRepository.clear()
+    clusterManager.deleteAllClusters(context)
     refreshIndex(context.applicationContext, mediaEmbeddingStores.map{it.first})
 }

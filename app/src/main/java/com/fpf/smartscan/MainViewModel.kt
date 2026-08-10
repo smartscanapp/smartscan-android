@@ -2,6 +2,7 @@ package com.fpf.smartscan
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
@@ -11,11 +12,9 @@ import com.fpf.smartscan.cloud.index.CloudImageIndexListener
 import com.fpf.smartscan.core.embeds.EmbeddingStoresFiles
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
+import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.data.DataSyncHelper
-import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.models.ModelRepository
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.index.ImageIndexListener
 import com.fpf.smartscan.core.index.IndexJobType
@@ -42,14 +41,13 @@ import java.util.concurrent.TimeUnit
 
 class MainViewModel(
     application: Application,
-    private val db: MediaDatabase,
+    private val mediaMetadataRepository: MediaMetadataRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
+    private val clusterManager: ClusterManager,
     private val modelRepository: ModelRepository
 ) : AndroidViewModel(application) {
 
@@ -82,7 +80,7 @@ class MainViewModel(
     val versionName: String? = try {
         val packageInfo = application.packageManager.getPackageInfo(application.packageName, 0)
         packageInfo.versionName
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 
@@ -105,8 +103,8 @@ class MainViewModel(
             application.getString(R.string.update_tagging),
             application.getString(R.string.update_strictness),
             application.getString(R.string.update_fixed_mediastore_collision_bug),
-            application.getString(R.string.update_backups),
-            )
+            application.getString(R.string.update_backups)
+        )
     }
 
     fun prepareApp(onAppReady: () -> Unit) {
@@ -127,8 +125,17 @@ class MainViewModel(
                 videoEmbedStores = listOf(videoEmbedStore, videoConceptEmbedStore),
                 allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()},
                 allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()},
-                mediaMetadataRepository = MediaMetadataRepository(db.metadataDao())
+                mediaMetadataRepository = mediaMetadataRepository,
+                clusterManager = clusterManager,
             )
+
+            // One time sync if required to remove stale clusters embeds which could exist
+            // because the current mechanism which syncs clusters after media purging was not in place in older versions
+            val hasSyncedClustersWithRoom: Boolean = sharedPrefs.getBoolean(PrefsKeys.HAS_SYNCED_CLUSTERS, false)
+            if(!hasSyncedClustersWithRoom){
+                clusterManager.syncEmbedsWithRoom()
+                sharedPrefs.edit { putBoolean(PrefsKeys.HAS_SYNCED_CLUSTERS, true) }
+            }
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
 
@@ -160,7 +167,7 @@ class MainViewModel(
             }
             viewModelScope.launch {
                 _runningMediaTypes.update { mediaTypes.toSet()}
-                rebuildIndex(getApplication(), mediaTypeToEmbedStore, clusterCrossRefRepository, clusterMetadataRepository)
+                rebuildIndex(getApplication(), mediaTypeToEmbedStore, clusterManager)
             }
         }
     }
@@ -178,7 +185,6 @@ class MainViewModel(
         resetConceptIndexingState(mediaType)
         _runningMediaTypes.update { it - mediaType}
     }
-
 
     fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
