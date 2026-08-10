@@ -214,6 +214,7 @@ fun MediaViewer(
                         isZoomed = scale > 1f,
                         onTap = { isActionsVisible = !isActionsVisible },
                         onDoubleTap = {
+                            if(detailsExpanded) return@mediaViewerGestures
                             if (targetScale > 1f) {
                                 targetScale = 1f
                                 targetOffset = Offset.Zero
