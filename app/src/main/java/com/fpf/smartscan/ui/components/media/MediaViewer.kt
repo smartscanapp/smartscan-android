@@ -34,7 +34,10 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.MediaItem as ExoMediaItem
@@ -65,6 +68,7 @@ fun MediaViewer(
     var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
     var detailsExpanded by remember { mutableStateOf(false) }
+    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
 
     // Media details
     var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
@@ -92,23 +96,38 @@ fun MediaViewer(
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
         label = "detailsExpandedScale"
     )
+
     val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
         val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
         targetScale = newScale
 
-        if (newScale <= 1f || currentItemWidth <= 0 || currentItemHeight <= 0) {
+        if (newScale <= 1f || viewportSize.width == 0 || viewportSize.height == 0 || currentItemWidth == 0 || currentItemHeight == 0) {
             targetOffset = Offset.Zero
-        } else {
-            val scaledWidth = currentItemWidth * newScale * detailsExpandedScale
-            val scaledHeight = currentItemHeight * newScale * detailsExpandedScale
-            val maxX = ((scaledWidth - currentItemWidth) / 2f).coerceAtLeast(0f)
-            val maxY = ((scaledHeight - currentItemHeight) / 2f).coerceAtLeast(0f)
-
-            targetOffset = Offset(
-                x = (targetOffset.x + panChange.x).coerceIn(-maxX, maxX),
-                y = (targetOffset.y + panChange.y).coerceIn(-maxY, maxY)
-            )
+            return@rememberTransformableState
         }
+
+        val viewportWidth = viewportSize.width.toFloat()
+        val viewportHeight = viewportSize.height.toFloat()
+        val imageAspect = currentItemWidth.toFloat() / currentItemHeight.toFloat()
+        val fittedWidth: Float
+        val fittedHeight: Float
+
+        if (imageAspect > viewportWidth / viewportHeight) {
+            fittedWidth = viewportWidth
+            fittedHeight = viewportWidth / imageAspect
+        } else {
+            fittedWidth = viewportHeight * imageAspect
+            fittedHeight = viewportHeight
+        }
+
+        val scale = newScale * detailsExpandedScale
+        val maxX = ((fittedWidth * scale - viewportWidth) / 2f).coerceAtLeast(0f)
+        val maxY = ((fittedHeight * scale - viewportHeight) / 2f).coerceAtLeast(0f)
+
+        targetOffset = Offset(
+            x = (targetOffset.x + panChange.x).coerceIn(-maxX, maxX),
+            y = (targetOffset.y + panChange.y).coerceIn(-maxY, maxY)
+        )
     }
 
     DisposableEffect(Unit) {
@@ -230,6 +249,7 @@ fun MediaViewer(
                             .transformable(transformableState)
                             .fillMaxWidth()
                             .height(mediaHeight)
+                            .onSizeChanged { viewportSize = it }
                             .align(Alignment.TopCenter)
                             .clipToBounds()
                     ) {
