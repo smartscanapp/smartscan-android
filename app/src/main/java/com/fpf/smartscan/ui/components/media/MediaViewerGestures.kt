@@ -11,19 +11,19 @@ import kotlin.math.abs
 fun Modifier.mediaViewerGestures(
     gestureKey: Long,
     isZoomed: Boolean,
-    onTap: () -> Unit = {},
-    onDoubleTap: () -> Unit = {},
-    onSwipeLeft: () -> Unit = {},
-    onSwipeRight: () -> Unit = {},
-    onSwipeUp: () -> Unit = {},
-    onSwipeDown: () -> Unit = {},
+    onTap: (() -> Unit)? = null,
+    onDoubleTap: (() -> Unit)? = null,
+    onSwipeLeft: (() -> Unit)? = null,
+    onSwipeRight: (() -> Unit)? = null,
+    onSwipeUp: (() -> Unit)? = null,
+    onSwipeDown: (() -> Unit)? = null,
     threshold: Float = 100f
 ): Modifier {
     return this
         .pointerInput(gestureKey) {
             detectTapGestures(
-                onTap = { onTap() },
-                onDoubleTap = { onDoubleTap() }
+                onTap = { onTap?.invoke() },
+                onDoubleTap = { onDoubleTap?.invoke() }
             )
         }
         .pointerInput(isZoomed, threshold) {
@@ -85,17 +85,17 @@ fun Modifier.mediaViewerGestures(
                 when {
                     absX > absY && absX > threshold -> {
                         if (dx < 0f) {
-                            onSwipeLeft()
+                            onSwipeLeft?.invoke()
                         } else {
-                            onSwipeRight()
+                            onSwipeRight?.invoke()
                         }
                     }
 
                     absY > absX && absY > threshold -> {
                         if (dy < 0f) {
-                            onSwipeUp()
+                            onSwipeUp?.invoke()
                         } else {
-                            onSwipeDown()
+                            onSwipeDown?.invoke()
                         }
                     }
                 }
