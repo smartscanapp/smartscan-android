@@ -1,9 +1,11 @@
 package com.fpf.smartscan.core.cluster
 
+import android.content.Context
 import android.util.Log
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.mappers.toIncrementalClusterMetadata
+import com.fpf.smartscan.core.embeds.EmbeddingStoresFilesQuant
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.utils.reservoirSample
@@ -16,6 +18,7 @@ import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.generatePrototypeEmbedding
 import com.fpf.smartscansdk.core.embeddings.getSimilarities
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
+import java.io.File
 import kotlin.collections.map
 import kotlin.collections.mapNotNull
 import kotlin.math.sqrt
@@ -117,6 +120,11 @@ class ClusterManager(
 
     suspend fun getClustersMatchingMedia(mediaId: Long, mediaType: MediaType): List<StoredClusterMetadata>{
         return clusterMetadataRepository.getClustersForMedia(mediaId, mediaType)
+    }
+
+    suspend fun deleteAllClusters(context: Context){
+        File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER).delete()
+        clusterMetadataRepository.clear() // cascades crossrefs
     }
 
     private suspend fun getAllClusters(): Map<Long, Cluster> {
