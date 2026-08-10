@@ -1,6 +1,7 @@
 package com.fpf.smartscan.core.cluster
 
 import android.content.Context
+import android.util.Log
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.mappers.toIncrementalClusterMetadata
@@ -81,6 +82,16 @@ class ClusterManager(
         val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = embeddings.size)
         clusterEmbedStore.update(listOf(updatedStoredEmbed))
         clusterMetadataRepository.updateMetadata(updatedMetadata)
+    }
+
+    suspend fun syncEmbedsWithRoom(){
+        val clusterIdsFromRoom = clusterMetadataRepository.getClusterIds().toSet()
+        val clusterIdsFromEmbedStore = clusterEmbedStore.get().map{it.id}
+        val clustersIdsToPurge = clusterIdsFromEmbedStore.filterNot { it in clusterIdsFromRoom}
+        if(clustersIdsToPurge.isNotEmpty()) {
+            val removed = clusterEmbedStore.remove(clustersIdsToPurge)
+            Log.d(TAG, "Purged $removed clusters")
+        }
     }
 
     suspend fun mergeClusters(primaryClusterId: Long, otherClusters: List<Long>){
