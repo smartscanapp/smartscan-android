@@ -236,7 +236,8 @@ fun BinScreen(
             )
 
             EmptyItemsScreen(
-                isVisible = items.itemCount == 0
+                isVisible = items.itemCount == 0,
+                description = stringResource(R.string.bin_description)
             )
         }
 
