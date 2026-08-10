@@ -1,5 +1,6 @@
 package com.fpf.smartscan.ui.components.placeholders
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,6 +23,9 @@ import com.fpf.smartscan.R
 @Composable
 fun EmptyItemsScreen(
     isVisible: Boolean,
+    title: String? = null,
+    description: String? = null,
+    icon: ImageVector? = null
 ) {
     if (!isVisible) return
 
@@ -32,19 +37,27 @@ fun EmptyItemsScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.HideImage,
+                imageVector = icon?: Icons.Filled.HideImage,
                 contentDescription = "No media icon",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(96.dp)
             )
 
             Text(
-                text = stringResource(R.string.collections_no_collections_items_title),
+                text = title?: stringResource(R.string.collections_no_collections_items_title),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.displayMedium
             )
+
+            description?.let{
+                Text(
+                    text = description,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
