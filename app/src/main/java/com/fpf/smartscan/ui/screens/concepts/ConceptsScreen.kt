@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,7 +79,7 @@ fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     onGenerateSummaries: ()-> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
@@ -132,6 +132,10 @@ fun ConceptsScreen(
                       },
             enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
         ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onNavigateToSettings() },
+        ),
     )
 
     var offset by remember { mutableIntStateOf(0) }
@@ -153,14 +157,6 @@ fun ConceptsScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -169,6 +165,7 @@ fun ConceptsScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp),
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}

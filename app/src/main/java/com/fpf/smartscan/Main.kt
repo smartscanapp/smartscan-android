@@ -219,7 +219,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
-                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                             onNavigateToRecyclingBin = { navController.navigate(Routes.BIN) },
                             )
                     }
@@ -235,7 +235,7 @@ fun Main(
 
                                 navController.navigate(Routes.COLLECTION_ITEMS)
                             },
-                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                             onNavigateToRecyclingBin = { navController.navigate(Routes.BIN) },
                             )
                     }
@@ -278,7 +278,7 @@ fun Main(
 
                                 navController.navigate(Routes.CONCEPT_ITEMS)
                             },
-                            onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
                         )
                     }
                     composable(

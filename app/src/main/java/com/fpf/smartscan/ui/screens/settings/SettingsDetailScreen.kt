@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.ui.components.pickers.DirectoryPicker
 import com.fpf.smartscan.R
 import com.fpf.smartscan.navigation.SettingsRoutes
@@ -62,6 +63,7 @@ fun SettingsDetailScreen(
         SettingsRoutes.MODELS -> stringResource(R.string.setting_models)
         SettingsRoutes.MANAGE_MODELS -> stringResource(R.string.setting_manage_models)
         SettingsRoutes.ALLOWED_FOLDERS -> stringResource(R.string.setting_allowed_folders)
+        SettingsRoutes.API -> stringResource(R.string.setting_api_keys)
         else -> ""
     }
 
@@ -190,9 +192,16 @@ fun SettingsDetailScreen(
                 }
                 SettingsRoutes.API-> {
                     TextInput(
-                        label = "OpenAI API Key",
+                        label = stringResource(R.string.setting_openai_api_key),
                         value = appSettings.openaiApiKey?:"",
-                        onValueChange = viewModel::updateOpenaiApiKey
+                        onValueChange = viewModel::updateOpenaiApiKey,
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.placeholders_api_key),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+
                     )
                 }
                 else -> {}

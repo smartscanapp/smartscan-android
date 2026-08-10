@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
@@ -83,7 +82,7 @@ fun SearchScreen(
     hasStoragePermission: Boolean,
     appSettings:  StateFlow<AppSettings>,
     onIndex: (mediaType: MediaType?) -> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
     onNavigateToRecyclingBin: () -> Unit,
     onTopBarChange: (TopBarState) -> Unit,
@@ -152,6 +151,10 @@ fun SearchScreen(
         MenuActionConfig.Button(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onNavigateToSettings() },
         ),
     )
 
@@ -234,14 +237,6 @@ fun SearchScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -250,6 +245,7 @@ fun SearchScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp) ,
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}

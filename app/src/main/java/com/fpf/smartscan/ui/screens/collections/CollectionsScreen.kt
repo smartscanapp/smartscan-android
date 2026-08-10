@@ -16,13 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -75,7 +75,7 @@ fun CollectionsScreen(
     hasStoragePermission: Boolean,
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToRecyclingBin: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
@@ -111,6 +111,10 @@ fun CollectionsScreen(
         MenuActionConfig.Button(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onNavigateToSettings() },
         ),
     )
 
@@ -152,14 +156,6 @@ fun CollectionsScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -168,6 +164,7 @@ fun CollectionsScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp) ,
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}
