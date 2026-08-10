@@ -74,6 +74,7 @@ fun ConceptItemsList(
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
     var playingVideoId by remember { mutableStateOf<Long?>(null) }
+    var initialVisibleItemCount by remember { mutableIntStateOf(0) }
 
     val connection = remember(maxCollapsePx) {
         object : NestedScrollConnection {
@@ -118,13 +119,20 @@ fun ConceptItemsList(
         }
             .distinctUntilChanged()
             .collect { (index, offset, visibleVideos) ->
+                val visibleItemCount = listState.layoutInfo.visibleItemsInfo.size
                 val movedDown = index > previousIndex || (index == previousIndex && offset > previousOffset)
                 val movedUp = index < previousIndex || (index == previousIndex && offset < previousOffset)
+
+                if (initialVisibleItemCount == 0 && visibleItemCount > 0) {
+                    initialVisibleItemCount = visibleItemCount
+                }
+
+                val scrolledPastThreshold = initialVisibleItemCount > 0 && index >= 5 * initialVisibleItemCount
 
                 showScrollToTop = when {
                     index == 0 && offset == 0 -> false
                     movedUp -> false
-                    movedDown -> true
+                    movedDown && scrolledPastThreshold -> true
                     else -> showScrollToTop
                 }
 

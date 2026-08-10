@@ -75,6 +75,7 @@ fun MediaCollectionsList(
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
+    var initialVisibleItemCount by remember { mutableIntStateOf(0) }
 
     val connection = remember {
         object : NestedScrollConnection {
@@ -97,14 +98,20 @@ fun MediaCollectionsList(
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
         }.collect { (index, offset) ->
-
+            val visibleItemCount = gridState.layoutInfo.visibleItemsInfo.size
             val movedDown = index > previousIndex || (index == previousIndex && offset > previousOffset)
             val movedUp = index < previousIndex || (index == previousIndex && offset < previousOffset)
+
+            if (initialVisibleItemCount == 0 && visibleItemCount > 0) {
+                initialVisibleItemCount = visibleItemCount
+            }
+
+            val scrolledPastThreshold = initialVisibleItemCount > 0 && index >= 2 * initialVisibleItemCount
 
             showScrollToTop = when {
                 index == 0 && offset == 0 -> false
                 movedUp -> false
-                movedDown -> true
+                movedDown && scrolledPastThreshold -> true
                 else -> showScrollToTop
             }
 
