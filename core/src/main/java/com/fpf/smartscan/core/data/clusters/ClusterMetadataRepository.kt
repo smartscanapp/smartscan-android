@@ -17,6 +17,7 @@ class ClusterMetadataRepository(private val dao: ClusterMetadataDao) {
     fun getCollections(): Flow<List<MediaCollection>> = dao.getCollections().map{collections -> collections.map{it.toDomain()}}
 
     suspend fun getClustersForMedia(mediaId: Long, mediaType: MediaType): List<StoredClusterMetadata> = dao.getClustersForMedia(mediaId, mediaType).map{it.toDomain()}
+    suspend fun getClustersForMedia(mediaIds: List<Long>, mediaType: MediaType): List<StoredClusterMetadata> = dao.getClustersForMedia(mediaIds, mediaType).map{it.toDomain()}
     suspend fun getCollections(clusterIds: List<Long>): List<MediaCollection> = dao.getCollections(clusterIds).map{ it.toDomain()}
     suspend fun getMetadata(ids: List<Long>): List<StoredClusterMetadata> = dao.get(ids).map{it.toDomain()}
     suspend fun getMetadata(id: Long): StoredClusterMetadata? = dao.get(listOf(id)).firstOrNull()?.toDomain()
