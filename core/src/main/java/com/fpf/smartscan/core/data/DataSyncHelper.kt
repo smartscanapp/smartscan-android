@@ -3,6 +3,8 @@ package com.fpf.smartscan.core.data
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.fpf.smartscan.core.cluster.ClusterManager
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaStoreHelper
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.removeStaleMedia
@@ -27,20 +29,33 @@ object DataSyncHelper {
         videoEmbedStores: List<FileEmbeddingStore>,
         allowedImageDirs: List<Uri> = emptyList(),
         allowedVideoDirs: List<Uri> = emptyList(),
-        mediaMetadataRepository: com.fpf.smartscan.core.data.media.MediaMetadataRepository
+        mediaMetadataRepository: MediaMetadataRepository,
+        clusterManager: ClusterManager,
         ){
-        syncWithMediaStore(context,
+        val purgedImageIds = syncWithMediaStore(context,
             embedStores = imageEmbedStores,
             allowedDirs = allowedImageDirs,
             mediaMetadataRepository = mediaMetadataRepository,
             mediaType = MediaType.IMAGE
         )
-        syncWithMediaStore(context,
+        val purgedVideoIds = syncWithMediaStore(context,
             embedStores = videoEmbedStores,
             allowedDirs = allowedVideoDirs,
             mediaMetadataRepository = mediaMetadataRepository,
             mediaType = MediaType.VIDEO
         )
+
+        val clustersToSync = buildSet {
+            purgedImageIds.forEach { mediaId ->
+                val clusters = clusterManager.getClustersMatchingMedia(mediaId, MediaType.IMAGE)
+                addAll(clusters.map{it.clusterId})
+            }
+            purgedVideoIds.forEach { mediaId ->
+                val clusters = clusterManager.getClustersMatchingMedia(mediaId, MediaType.VIDEO)
+                addAll(clusters.map{it.clusterId})
+            }
+        }
+        clustersToSync.forEach { clusterManager.sync(it) }
     }
 
     private suspend fun quantizeEmbedStore( oldEmbedStoreFile: File, quantStore: FileEmbeddingStore){
@@ -57,12 +72,12 @@ object DataSyncHelper {
         context: Context,
         embedStores: List<FileEmbeddingStore>,
         allowedDirs: List<Uri> = emptyList(),
-        mediaMetadataRepository: com.fpf.smartscan.core.data.media.MediaMetadataRepository,
+        mediaMetadataRepository: MediaMetadataRepository,
         mediaType: MediaType
-    ) {
+    ): List<Long> {
         try {
             val existingIdsFromMetadata = mediaMetadataRepository.getIds(mediaType)
-            if (existingIdsFromMetadata.isEmpty()) return
+            if (existingIdsFromMetadata.isEmpty()) return emptyList()
 
             val accessibleMediaIds = when (mediaType) {
                 MediaType.IMAGE -> MediaStoreHelper.queryImageIds(context, allowedDirs).toSet()
@@ -74,8 +89,10 @@ object DataSyncHelper {
                 removeStaleMedia(mediaToPurge, mediaType, embedStores, mediaMetadataRepository)
                 Log.d(TAG, "${mediaType.name}: Removed ${mediaToPurge.size} stale items")
             }
+            return mediaToPurge
         }catch (e: Exception){
             Log.e(TAG, "Error syncing with MediaStore\n Type: ${mediaType.name}\nDetails: $e")
+            return emptyList()
         }
     }
 }
