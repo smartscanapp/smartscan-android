@@ -107,10 +107,9 @@
 
     <!--Concepts Screen-->
     <string name="concepts_empty_screen_title">No Concepts</string>
-    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning, helping you rediscover information you\'ve saved but forgotten about. To get started you can manually add descriptions to media in the Media Viewer or follow the steps below to generate descriptions automatically.</string>
-    <string name="concepts_step_select_collections">Select allowed collections from the menu.</string>
-    <string name="concepts_step_generate_summaries">Generate descriptions for images in your selected collections.</string>
-    <string name="concepts_required_api_key_note">A SmartScan API key is required to generate descriptions.</string>
+    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning using media descriptions, helping you rediscover information you\'ve saved but forgotten about.\n\nYou can manually add descriptions in the Media Viewer or generate descriptions automatically in the menu.</string>
+    <string name="concepts_required_api_key_note">An OpenAI API key is required to generate descriptions. Don\'t have one? Get in touch via GitHub or Reddit.</string>
+    <string name="concepts_image_description_note">Generating image descriptions is intended for text-heavy images.</string>
     <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
     <string name="concepts_delete_alert_title">Delete concepts</string>
     <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>
@@ -124,10 +123,10 @@
     <string name="pin_unpin_concept_action">Pin / Unpin </string>
     <string name="placeholders_add_concept">Describe your new concept</string>
     <string name="concepts_wifi_warning_alert_title">Not connected to Wi-Fi</string>
-    <string name="concepts_wifi_warning_alert_content">Generating summaries can use a lot of network data. Do you want to continue without connecting to Wi-Fi?</string>
-    <string name="concepts_allowed_tag_collection_menu_action">Set allowed tag collections</string>
-    <string name="concepts_allowed_auto_collection_menu_action">Set allowed auto collections</string>
-    <string name="concepts_generate_summaries_menu_action">Generate summaries</string>
+    <string name="concepts_wifi_warning_alert_content">Generating descriptions can use a lot of network data. Do you want to continue without connecting to Wi-Fi?</string>
+    <string name="concepts_allowed_tag_collection_menu_action">Allowed tag collections</string>
+    <string name="concepts_allowed_auto_collection_menu_action">Allowed auto collections</string>
+    <string name="concepts_generate_summaries_menu_action">Generate image descriptions</string>
     <string name="concepts_updating_matching_media">Updating matching media…</string>
 
     <!--Collections Screen-->

@@ -30,11 +30,6 @@ fun EmptyConceptsScreen(
 ) {
     if (!isVisible) return
 
-    val steps = listOf(
-        stringResource(R.string.concepts_step_select_collections),
-        stringResource(R.string.concepts_step_generate_summaries)
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -58,7 +53,12 @@ fun EmptyConceptsScreen(
                     .padding(bottom = 32.dp)
             )
             if( isMainScanRequired){
-                Text(text = stringResource(R.string.alert_initial_scan_required), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+                Text(
+                    text = stringResource(R.string.alert_initial_scan_required),
+                    color = Color.Red,
+                    modifier = Modifier.padding(vertical=8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    )
             }
 
             Column(
@@ -71,16 +71,15 @@ fun EmptyConceptsScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                steps.forEachIndexed { index, step ->
-                    Text(
-                        text = "${index+1}. $step",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
                 Text(
                     text = stringResource(R.string.concepts_required_api_key_note),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    fontStyle = FontStyle.Italic
+                )
+                Text(
+                    text = stringResource(R.string.concepts_image_description_note),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                     fontStyle = FontStyle.Italic
                 )
