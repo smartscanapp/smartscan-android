@@ -175,6 +175,8 @@
     <string name="setting_source_code">Source code</string>
     <string name="setting_social_reddit">Reddit</string>
     <string name="setting_api_keys">API keys</string>
+    <string name="setting_openai_api_key">OpenAI API key</string>
+    <string name="placeholders_api_key">Enter API key</string>
 
     <!--Model Manager-->
     <string name="delete_model_alert_title">Delete model</string>
