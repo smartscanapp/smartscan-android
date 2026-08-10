@@ -42,7 +42,6 @@ fun SearchFilterControls(
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
 
