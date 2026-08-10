@@ -62,6 +62,7 @@ fun SettingsDetailScreen(
         SettingsRoutes.MODELS -> stringResource(R.string.setting_models)
         SettingsRoutes.MANAGE_MODELS -> stringResource(R.string.setting_manage_models)
         SettingsRoutes.ALLOWED_FOLDERS -> stringResource(R.string.setting_allowed_folders)
+        SettingsRoutes.API -> stringResource(R.string.setting_api_keys)
         else -> ""
     }
 
