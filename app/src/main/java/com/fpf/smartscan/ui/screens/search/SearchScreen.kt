@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
@@ -83,7 +82,7 @@ fun SearchScreen(
     hasStoragePermission: Boolean,
     appSettings:  StateFlow<AppSettings>,
     onIndex: (mediaType: MediaType?) -> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
     onNavigateToRecyclingBin: () -> Unit,
     onTopBarChange: (TopBarState) -> Unit,
@@ -155,7 +154,7 @@ fun SearchScreen(
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_settings),
-            onClick = { onOpenSettings() },
+            onClick = { onNavigateToSettings() },
         ),
     )
 

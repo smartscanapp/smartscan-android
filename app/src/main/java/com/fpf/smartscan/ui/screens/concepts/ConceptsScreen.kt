@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,7 +79,7 @@ fun ConceptsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     onGenerateSummaries: ()-> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: ConceptsViewModel = koinViewModel(),
 ) {
 
@@ -135,7 +134,7 @@ fun ConceptsScreen(
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_settings),
-            onClick = { onOpenSettings() },
+            onClick = { onNavigateToSettings() },
         ),
     )
 

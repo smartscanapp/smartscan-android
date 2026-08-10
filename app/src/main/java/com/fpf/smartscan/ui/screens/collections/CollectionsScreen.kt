@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -76,7 +75,7 @@ fun CollectionsScreen(
     hasStoragePermission: Boolean,
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    onOpenSettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToRecyclingBin: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
@@ -115,7 +114,7 @@ fun CollectionsScreen(
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_settings),
-            onClick = { onOpenSettings() },
+            onClick = { onNavigateToSettings() },
         ),
     )
 
