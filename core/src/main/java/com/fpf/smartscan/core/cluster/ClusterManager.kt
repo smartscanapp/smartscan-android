@@ -1,7 +1,6 @@
 package com.fpf.smartscan.core.cluster
 
 import android.content.Context
-import android.util.Log
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.mappers.toIncrementalClusterMetadata
@@ -82,7 +81,6 @@ class ClusterManager(
         val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = embeddings.size)
         clusterEmbedStore.update(listOf(updatedStoredEmbed))
         clusterMetadataRepository.updateMetadata(updatedMetadata)
-        Log.d(TAG, "Synced cluster: $clusterId")
     }
 
     suspend fun mergeClusters(primaryClusterId: Long, otherClusters: List<Long>){
@@ -122,6 +120,9 @@ class ClusterManager(
         return clusterMetadataRepository.getClustersForMedia(mediaId, mediaType)
     }
 
+    suspend fun getClustersMatchingMedia(mediaIds: List<Long>, mediaType: MediaType): List<StoredClusterMetadata>{
+        return clusterMetadataRepository.getClustersForMedia(mediaIds, mediaType)
+    }
     suspend fun deleteAllClusters(context: Context){
         File(context.filesDir, EmbeddingStoresFilesQuant.CLUSTER).delete()
         clusterMetadataRepository.clear() // cascades crossrefs
