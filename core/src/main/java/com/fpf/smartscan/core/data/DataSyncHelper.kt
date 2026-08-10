@@ -32,28 +32,24 @@ object DataSyncHelper {
         mediaMetadataRepository: MediaMetadataRepository,
         clusterManager: ClusterManager,
         ){
-        val purgedImageIds = syncWithMediaStore(context,
+        val clusterIdsFromImageSync = syncWithMediaStore(context,
             embedStores = imageEmbedStores,
             allowedDirs = allowedImageDirs,
             mediaMetadataRepository = mediaMetadataRepository,
+            clusterManager = clusterManager,
             mediaType = MediaType.IMAGE
         )
-        val purgedVideoIds = syncWithMediaStore(context,
+        val clusterIdsFromVideoSync = syncWithMediaStore(context,
             embedStores = videoEmbedStores,
             allowedDirs = allowedVideoDirs,
             mediaMetadataRepository = mediaMetadataRepository,
+            clusterManager = clusterManager,
             mediaType = MediaType.VIDEO
         )
 
         val clustersToSync = buildSet {
-            purgedImageIds.forEach { mediaId ->
-                val clusters = clusterManager.getClustersMatchingMedia(mediaId, MediaType.IMAGE)
-                addAll(clusters.map{it.clusterId})
-            }
-            purgedVideoIds.forEach { mediaId ->
-                val clusters = clusterManager.getClustersMatchingMedia(mediaId, MediaType.VIDEO)
-                addAll(clusters.map{it.clusterId})
-            }
+            addAll(clusterIdsFromImageSync)
+            addAll(clusterIdsFromVideoSync)
         }
         clustersToSync.forEach { clusterManager.sync(it) }
     }
@@ -73,7 +69,8 @@ object DataSyncHelper {
         embedStores: List<FileEmbeddingStore>,
         allowedDirs: List<Uri> = emptyList(),
         mediaMetadataRepository: MediaMetadataRepository,
-        mediaType: MediaType
+        clusterManager: ClusterManager,
+        mediaType: MediaType,
     ): List<Long> {
         try {
             val existingIdsFromMetadata = mediaMetadataRepository.getIds(mediaType)
@@ -85,11 +82,14 @@ object DataSyncHelper {
             }
 
             val mediaToPurge = existingIdsFromMetadata.filterNot { it in accessibleMediaIds }
+            var clustersToSync: List<Long> = emptyList()
             if (mediaToPurge.isNotEmpty()) {
+                // Must get clusters first because deleting media causes cascading of cluster crossrefs (will break if not)
+                clustersToSync = clusterManager.getClustersMatchingMedia(mediaToPurge, mediaType).map{it.clusterId}
                 removeStaleMedia(mediaToPurge, mediaType, embedStores, mediaMetadataRepository)
                 Log.d(TAG, "${mediaType.name}: Removed ${mediaToPurge.size} stale items")
             }
-            return mediaToPurge
+            return clustersToSync
         }catch (e: Exception){
             Log.e(TAG, "Error syncing with MediaStore\n Type: ${mediaType.name}\nDetails: $e")
             return emptyList()
