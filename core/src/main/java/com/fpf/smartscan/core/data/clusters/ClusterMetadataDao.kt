@@ -120,7 +120,6 @@ ORDER BY prototypeSize DESC
     fun getCollections(clusterIds: List<Long>): List<AutoCollectionData>
 
 
-
     @Query("""
     SELECT metadata.*, COUNT(crossRef.mediaId) AS prototypeSize
     FROM cluster_metadata metadata
@@ -137,6 +136,9 @@ ORDER BY prototypeSize DESC
     GROUP BY metadata.clusterId
 """)
     suspend fun get(ids: List<Long>): List<ClusterMetadataEntity>
+
+    @Query("SELECT clusterId FROM cluster_metadata metadata")
+    suspend fun getIds(): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(clusters: List<ClusterMetadataEntity>): List<Long>
