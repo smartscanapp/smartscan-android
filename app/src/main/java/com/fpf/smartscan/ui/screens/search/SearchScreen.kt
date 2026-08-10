@@ -153,6 +153,10 @@ fun SearchScreen(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
         ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onOpenSettings() },
+        ),
     )
 
 
@@ -234,14 +238,6 @@ fun SearchScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -250,6 +246,7 @@ fun SearchScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp) ,
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -132,6 +133,10 @@ fun ConceptsScreen(
                       },
             enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
         ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onOpenSettings() },
+        ),
     )
 
     var offset by remember { mutableIntStateOf(0) }
@@ -153,14 +158,6 @@ fun ConceptsScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -169,6 +166,7 @@ fun ConceptsScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp),
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}

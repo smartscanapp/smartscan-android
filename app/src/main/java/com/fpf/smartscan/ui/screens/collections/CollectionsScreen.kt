@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -112,6 +113,10 @@ fun CollectionsScreen(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
         ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onOpenSettings() },
+        ),
     )
 
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
@@ -152,14 +157,6 @@ fun CollectionsScreen(
             TopBarState(
                 title = screenTitle,
                 actions = {
-                    IconButton(
-                        onClick = {onOpenSettings()}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "settings"
-                        )
-                    }
                     Box{
                         IconButton (onClick = { showMenu = true }) {
                             Icon(
@@ -168,6 +165,7 @@ fun CollectionsScreen(
                             )
                         }
                         DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp) ,
                             expanded = showMenu,
                             actions = menuActions,
                             onClose = {showMenu = false}
