@@ -57,6 +57,29 @@ class ClusterManager(
         updateClustersAndAssign(result, existingClusters.keys, unclusterItems)
     }
 
+    suspend fun sync(clusterId: Long){
+        val clusterCrossRefs = clusterCrossRefRepository.getByClusterIds(listOf(clusterId))
+
+        // Delete cluster from embed store if there is no items in cluster
+        if(clusterCrossRefs.isEmpty()) {
+            clusterEmbedStore.remove(listOf(clusterId))
+            return
+        }
+
+        val (imageCrossRefs, videoCrossRefs) = clusterCrossRefs.partition{it.mediaType == MediaType.IMAGE}
+        val embeddings = mutableListOf<Embedding>()
+        embeddings.addAll(imageEmbedStore.get(imageCrossRefs.map{it.mediaId}).map {it.embedding})
+        embeddings.addAll(videoEmbedStore.get(videoCrossRefs.map{it.mediaId}).map{it.embedding})
+
+        val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(embeddings)
+        val oldStoredEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()?: error("Cluster embedding not found")
+        val updatedStoredEmbed = oldStoredEmbed.copy(embedding = prototypeEmbedding)
+        val clusterMetadata = clusterMetadataRepository.getMetadata(clusterId)?: return
+        val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = embeddings.size)
+        clusterEmbedStore.update(listOf(updatedStoredEmbed))
+        clusterMetadataRepository.updateMetadata(updatedMetadata)
+    }
+
     suspend fun mergeClusters(primaryClusterId: Long, otherClusters: List<Long>){
         val otherClustersCrossRefs = clusterCrossRefRepository.getByClusterIds(otherClusters)
         val updatedClusterCrossRefs = otherClustersCrossRefs.map { it.copy(clusterId = primaryClusterId) }
@@ -220,39 +243,9 @@ class ClusterManager(
         return Triple(prototypeEmbedding, meanSim, stdSim)
     }
 
-    private suspend fun sync(clusterId: Long){
-        val clusterCrossRefs = clusterCrossRefRepository.getByClusterIds(listOf(clusterId))
-
-        // Delete cluster from embed store if there is no items in cluster
-        if(clusterCrossRefs.isEmpty()) {
-            val clusterEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()
-            clusterEmbed?.let{ clusterEmbedStore.remove(listOf(it.id)) }
-            return
-        }
-
-        val mediaIds = clusterCrossRefs.map{it.mediaId}
-        val embeddings = mutableListOf<Embedding>()
-
-        // Note: mediaIds may contain both image and video ids so get calls are required to both stores
-        // In the event that it only contains 1 media type, then an empty list will be returned if that media type doesnt match the embed store
-        // This is quicker than checking type via db
-        embeddings.addAll(imageEmbedStore.get(mediaIds).map {it.embedding})
-        embeddings.addAll(videoEmbedStore.get(mediaIds).map{it.embedding})
-
-        val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(embeddings)
-        val oldStoredEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()?: error("Cluster embedding not found")
-        val updatedStoredEmbed = oldStoredEmbed.copy(embedding = prototypeEmbedding)
-        val clusterMetadata = clusterMetadataRepository.getMetadata(clusterId)?: return
-        val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = mediaIds.size)
-        clusterEmbedStore.update(listOf(updatedStoredEmbed))
-        clusterMetadataRepository.updateMetadata(updatedMetadata)
-    }
-
     private fun generateId(): Long {
         val id = System.currentTimeMillis() + idCount
         ++idCount
         return id
     }
-
-
 }
