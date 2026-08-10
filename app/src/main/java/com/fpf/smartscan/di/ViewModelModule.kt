@@ -17,7 +17,7 @@ val viewModelModule = module {
     viewModel {
         MainViewModel(
             application = get(),
-            db = get(),
+            mediaMetadataRepository = get(),
             imageEmbedStore = get(IMAGE_EMBED_STORE),
             videoEmbedStore = get(VIDEO_EMBED_STORE),
             imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),

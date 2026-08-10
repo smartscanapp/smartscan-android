@@ -14,10 +14,7 @@ import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.data.DataSyncHelper
-import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.models.ModelRepository
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.index.ImageIndexListener
 import com.fpf.smartscan.core.index.IndexJobType
@@ -44,7 +41,7 @@ import java.util.concurrent.TimeUnit
 
 class MainViewModel(
     application: Application,
-    private val db: MediaDatabase,
+    private val mediaMetadataRepository: MediaMetadataRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterEmbedStore: FileEmbeddingStore,
@@ -128,7 +125,7 @@ class MainViewModel(
                 videoEmbedStores = listOf(videoEmbedStore, videoConceptEmbedStore),
                 allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()},
                 allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()},
-                mediaMetadataRepository = MediaMetadataRepository(db.metadataDao()),
+                mediaMetadataRepository = mediaMetadataRepository,
                 clusterManager = clusterManager,
             )
 
