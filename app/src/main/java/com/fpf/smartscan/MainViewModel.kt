@@ -87,6 +87,9 @@ class MainViewModel(
     val storedVersion: String?
         get() = sharedPrefs.getString(PrefsKeys.UPDATES, null)
 
+    val hasCompletedInitialDedupe: Boolean
+        get() = sharedPrefs.getBoolean(PrefsKeys.HAS_COMPLETED_INITIAL_DEDUPE, false)
+
     private val _isUpdatePopUpVisible = MutableStateFlow(storedVersion != versionName && storedVersion != null)
     val  isUpdatePopUpVisible: StateFlow<Boolean> = _isUpdatePopUpVisible
 
@@ -213,6 +216,10 @@ class MainViewModel(
         val (minutes, seconds) = getTimeInMinutesAndSeconds(metrics.timeElapsed)
         val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${metrics.totalProcessed}, Time: ${minutes}m ${seconds}s"
         return notificationText
+    }
+
+    fun onInitialDedupeComplete(){
+        sharedPrefs.edit { putBoolean(PrefsKeys.HAS_COMPLETED_INITIAL_DEDUPE, true) }
     }
 
     private fun resetIndexingState(mediaType: MediaType){

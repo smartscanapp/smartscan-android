@@ -100,6 +100,10 @@ fun Main(
     LaunchedEffect(Unit) {
         hasStoragePermission = getStorageAccess(context) != StorageAccess.Denied
         mainViewModel.prepareApp { onAppReady() }
+        if(!mainViewModel.hasCompletedInitialDedupe){
+            mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
+            mainViewModel.onInitialDedupeComplete()
+        }
     }
 
     LaunchedEffect(imageIndexStatus) {
