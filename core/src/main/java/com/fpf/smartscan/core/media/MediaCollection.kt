@@ -21,6 +21,9 @@ data class MediaCollection (
 ): Parcelable{
     val videoCount: Int
         get() = (size - imageCount).coerceAtLeast(0)
+
+    val duplicateVideoCount: Int
+        get() = 0 // No dedupe for videos yet. May add in the future
     companion object {
         const val UNLABELLED_COLLECTION = "?"
     }
