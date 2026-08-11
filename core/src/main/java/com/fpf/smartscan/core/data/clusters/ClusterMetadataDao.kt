@@ -26,20 +26,17 @@ interface ClusterMetadataDao {
         """
     )
     suspend fun getClustersForMedia(mediaId: Long, mediaType: MediaType): List<ClusterMetadataEntity>
-
     @Query(
         """
-        SELECT meta.*
-        FROM cluster_metadata AS meta
-        INNER JOIN media_cluster_crossref AS crossref
-            ON meta.clusterId = crossref.clusterId
-        WHERE crossref.mediaId IN (:mediaIds)
-          AND crossref.mediaType = :mediaType
-        """
+    SELECT DISTINCT meta.*
+    FROM cluster_metadata AS meta
+    INNER JOIN media_cluster_crossref AS crossref
+        ON meta.clusterId = crossref.clusterId
+    WHERE crossref.mediaId IN (:mediaIds)
+      AND crossref.mediaType = :mediaType
+    """
     )
     suspend fun getClustersForMedia(mediaIds: List<Long>, mediaType: MediaType): List<ClusterMetadataEntity>
-
-
     @Query("""
 WITH active_media AS (
     SELECT id, type, dateAdded, isDuplicate
