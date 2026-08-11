@@ -3,14 +3,12 @@ package com.fpf.smartscan.core.concepts
 import com.fpf.smartscan.core.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.core.data.concepts.ConceptRepository
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.search.Reranker
 import com.fpf.smartscan.core.search.toSimsMap
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.dot
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
-import kotlin.math.max
 
 class ConceptManager(
     private val conceptRepository: ConceptRepository,
@@ -114,55 +112,35 @@ class ConceptManager(
 
     private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore): Map<Long, Float>{
         val result = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
-        val simsMap = result.toSimsMap()
-        val cutOff = Reranker.calculateRelevanceCutoff(simsMap)
-        return simsMap.filter { it.value >= cutOff }
+        return  result.toSimsMap()
     }
-
 
     private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaEmbed.id, type)
         val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
         if (conceptEmbeds.size != linkedConceptIds.size) error("Missing embeddings for some concepts")
-        val conceptScores = getConceptToScoresMap(linkedConceptIds.filterNot { it in conceptToThresholdMap })
-        conceptScores.forEach { (conceptId, scores) -> conceptToThresholdMap[conceptId] = Reranker.calculateRelevanceCutoff(scores) }
         for (conceptEmbed in conceptEmbeds){
             val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
-            val dynamicThreshold = conceptToThresholdMap[conceptEmbed.id]?.toFloat()
-            val threshold = max(similarityThreshold, dynamicThreshold?: similarityThreshold)
-            if (sim < threshold){
+            if (sim < similarityThreshold){
                 crossRefsToDelete.add(ConceptCrossRef(mediaEmbed.id, conceptId = conceptEmbed.id, type, sim))
             }
         }
         return crossRefsToDelete
     }
 
-
     private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
         val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(mediaEmbed.id, type)
         val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)
         if (unlinkedConceptIds.size != unlinkedConceptEmbeds.size) error("Missing embeddings for some concepts")
-        val conceptScores = getConceptToScoresMap(unlinkedConceptIds.filterNot { it in conceptToThresholdMap })
-        conceptScores.forEach { (conceptId, scores) -> conceptToThresholdMap[conceptId] = Reranker.calculateRelevanceCutoff(scores) }
         for (conceptEmbed in unlinkedConceptEmbeds){
             val sim = conceptEmbed.embedding.toQInt8Embed().vector dot mediaEmbed.embedding.toQInt8Embed().vector
-            val dynamicThreshold = conceptToThresholdMap[conceptEmbed.id]?.toFloat()
-            val threshold = max(similarityThreshold, dynamicThreshold?: similarityThreshold)
-            if (sim >= threshold){
+            if (sim >= similarityThreshold){
                 crossRefsToAdd.add(ConceptCrossRef(mediaEmbed.id, conceptId = conceptEmbed.id, type, sim))
             }
         }
         return crossRefsToAdd
-    }
-
-    suspend fun getConceptToScoresMap(ids: List<Long>): Map<Long, Map<Long, Float>> {
-        return conceptCrossRefRepository.getByConceptIds(ids)
-            .groupBy { it.conceptId }
-            .mapValues { (_, crossRefs) ->
-                crossRefs.associate { it.mediaId to it.similarity }
-            }
     }
 
     private fun generateId(): Long {
