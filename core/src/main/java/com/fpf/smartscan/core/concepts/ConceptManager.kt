@@ -43,8 +43,6 @@ class ConceptManager(
 
         val conceptEmbed = StoredEmbedding(id = concept.id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
         conceptEmbedStore.add(listOf(conceptEmbed))
-
-        ++idCount
         findAndUpdateMediaMatchingConcept(concept)
     }
 
@@ -167,7 +165,11 @@ class ConceptManager(
             }
     }
 
-    private fun generateId(): Long = System.currentTimeMillis() + idCount
+    private fun generateId(): Long {
+        val id = System.currentTimeMillis() + idCount
+        ++idCount
+        return id
+    }
 }
 
 
