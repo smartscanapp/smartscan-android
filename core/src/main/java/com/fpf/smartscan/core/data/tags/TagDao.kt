@@ -42,7 +42,7 @@ interface TagDao {
     // and importantly so Flow automatically retriggers when crossrefs change
     @Query("""
 WITH active_media AS (
-    SELECT id, type, dateAdded
+    SELECT id, type, dateAdded, isDuplicate
     FROM media_metadata
     WHERE isTrashed = 0
 )
@@ -50,13 +50,17 @@ SELECT
     t.id AS tagId,
     t.name,
     counts.size,
+    counts.imageCount,
+    counts.duplicateImageCount,
     latest.thumbNailId,
     latest.thumbNailType
 FROM media_tag t
 JOIN (
     SELECT
         c.tagId,
-        COUNT(*) AS size
+        COUNT(*) AS size,
+        COUNT(CASE WHEN m.type = 0 THEN 1 END) AS imageCount,
+        COUNT(CASE WHEN m.type = 0 AND m.isDuplicate = 1 THEN 1 END) AS duplicateImageCount
     FROM tag_crossref c
     JOIN active_media m
         ON m.id = c.mediaId
@@ -86,7 +90,7 @@ ORDER BY counts.size DESC
 
     @Query("""
 WITH active_media AS (
-    SELECT id, type, dateAdded
+    SELECT id, type, dateAdded, isDuplicate
     FROM media_metadata
     WHERE isTrashed = 0
 )
@@ -94,13 +98,17 @@ SELECT
     t.id AS tagId,
     t.name,
     counts.size,
+    counts.imageCount,
+    counts.duplicateImageCount,
     latest.thumbNailId,
     latest.thumbNailType
 FROM media_tag t
 JOIN (
     SELECT
         c.tagId,
-        COUNT(*) AS size
+        COUNT(*) AS size,
+        COUNT(CASE WHEN m.type = 0 THEN 1 END) AS imageCount,
+        COUNT(CASE WHEN m.type = 0 AND m.isDuplicate = 1 THEN 1 END) AS duplicateImageCount
     FROM tag_crossref c
     JOIN active_media m
         ON m.id = c.mediaId
@@ -128,6 +136,7 @@ WHERE t.id IN (:tagIds)
 ORDER BY counts.size DESC
 """)
     suspend fun getCollections(tagIds: List<Long>): List<TagCollectionData>
+
 
     // MUST use ignore. Using replace will cause cascading deletes of cross refs
     @Transaction

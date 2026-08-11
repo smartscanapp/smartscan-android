@@ -10,6 +10,8 @@ fun AutoCollectionData.toDomain(): MediaCollection = MediaCollection(
     id = clusterId,
     name = label?: MediaCollection.UNLABELLED_COLLECTION,
     size = prototypeSize,
+    imageCount = imageCount,
+    duplicateImageCount = duplicateImageCount,
     thumbNail = MediaStoreHelper.mediaIdToUri(thumbNailId, thumbNailType),
     type = CollectionType.CLUSTER
 )
@@ -18,6 +20,8 @@ fun TagCollectionData.toDomain(): MediaCollection = MediaCollection(
     id = tagId,
     name = name,
     size = size,
+    imageCount = imageCount,
+    duplicateImageCount = duplicateImageCount,
     thumbNail = MediaStoreHelper.mediaIdToUri(thumbNailId, thumbNailType),
     type = CollectionType.TAG
 )
