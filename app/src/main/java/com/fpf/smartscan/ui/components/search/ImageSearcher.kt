@@ -95,7 +95,7 @@ fun ImageSearcher(
                 )
         ) {
             ImageDisplay(
-                maxSize = 720,
+                size = 720,
                 uri = uri,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,

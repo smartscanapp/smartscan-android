@@ -28,20 +28,20 @@ fun ImageDisplay(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     mediaType: MediaType? = null,
-    maxSize:Int? = 512,
+    size:Int? = 512,
     onSizeChanged: ((Int, Int) -> Unit)? = null,
     onError: ((error:  AsyncImagePainter.State.Error)-> Unit)? = null
     ) {
     val context = LocalContext.current
 
-    val request = remember(uri, maxSize) {
+    val request = remember(uri, size) {
         val builder = ImageRequest.Builder(context)
             .allowHardware(true)
             .crossfade(true)
             .data(uri)
 
-        if (maxSize != null) {
-            builder.size(maxSize)
+        if (size != null) {
+            builder.size(size)
         }
 
         builder.build()

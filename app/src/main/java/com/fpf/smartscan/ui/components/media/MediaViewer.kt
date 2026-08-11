@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -267,7 +266,7 @@ fun MediaViewer(
                                             translationY = offset.y
                                         },
                                     contentScale = ContentScale.Fit,
-                                    maxSize = size,
+                                    size = size,
                                     mediaType = currentItem.type,
                                     onSizeChanged = { width, height ->
                                         currentItemWidth = width

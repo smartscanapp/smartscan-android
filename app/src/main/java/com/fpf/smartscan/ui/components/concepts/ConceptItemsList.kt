@@ -196,7 +196,7 @@ fun ConceptItemsList(
                         when (item.type) {
                             MediaType.IMAGE -> {
                                 ImageDisplay(
-                                    maxSize = 864,
+                                    size = 864,
                                     uri = item.uri,
                                     mediaType = item.type,
                                     contentScale = ContentScale.Crop,
@@ -222,7 +222,7 @@ fun ConceptItemsList(
                                     )
                                 } else {
                                     ImageDisplay(
-                                        maxSize = 864,
+                                        size = 864,
                                         uri = item.uri,
                                         mediaType = MediaType.VIDEO,
                                         contentScale = ContentScale.Crop,
