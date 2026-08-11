@@ -15,8 +15,12 @@ data class MediaCollection (
     val name: String,
     val thumbNail: Uri,
     val size: Int,
+    val imageCount: Int,
+    val duplicateImageCount: Int,
     val type: CollectionType
 ): Parcelable{
+    val videoCount: Int
+        get() = (size - imageCount).coerceAtLeast(0)
     companion object {
         const val UNLABELLED_COLLECTION = "?"
     }

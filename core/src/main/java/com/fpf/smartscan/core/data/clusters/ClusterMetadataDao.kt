@@ -42,7 +42,7 @@ interface ClusterMetadataDao {
 
     @Query("""
 WITH active_media AS (
-    SELECT id, type, dateAdded
+    SELECT id, type, dateAdded, isDuplicate
     FROM media_metadata
     WHERE isTrashed = 0
 )
@@ -50,6 +50,8 @@ SELECT
     c.clusterId,
     c.label,
     COUNT(ref.mediaId) AS prototypeSize,
+    COUNT(CASE WHEN m.type = 0 THEN 1 END) AS imageCount,
+    COUNT(CASE WHEN m.type = 0 AND m.isDuplicate = 1 THEN 1 END) AS duplicateImageCount,
     latest.mediaId AS thumbNailId,
     latest.mediaType AS thumbNailType
 FROM cluster_metadata c
@@ -81,7 +83,7 @@ ORDER BY prototypeSize DESC
 
     @Query("""
 WITH active_media AS (
-    SELECT id, type, dateAdded
+    SELECT id, type, dateAdded, isDuplicate
     FROM media_metadata
     WHERE isTrashed = 0
 )
@@ -89,6 +91,8 @@ SELECT
     c.clusterId,
     c.label,
     COUNT(ref.mediaId) AS prototypeSize,
+    COUNT(CASE WHEN m.type = 0 THEN 1 END) AS imageCount,
+    COUNT(CASE WHEN m.type = 0 AND m.isDuplicate = 1 THEN 1 END) AS duplicateImageCount,
     latest.mediaId AS thumbNailId,
     latest.mediaType AS thumbNailType
 FROM cluster_metadata c
@@ -118,7 +122,6 @@ GROUP BY c.clusterId
 ORDER BY prototypeSize DESC
 """)
     fun getCollections(clusterIds: List<Long>): List<AutoCollectionData>
-
 
     @Query("""
     SELECT metadata.*, COUNT(crossRef.mediaId) AS prototypeSize
