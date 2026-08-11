@@ -1,8 +1,10 @@
 package com.fpf.smartscan.ui.screens.bin
 
 import android.app.Activity
+import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -58,8 +60,6 @@ import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.createDeleteRequest
-import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -116,7 +116,9 @@ fun BinScreen(
                 viewModel.onAction(
                 BinAction.Delete{ items ->
                     itemPendingAction = items
-                    deleteLauncher.launch(createDeleteRequest(context, items.map{it.uri}))
+                    val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, items.map{it.uri})
+                    val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                    deleteLauncher.launch(request)
                 }
             )},
         ),
@@ -125,10 +127,13 @@ fun BinScreen(
     val actionBarActions: List<ActionConfig> = listOf(
         ActionConfig(
             label = stringResource(R.string.delete_action),
-            onClick = { viewModel.onAction(
+            onClick = {
+                viewModel.onAction(
                 BinAction.Delete{ items ->
                     itemPendingAction = items
-                    deleteLauncher.launch(createDeleteRequest(context, items.map{it.uri}))
+                    val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, items.map{it.uri})
+                    val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                    deleteLauncher.launch(request)
                 }
             ) },
             icon=Icons.Filled.Delete
@@ -137,9 +142,9 @@ fun BinScreen(
             label = stringResource(R.string.restore_action),
             onClick = { viewModel.onAction(BinAction.Restore{ items ->
                 itemPendingAction = items
-                restoreLauncher.launch(
-                    createTrashRequest(context, items.map{it.uri}, false)
-                )
+                val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, items.map{it.uri}, false)
+                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                restoreLauncher.launch(request)
             })},
             icon=Icons.Filled.Restore
         ),

@@ -1,9 +1,11 @@
 package com.fpf.smartscan.ui.screens.search
 
 import android.app.Activity
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -63,7 +65,6 @@ import com.fpf.smartscan.ui.components.search.RecentSearchesList
 import com.fpf.smartscan.ui.components.search.SearchFilterControls
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.toEpochSeconds
-import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -197,9 +198,9 @@ fun SearchScreen(
             label = stringResource(R.string.delete_action),
             onClick = { searchViewModel.onAction(SearchAction.Delete{ items ->
                 pendingDeleteItems = items
-                trashLauncher.launch(
-                    createTrashRequest(context, items.map{it.uri})
-                )
+                val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, items.map{it.uri}, true)
+                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                trashLauncher.launch(request)
             }) },
         ),
     )

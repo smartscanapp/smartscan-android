@@ -1,9 +1,11 @@
 package com.fpf.smartscan.ui.screens.collections
 
 import android.app.Activity
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -73,7 +75,6 @@ import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.createTrashRequest
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -189,9 +190,9 @@ fun CollectionItemsScreen(
             label = stringResource(R.string.delete_action),
             onClick = { viewModel.onAction(CollectionItemAction.Delete{ items ->
                 pendingDeleteItems = items
-                trashLauncher.launch(
-                    createTrashRequest(context, items.map{it.uri})
-                )
+                val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, items.map{it.uri}, true)
+                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                trashLauncher.launch(request)
             }) },
         ),
     )

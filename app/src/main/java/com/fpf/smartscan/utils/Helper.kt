@@ -1,8 +1,5 @@
 package com.fpf.smartscan.utils
 
-import android.net.Uri
-import android.provider.MediaStore
-import androidx.activity.result.IntentSenderRequest
 import android.Manifest
 import android.app.ActivityManager
 import android.app.Service
@@ -83,19 +80,6 @@ fun isServiceRunning(context: Context, serviceClass: Class<out Service>): Boolea
     return am.getRunningServices(Int.MAX_VALUE).any {
         it.service.className == serviceClass.name
     }
-}
-
-fun createTrashRequest(context: Context, uris: List<Uri>, trash: Boolean = true): IntentSenderRequest {
-    val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, uris, trash)
-    return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
-}
-
-fun createDeleteRequest(context: Context, uris: List<Uri>): IntentSenderRequest {
-    val pendingIntent = MediaStore.createDeleteRequest(
-        context.contentResolver,
-        uris
-    )
-    return IntentSenderRequest.Builder(pendingIntent.intentSender).build()
 }
 
 fun isConnectedToWifi(context: Context): Boolean {
