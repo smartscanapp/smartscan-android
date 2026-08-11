@@ -15,6 +15,7 @@ import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.ImageEmbeddingProvider
 import com.fpf.smartscansdk.core.processors.BatchProcessor
+import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
 import kotlin.collections.map
@@ -34,7 +35,7 @@ class LocalIndexJobManager(
         private const val TAG = "LocalIndexJobManager"
     }
 
-    suspend fun run(mediaTypes: List<MediaType>, allowedImageDirs: List<Uri>, allowedVideoDirs: List<Uri>){
+    suspend fun run(mediaTypes: List<MediaType>, allowedImageDirs: List<Uri>, allowedVideoDirs: List<Uri>):  MutableMap<MediaType, ProcessorResult>{
         try {
             if(!imageEmbedder.isInitialized()) imageEmbedder.initialize()
 
@@ -46,6 +47,8 @@ class LocalIndexJobManager(
                 clusterMetadataRepository = clusterMetadataRepository,
             )
 
+            val results = mutableMapOf<MediaType, ProcessorResult>()
+
             mediaTypes.forEach { mediaType ->
                 when (mediaType) {
                     MediaType.IMAGE -> {
@@ -56,7 +59,7 @@ class LocalIndexJobManager(
                             store = imageEmbedStore,
                             quantize = true
                         )
-                        indexMedia(
+                        val imagesResult = indexMedia(
                             application,
                             MediaType.IMAGE,
                             imageEmbedStore,
@@ -64,6 +67,7 @@ class LocalIndexJobManager(
                             mediaMetadataRepository,
                             allowedImageDirs
                         )
+                        results[mediaType] = imagesResult
                     }
 
                     MediaType.VIDEO -> {
@@ -76,7 +80,7 @@ class LocalIndexJobManager(
                             width = IMAGE_SIZE_X,
                             height = IMAGE_SIZE_Y
                         )
-                        indexMedia(
+                        val videosResult = indexMedia(
                             application,
                             MediaType.VIDEO,
                             videoEmbedStore,
@@ -84,6 +88,7 @@ class LocalIndexJobManager(
                             mediaMetadataRepository,
                             allowedVideoDirs
                         )
+                        results[mediaType] = videosResult
                     }
                 }
             }
@@ -94,7 +99,7 @@ class LocalIndexJobManager(
             } catch (e: Exception) {
                 throw AppException.ClusterException(cause = e)
             }
-
+            return results
         }
         finally {
             imageEmbedder.closeSession()
@@ -108,7 +113,7 @@ class LocalIndexJobManager(
         indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>,
         metadataRepo: MediaMetadataRepository,
         allowedDirs: List<Uri> = emptyList()
-    ){
+    ): ProcessorResult{
         val idToDateMap = when(mediaType){
             MediaType.IMAGE -> MediaStoreHelper.queryImageIdDateMap(context, allowedDirs)
             MediaType.VIDEO ->  MediaStoreHelper.queryVideoIdDateMap(context, allowedDirs)
@@ -121,6 +126,6 @@ class LocalIndexJobManager(
             MediaMetadata(it, mediaType, date)
         }
         metadataRepo.insert(newMedia)
-        indexer.run(newMedia)
+        return indexer.run(newMedia)
     }
 }
