@@ -127,7 +127,11 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
 
             val allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()}
             val allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()}
-            localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
+            val result = localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
+            val imageResult = result[MediaType.IMAGE]
+            imageResult?.let{
+                if(it.totalProcessed > 0) mediaJobManager.findAndMarkDuplicates(MediaType.IMAGE)
+            }
 
             //TODO: replace openai api with SmartScan API key
             val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
