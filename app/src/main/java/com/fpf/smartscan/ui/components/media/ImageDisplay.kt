@@ -49,11 +49,14 @@ fun ImageDisplay(
 
     Box(modifier = Modifier.background(Color.Transparent), contentAlignment = Alignment.Center) {
         if(mediaType == MediaType.VIDEO){
-            Icon(Icons.Filled.PlayCircle, contentDescription = null, modifier = Modifier
-                .align(
-                    Alignment.Center
-                )
-                .zIndex(1f))
+            Icon(
+                imageVector = Icons.Filled.PlayCircle,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .zIndex(1f),
+                tint = Color.White
+            )
         }
         AsyncImage(
             model = request,
