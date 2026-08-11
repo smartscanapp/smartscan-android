@@ -6,6 +6,7 @@ import android.util.Log
 import com.fpf.smartscan.core.embeds.EmbeddingStoresFilesQuant
 import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.errors.AppException
+import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import java.io.File
 
 object BackupUtils {
@@ -102,5 +103,5 @@ object BackupUtils {
         )
     }
 
-    private fun getTombstoneFiles(embedStoreFiles: List<File>): List<File> = embedStoreFiles.map{File("${it.path}.tombstones")}
+    private fun getTombstoneFiles(embedStoreFiles: List<File>): List<File> = embedStoreFiles.map{ FileEmbeddingStore.getTombstoneFile(it) }
 }
