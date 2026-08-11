@@ -11,6 +11,15 @@ android {
         version = release(37)
     }
 
+    packaging {
+        resources.excludes.addAll(
+            listOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+            )
+        )
+    }
+
     defaultConfig {
         minSdk = 28
 
@@ -69,6 +78,7 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
 
     // Android instrumented tests
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.core)
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.runner)
