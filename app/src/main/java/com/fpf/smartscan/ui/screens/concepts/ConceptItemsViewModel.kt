@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.ClipData
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.util.Log
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -62,8 +61,6 @@ class ConceptItemsViewModel(
         .map { Triple(it.filter, it.sortBy, it.concept) }
         .distinctUntilChanged()
         .flatMapLatest { (filters, sortBy, concept) ->
-
-            Log.d(TAG, "Sort by: $sortBy")
             if (concept?.id == null) {
                 flowOf(PagingData.empty())
             } else {
