@@ -328,24 +328,22 @@ class CollectionItemsViewModel(
 
     private fun setCollection(collection: MediaCollection) {
         _state.update { it.copy(collection = collection) }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val duplicateCount = when (collection.type) {
-                CollectionType.CLUSTER -> mediaMetadataRepository.countDuplicatesInCluster(collection.id)
-                CollectionType.TAG -> mediaMetadataRepository.countDuplicatesInTag(collection.id)
-            }
-            _state.update { it.copy(duplicateCount = duplicateCount) }
-        }
+        setTotalItems()
     }
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
 
-    private fun resetFilters() = _state.update {it.copy(filter = it.filter.copy(isDuplicate = null, mediaType = null))}
+    private fun resetFilters() {
+        _state.update { it.copy(filter = it.filter.copy(isDuplicate = null, mediaType = null)) }
+        setTotalItems()
+    }
     private fun setMediaTypeFilter(type: MediaType?) {
         _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
+        setTotalItems()
         resetSelection()
     }
     private fun setDuplicateFilter(duplicateFilter: Boolean?) {
         _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+        setTotalItems()
         resetSelection()
     }
 
@@ -364,5 +362,29 @@ class CollectionItemsViewModel(
     private fun getSortByPref(): SortBy{
         val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "")?: ""
         return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    }
+
+    private fun setTotalItems(){
+        val currentState = _state.value
+        val collection = currentState.collection?: return
+
+        val total = when(currentState.filter.isDuplicate){
+            true -> when(currentState.filter.mediaType){
+                MediaType.IMAGE -> collection.duplicateImageCount
+                MediaType.VIDEO -> collection.duplicateVideoCount
+                else -> collection.duplicateImageCount + collection.duplicateVideoCount
+            }
+            false -> when(currentState.filter.mediaType){
+                MediaType.IMAGE -> collection.imageCount - collection.duplicateImageCount
+                MediaType.VIDEO -> collection.videoCount - collection.duplicateVideoCount
+                else -> collection.size - collection.duplicateImageCount - collection.duplicateVideoCount
+            }
+            else -> when(currentState.filter.mediaType) {
+                MediaType.IMAGE -> collection.imageCount
+                MediaType.VIDEO -> collection.videoCount
+                else -> collection.size
+            }
+        }
+        _state.update { it.copy(totalItems = total) }
     }
 }
