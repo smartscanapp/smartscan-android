@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -72,6 +73,8 @@ fun ConceptItemsList(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val playbackPositions = remember { mutableStateMapOf<Long, Long>() }
+    val manuallyPausedVideos = remember { mutableStateSetOf<Long>() }
+    val programmaticPlaybackChanges = remember { mutableStateSetOf<Long>() }
     val minimumVisibilityFraction = 0.5f
 
     var showScrollToTop by remember { mutableStateOf(false) }
@@ -148,7 +151,9 @@ fun ConceptItemsList(
                     .filter { it !in visibleIds }
                     .toList()
                     .forEach { id ->
-                        playerPool.get(id)?.let { player -> playbackPositions[id] = player.currentPosition }
+                        playerPool.get(id)?.let { player ->
+                            playbackPositions[id] = player.currentPosition
+                        }
                         playerPool.release(id)
                     }
 
@@ -169,12 +174,22 @@ fun ConceptItemsList(
                         player.prepare()
                         player.seekTo(playbackPositions[video.id] ?: 0L)
                     }
-                    player.playWhenReady = video.id == playingVideoId && visibilityFraction >= minimumVisibilityFraction
+                    val shouldPlay = video.id == playingVideoId && visibilityFraction >= minimumVisibilityFraction && video.id !in manuallyPausedVideos
+                    // Prevent autoplay playback changes from being treated as manual pauses
+                    programmaticPlaybackChanges.add(video.id)
 
+                    if (shouldPlay) {
+                        player.play()
+                    } else {
+                        player.pause()
+                    }
+                    programmaticPlaybackChanges.remove(video.id)
                 }
             }
         }
     }
+
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
@@ -223,6 +238,15 @@ fun ConceptItemsList(
                                     VideoDisplay(
                                         videoId = item.id,
                                         player = player,
+                                        onPauseChanged = { paused ->
+                                            if (item.id in programmaticPlaybackChanges) return@VideoDisplay
+
+                                            if (paused) {
+                                                manuallyPausedVideos.add(item.id)
+                                            } else {
+                                                manuallyPausedVideos.remove(item.id)
+                                            }
+                                        },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(MaterialTheme.shapes.large)

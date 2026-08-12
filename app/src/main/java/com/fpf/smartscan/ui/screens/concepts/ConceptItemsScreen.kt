@@ -32,6 +32,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
@@ -60,6 +63,7 @@ fun ConceptItemsScreen(
 ) {
     if(concept == null) return
 
+    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val conceptItems = viewModel.conceptItems.collectAsLazyPagingItems()
@@ -129,9 +133,20 @@ fun ConceptItemsScreen(
         )
     }
 
+
     DisposableEffect(playerPool) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                playerPool.assignedIds.forEach { id ->
+                    playerPool.get(id)?.pause()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
         onDispose {
             playerPool.releaseAll()
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

@@ -39,6 +39,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.fpf.smartscan.core.media.CollectionType
@@ -62,6 +65,7 @@ fun MediaViewer(
 ) {
     if (items.isEmpty()) return
 
+    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
     var showMenu by remember { mutableStateOf(false) }
@@ -129,8 +133,19 @@ fun MediaViewer(
         )
     }
 
-    DisposableEffect(Unit) {
-        onDispose { videoPlayer.release() }
+    DisposableEffect(videoPlayer) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                videoPlayer.pause()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            videoPlayer.release()
+        }
     }
 
     LaunchedEffect(detailsExpanded) {
