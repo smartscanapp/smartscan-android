@@ -133,7 +133,8 @@
     <string name="collections_storage_permissions">Storage permission required to create collections.</string>
     <string name="collections_no_collections_title">No Collections</string>
     <string name="collections_no_collections_items_title">No items</string>
-    <string name="collections_no_collections_description">Collections are created by automatically grouping similar items or when you tag items.</string>
+    <string name="collections_auto_collections_description">Auto collections are created by automatically grouping visually similar media after a scan.</string>
+    <string name="collections_tag_collections_description">Tag collections are created when you tag media.</string>
     <string name="collections_delete_collections_alert_title">Delete collections</string>
     <string name="collections_delete_collections_alert_description">Delete %1$d %2$s, removing all related tags?</string>
     <plurals name="collection_count">

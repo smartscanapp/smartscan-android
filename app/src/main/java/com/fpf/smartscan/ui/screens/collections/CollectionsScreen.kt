@@ -324,7 +324,7 @@ fun CollectionsScreen(
                 maxCollapsePx = maxCollapsablePx,
             )
 
-            EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired )
+            EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired, collectionType = state.collectionType )
         }
 
 

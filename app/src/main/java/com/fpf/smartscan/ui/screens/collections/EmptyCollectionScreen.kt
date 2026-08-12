@@ -19,14 +19,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
+import com.fpf.smartscan.core.media.CollectionType
 
 @Composable
 fun EmptyCollectionScreen(
     isVisible: Boolean,
     isMainScanRequired: Boolean,
+    collectionType: CollectionType
     ) {
     if (!isVisible) return
 
+    val message = when(collectionType){
+        CollectionType.TAG -> stringResource(R.string.collections_tag_collections_description)
+        CollectionType.CLUSTER -> stringResource(R.string.collections_auto_collections_description)
+    }
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
@@ -56,7 +62,7 @@ fun EmptyCollectionScreen(
             }
 
             Text(
-                text = stringResource(R.string.collections_no_collections_description),
+                text = message,
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
