@@ -57,7 +57,7 @@ fun MediaViewer(
     onClose: () -> Unit,
     size: Int? = 1728,
     actionsEnabled: Boolean = true,
-    onGetCollections: (suspend (MediaItem, type: CollectionType) -> Map<Long, String>)? = null,
+    onGetCollections: (suspend (MediaItem) -> List<Triple<Long, String, CollectionType>>)? = null,
     onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
@@ -78,13 +78,8 @@ fun MediaViewer(
     val currentItem = items[currentIndex]
     var currentItemWidth by remember(currentItem.id) { mutableIntStateOf(0) }
     var currentItemHeight by remember(currentItem.id) { mutableIntStateOf(0) }
-    val collectionCache = remember { mutableStateMapOf<Pair<Long, CollectionType>, Map<Long, String>>() }
-    var tags by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
-    var clusters by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
-    val collections = buildList {
-        tags.forEach { (id, name) -> add(Triple(id, name, CollectionType.TAG)) }
-        clusters.forEach { (id, name) -> add(Triple(id, name, CollectionType.CLUSTER)) }
-    }
+    var collections by remember { mutableStateOf<List<Triple<Long, String, CollectionType>>>(emptyList()) }
+    val collectionCache = remember { mutableStateMapOf<Pair<Long, MediaType>, List<Triple<Long, String, CollectionType>>>() }
     val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
 
     // Pinch to zoom / scaling animations
@@ -168,10 +163,9 @@ fun MediaViewer(
         }
     }
 
-    LaunchedEffect(currentItem.id) {
+    LaunchedEffect(currentItem.id, currentItem.type) {
         onGetCollections?.let{
-            tags = collectionCache.getOrPut(currentItem.id to CollectionType.TAG) { onGetCollections(currentItem, CollectionType.TAG) }
-            clusters = collectionCache.getOrPut(currentItem.id to CollectionType.CLUSTER) { onGetCollections(currentItem, CollectionType.CLUSTER) }
+            collections = collectionCache.getOrPut(currentItem.id to currentItem.type) { onGetCollections(currentItem) }
         }
         targetScale = 1f
         targetOffset = Offset.Zero

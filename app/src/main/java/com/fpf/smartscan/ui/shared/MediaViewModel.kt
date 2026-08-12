@@ -80,22 +80,19 @@ class MediaViewModel(
     }
 
     // Only collection id and name are required hence why getCollections no used here as that method does unncessary db work
-    suspend fun getCollectionsMatchingMedia(media: MediaItem, collectionType: CollectionType ): MutableMap<Long, String> {
-        return when(collectionType){
-            CollectionType.TAG -> getTagsMatchingMedia(media)
-            CollectionType.CLUSTER -> getClustersMatchingMedia(media)
-        }
+    suspend fun getCollectionsMatchingMedia(media: MediaItem ): List<Triple<Long, String, CollectionType>> {
+        return  getTagsMatchingMedia(media) + getClustersMatchingMedia(media)
     }
 
-    private suspend fun getTagsMatchingMedia(media: MediaItem): MutableMap<Long, String> {
+    private suspend fun getTagsMatchingMedia(media: MediaItem): List<Triple<Long, String, CollectionType>> {
         val tags = tagRepository.getTagsForMedia(media.id, media.type)
-        return tags.associate { it.id to it.name }.toMutableMap()
+        return tags.map{Triple(it.id, it.name, CollectionType.TAG)}
     }
 
-    private suspend fun getClustersMatchingMedia(media: MediaItem): MutableMap<Long, String> {
+    private suspend fun getClustersMatchingMedia(media: MediaItem): List<Triple<Long, String, CollectionType>> {
         val clusters = clusterMetadataRepository.getClustersForMedia(media.id, media.type)
-        return  clusters
+        return clusters
             .filter { !it.label.isNullOrBlank() }
-            .associate { it.clusterId to it.label!! }.toMutableMap()
+            .map{ Triple(it.clusterId, it.label!!, CollectionType.CLUSTER)}
     }
 }
