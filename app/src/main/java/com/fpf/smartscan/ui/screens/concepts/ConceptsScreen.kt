@@ -197,6 +197,8 @@ fun ConceptsScreen(
                     modifier = Modifier
                         .padding(vertical = 8.dp)
                         .align(Alignment.CenterHorizontally),
+                    style = MaterialTheme.typography.bodyMedium
+
                 )
             }
 

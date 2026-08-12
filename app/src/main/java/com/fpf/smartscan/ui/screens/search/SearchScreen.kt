@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -293,7 +294,12 @@ fun SearchScreen(
             verticalArrangement = Arrangement.Top
         ) {
             if(!hasStoragePermission && !state.loading){
-                Text(text = stringResource(R.string.search_storage_permissions), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+                Text(
+                    text = stringResource(R.string.search_storage_permissions),
+                    color = Color.Red,
+                    modifier = Modifier.padding(vertical=8.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
             if (state.queryImage != null) {
                 SlideRevealBox(

@@ -58,7 +58,12 @@ fun EmptyCollectionScreen(
             )
 
             if( isMainScanRequired){
-                Text(text = stringResource(R.string.alert_initial_scan_required), color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
+                Text(
+                    text = stringResource(R.string.alert_initial_scan_required),
+                    color = Color.Red,
+                    modifier = Modifier.padding(vertical=8.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Text(
