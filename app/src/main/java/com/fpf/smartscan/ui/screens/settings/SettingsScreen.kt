@@ -61,6 +61,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val sourceCodeUrl = stringResource(R.string.source_code_url)
+    val issuesUrl = stringResource(R.string.issues_url)
     val redditUrl = stringResource(R.string.reddit_url)
     val versionName: String? = try {
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -156,17 +157,28 @@ fun SettingsScreen(
     val otherSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
             label = stringResource(id = R.string.title_donate),
+            description = stringResource(R.string.donate_support_message),
             onClick = { onNavigate(Routes.DONATE) }
         ),
         SettingActionConfig.Button(
             label = stringResource(id = R.string.setting_source_code),
+            description = stringResource(id = R.string.setting_source_code_description),
             onClick = {
                 val intent = Intent(Intent.ACTION_VIEW, sourceCodeUrl.toUri())
                 context.startActivity(intent)
             },
         ),
         SettingActionConfig.Button(
+            label = stringResource(id = R.string.setting_issues),
+            description = stringResource(R.string.setting_issues_description),
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, issuesUrl.toUri())
+                context.startActivity(intent)
+            },
+        ),
+        SettingActionConfig.Button(
             label = stringResource(id = R.string.setting_social_reddit),
+            description = stringResource(R.string.setting_reddit_description),
             onClick = {
                 val intent = Intent(Intent.ACTION_VIEW, redditUrl.toUri())
                 context.startActivity(intent)
