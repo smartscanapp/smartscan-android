@@ -72,7 +72,7 @@ fun ConceptItemsList(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val playbackPositions = remember { mutableStateMapOf<Long, Long>() }
-    val minimumVisibilityFraction = 0.2f
+    val minimumVisibilityFraction = 0.5f
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
@@ -153,23 +153,27 @@ fun ConceptItemsList(
                     }
 
                 val currentVisibleFraction = visibleVideos.firstOrNull { it.first.id == playingVideoId }?.second ?: 0f
-                val mostVisibleVideo = visibleVideos.maxByOrNull { it.second }
+                val eligibleVideos = visibleVideos.filter { (_, fraction) ->
+                    fraction >= minimumVisibilityFraction
+                }
+                val mostVisibleVideo = eligibleVideos.maxByOrNull { it.second }
 
                 if (playingVideoId == null || currentVisibleFraction < minimumVisibilityFraction || (movedUp && mostVisibleVideo != null && mostVisibleVideo.first.id != playingVideoId)){
                     playingVideoId = mostVisibleVideo?.first?.id
                 }
 
-                visibleVideos.forEach { (video, _) ->
-                    playerPool.assign(video.id)?.let { player ->
-                        if (player.currentMediaItem?.localConfiguration?.uri != video.uri) {
-                            player.setMediaItem(ExoMediaItem.fromUri(video.uri))
-                            player.prepare()
-                            player.seekTo(playbackPositions[video.id] ?: 0L)
-                        }
-                        player.playWhenReady = video.id == playingVideoId
+            visibleVideos.forEach { (video, visibilityFraction) ->
+                playerPool.assign(video.id)?.let { player ->
+                    if (player.currentMediaItem?.localConfiguration?.uri != video.uri) {
+                        player.setMediaItem(ExoMediaItem.fromUri(video.uri))
+                        player.prepare()
+                        player.seekTo(playbackPositions[video.id] ?: 0L)
                     }
+                    player.playWhenReady = video.id == playingVideoId && visibilityFraction >= minimumVisibilityFraction
+
                 }
             }
+        }
     }
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
