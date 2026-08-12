@@ -3,8 +3,8 @@
     <string name="app_name">SmartScan</string>
     <string name="copyright">© 2026 D41 Dev</string>
     <string name="source_code_url">https://github.com/dev-diaries41/smartscan</string>
+    <string name="issues_url">https://github.com/smartscanapp/smartscan-android/issues</string>
     <string name="reddit_url">https://www.reddit.com/r/SmartScan/</string>
-
 
     <!-- Screen titles-->
     <string name="title_explore">Explore</string>
@@ -171,12 +171,15 @@
     <string name="setting_models">Models</string>
     <string name="setting_models_description">Download models for additional search and organisation features.</string>
     <string name="setting_manage_models">Manage models</string>
+    <string name="setting_issues">Issues</string>
     <string name="setting_source_code">Source code</string>
     <string name="setting_social_reddit">Reddit</string>
     <string name="setting_api_keys">API keys</string>
     <string name="setting_openai_api_key">OpenAI API key</string>
     <string name="placeholders_api_key">Enter API key</string>
-
+    <string name="setting_issues_description">Send bug reports and feature requests.</string>
+    <string name="setting_reddit_description">Discuss the app and stay up-to-date with changes.</string>
+    <string name="setting_source_code_description">View the app’s source code on GitHub.</string>
     <!--Bin Screen-->
     <string name="bin_description">Any media you delete will stay in the Recycle bin for 30 days before they\'re permanently deleted.</string>
 
