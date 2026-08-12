@@ -27,7 +27,8 @@ fun VideoDisplay(
     modifier: Modifier = Modifier,
     showControls: Boolean = false,
     onSizeChanged: ((Int, Int) -> Unit)? = null,
-    onTap: () -> Unit = {},
+    onTap: (() -> Unit)? = null,
+    onPauseChanged: ((Boolean) -> Unit)? = null,
 ) {
     var playerView by remember {
         mutableStateOf<CustomPlayerView?>(null)
@@ -37,6 +38,16 @@ fun VideoDisplay(
         val listener = object : Player.Listener {
             override fun onVideoSizeChanged(size: VideoSize) {
                 onSizeChanged?.invoke(size.width, size.height)
+            }
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                // This fires ONLY when the user (or app logic) explicitly toggles play/pause intent.
+                // It does NOT fire for automatic buffering states.
+
+                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+                    // Explicit user action detected (Play or Pause button clicked)
+                    onPauseChanged?.invoke(!playWhenReady)
+                    // Pass 'true' if paused (!playWhenReady), 'false' if playing
+                }
             }
         }
 
