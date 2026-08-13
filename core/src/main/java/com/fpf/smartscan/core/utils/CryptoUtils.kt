@@ -36,8 +36,15 @@ class CryptoUtils(context: Context) {
     fun decrypt(ciphertext: ByteArray, associatedData: ByteArray = ByteArray(0)): String =
         String(aead.decrypt(ciphertext, associatedData), Charsets.UTF_8)
 
-    fun toBase64(byteArray: ByteArray): String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
 
-    fun toByteArray(base64Str: String): ByteArray = Base64.decode(base64Str, Base64.NO_WRAP)
+    fun encryptToBase64(value: String, associatedData: ByteArray = ByteArray(0)): String =
+        toBase64(encrypt(value, associatedData))
+
+
+    fun decryptFromBase64(ciphertextBase64: String, associatedData: ByteArray = ByteArray(0)): String =
+        decrypt(toByteArray(ciphertextBase64), associatedData)
+    private fun toBase64(byteArray: ByteArray): String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+
+    private fun toByteArray(base64Str: String): ByteArray = Base64.decode(base64Str, Base64.NO_WRAP)
 
 }
