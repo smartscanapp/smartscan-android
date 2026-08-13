@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 
-abstract class BaseIndexListener(private val tag: String) : ProcessorListener<MediaMetadata> {
+abstract class BaseIndexListener(protected val tag: String) : ProcessorListener<MediaMetadata> {
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress
 
@@ -41,7 +41,7 @@ abstract class BaseIndexListener(private val tag: String) : ProcessorListener<Me
     }
 
     override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
-        Log.e(tag, "Error during processing: ${error.message}", error)
+        Log.e(tag, "Error during processing", error)
     }
     fun reset(){
         _indexingStatus.value = IndexingStatus.IDLE
