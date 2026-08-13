@@ -29,15 +29,15 @@ abstract class BaseIndexListener(protected val tag: String) : ProcessorListener<
     }
 
     override suspend fun onComplete(context: Context, result: ProcessorResult.Success) {
+        _result.value = result
         _indexingStatus.value = IndexingStatus.COMPLETE
         _progress.value = 0f
-        _result.value = result
     }
 
     override suspend fun onFail(context: Context, result: ProcessorResult.Failure) {
+        _result.value = result
         _indexingStatus.value = IndexingStatus.FAILED
         _progress.value = 0f
-        _result.value = result
     }
 
     override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
