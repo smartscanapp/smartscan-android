@@ -22,9 +22,11 @@ import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
+import com.fpf.smartscan.constants.EncryptedStorageKeys
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
+import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -61,8 +63,8 @@ class IndexService : Service(), KoinComponent {
     private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
     private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
-
     private val sharedPrefs: SharedPreferences by inject()
+    private val encryptedStorage: EncryptedStorage by inject()
 
     private val cloudIndexJobManager by lazy {
         CloudIndexJobManager(
@@ -128,8 +130,8 @@ class IndexService : Service(), KoinComponent {
                 when(indexJob){
                     IndexJobType.CLOUD -> {
                         try {
-                            val appSettings = loadSettings(sharedPrefs)
-                            cloudIndexJobManager.run(mediaTypes, appSettings.openaiApiKey)
+                            val openaiApiKey = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
+                            cloudIndexJobManager.run(mediaTypes, openaiApiKey)
                         } catch (e: AppException.MissingApiKey) {
                             Log.e(TAG, e.message, e)
                             val title = application.getString(R.string.notif_title_index_error_service, "Media")

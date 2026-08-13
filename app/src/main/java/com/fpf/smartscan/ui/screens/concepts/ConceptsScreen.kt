@@ -55,7 +55,6 @@ import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
@@ -75,7 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ConceptsScreen(
     hasStoragePermission: Boolean,
     isMainScanRequired: Boolean,
-    appSettings: StateFlow<AppSettings>,
+    openaiApiKey: StateFlow<String?>,
     onTopBarChange: (TopBarState) -> Unit,
     onViewConcept: (Concept) -> Unit,
     onGenerateSummaries: ()-> Unit,
@@ -84,7 +83,7 @@ fun ConceptsScreen(
 ) {
 
     val context = LocalContext.current
-    val settings by appSettings.collectAsState()
+    val apiKey by openaiApiKey.collectAsState()
     val state by viewModel.state.collectAsState()
     val clusterCollections by viewModel.clusterCollections.collectAsState()
     val tagCollections by viewModel.tagCollections.collectAsState()
@@ -130,7 +129,7 @@ fun ConceptsScreen(
                     showWifiWarning = true
                 }
                       },
-            enabled = viewModel.hasSelectCollection && !settings.openaiApiKey.isNullOrBlank()
+            enabled = viewModel.hasSelectCollection && !apiKey.isNullOrBlank()
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_settings),

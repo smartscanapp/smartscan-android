@@ -19,10 +19,12 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
+import com.fpf.smartscan.constants.EncryptedStorageKeys
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.models.ModelRepository
+import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.services.IndexService
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.isServiceRunning
@@ -77,6 +79,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val mediaJobManager: MediaJobManager by inject()
     private val sharedPrefs: SharedPreferences by inject()
 
+    private val encryptedStorage: EncryptedStorage by inject()
+
 
     // Disable listener for background jobs
     // Note: May later use worker specific listener
@@ -122,8 +126,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             if(videoEmbedStore.exists){
                 mediaTypes.add((MediaType.VIDEO))
             }
-            val appSettings = loadSettings(sharedPrefs)
 
+            val appSettings = loadSettings(sharedPrefs)
             val allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()}
             val allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()}
             val result = localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
@@ -132,10 +136,10 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
                 if(it.totalProcessed > 0) mediaJobManager.findAndMarkDuplicates(MediaType.IMAGE)
             }
 
-            //TODO: replace openai api with SmartScan API key
             val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
-            if(modelExist && !appSettings.openaiApiKey.isNullOrBlank() && imageConceptsEmbedStore.exists){
-                cloudIndexJobManager.run(listOf(MediaType.IMAGE), appSettings.openaiApiKey) // only image is supported ATM
+            val openaiApiKey = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
+            if(modelExist && !openaiApiKey.isNullOrBlank() && imageConceptsEmbedStore.exists){
+                cloudIndexJobManager.run(listOf(MediaType.IMAGE), openaiApiKey) // only image is supported ATM
             }
 
             return@withContext Result.success()
