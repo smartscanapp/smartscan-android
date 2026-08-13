@@ -50,6 +50,7 @@ fun SettingsDetailScreen(
     onBack: () -> Unit,
 ) {
     val appSettings by viewModel.appSettings.collectAsState()
+    val openaiApiKey by viewModel.openaiApiKey.collectAsState()
     val installedModels by viewModel.installedModels.collectAsState()
     val context = LocalContext.current
 
@@ -193,7 +194,7 @@ fun SettingsDetailScreen(
                 SettingsRoutes.API-> {
                     TextInput(
                         label = stringResource(R.string.setting_openai_api_key),
-                        value = appSettings.openaiApiKey?:"",
+                        value = openaiApiKey?:"",
                         onValueChange = viewModel::updateOpenaiApiKey,
                         placeholder = {
                             Text(
@@ -201,7 +202,6 @@ fun SettingsDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                             )
                         }
-
                     )
                 }
                 else -> {}

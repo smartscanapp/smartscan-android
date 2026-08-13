@@ -268,7 +268,7 @@ fun Main(
                     }
                     composable(Routes.CONCEPTS) {
                         ConceptsScreen(
-                            appSettings = settingsViewModel.appSettings,
+                            openaiApiKey = settingsViewModel.openaiApiKey,
                             isMainScanRequired = hasIndexedImages == false && hasIndexedVideos == false,
                             hasStoragePermission = hasStoragePermission,
                             onTopBarChange = { topBarState.value = it },

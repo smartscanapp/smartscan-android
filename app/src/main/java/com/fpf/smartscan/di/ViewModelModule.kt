@@ -80,7 +80,8 @@ val viewModelModule = module {
         SettingsViewModel(
             application = get(),
             modelRepository = get(),
-            sharedPrefs = get()
+            sharedPrefs = get(),
+            encryptedStorage = get()
         )
     }
 

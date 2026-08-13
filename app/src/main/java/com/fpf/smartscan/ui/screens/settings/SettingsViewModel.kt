@@ -5,9 +5,11 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.fpf.smartscan.constants.EncryptedStorageKeys
 import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.models.ModelRepository
+import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
 import com.fpf.smartscan.events.ModelEvent
@@ -31,10 +33,14 @@ import kotlinx.coroutines.flow.update
 class SettingsViewModel(
     application: Application,
     private val modelRepository: ModelRepository,
-    private val sharedPrefs: SharedPreferences
+    private val sharedPrefs: SharedPreferences,
+    private val encryptedStorage: EncryptedStorage
 ) : AndroidViewModel(application) {
     private val _appSettings = MutableStateFlow(AppSettings())
     val appSettings: StateFlow<AppSettings> = _appSettings
+
+    private val _openaiApiKey = MutableStateFlow<String?>(null)
+    val openaiApiKey: StateFlow<String?> = _openaiApiKey
     private val _modelEvent = MutableSharedFlow<ModelEvent>()
     val modelEvent = _modelEvent.asSharedFlow()
 
@@ -59,6 +65,7 @@ class SettingsViewModel(
 
     init {
         _appSettings.value = loadSettings(sharedPrefs)
+        _openaiApiKey.value = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
     }
 
     fun addSearchableImageDirectory(dir: String) {
@@ -139,9 +146,12 @@ class SettingsViewModel(
     }
 
     fun updateOpenaiApiKey(apiKey: String){
-        val currentSettings = _appSettings.value
-        _appSettings.value = currentSettings.copy(openaiApiKey = apiKey)
-        saveSettings(sharedPrefs, _appSettings.value)
+        _openaiApiKey.value = apiKey
+        if(apiKey.isBlank()){
+            encryptedStorage.remove(EncryptedStorageKeys.OPENAI_API_KEY)
+        }else{
+            encryptedStorage.putString(EncryptedStorageKeys.OPENAI_API_KEY, apiKey)
+        }
     }
 
     fun downloadModel(modelInfo: ModelInfo) = modelRepository.downloadModel(modelInfo)
