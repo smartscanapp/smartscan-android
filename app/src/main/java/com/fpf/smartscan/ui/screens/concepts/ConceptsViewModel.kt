@@ -1,7 +1,7 @@
 package com.fpf.smartscan.ui.screens.concepts
 
 import android.app.Application
-import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.core.concepts.Concept
@@ -10,7 +10,6 @@ import com.fpf.smartscan.core.concepts.getAllowedClusters
 import com.fpf.smartscan.core.concepts.getAllowedTags
 import com.fpf.smartscan.core.concepts.setAllowedClusters
 import com.fpf.smartscan.core.concepts.setAllowedTags
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.data.tags.TagRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
@@ -37,14 +36,13 @@ class ConceptsViewModel(
     private val tagRepository: TagRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
     private val conceptManager: ConceptManager,
-    private val modelRepository: ModelRepository
+    private val modelRepository: ModelRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "ConceptsViewModel"
     }
-
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)    }
 
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
 

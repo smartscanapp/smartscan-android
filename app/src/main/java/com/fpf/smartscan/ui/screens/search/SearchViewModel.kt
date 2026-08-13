@@ -4,6 +4,7 @@ import com.fpf.smartscan.core.data.paging.SearchPagingSource
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
@@ -19,7 +20,6 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.Dispatchers
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.PrefsKeys
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -67,7 +67,8 @@ class SearchViewModel(
     private val tagManager: TagManager,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val modelRepository: ModelRepository
+    private val modelRepository: ModelRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "SearchViewModel"
@@ -132,8 +133,6 @@ class SearchViewModel(
             }
         }
         .cachedIn(viewModelScope)
-
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)}
 
     init {
         loadRecentSearches()

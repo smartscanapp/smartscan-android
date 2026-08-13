@@ -1,11 +1,10 @@
 package com.fpf.smartscan.ui.screens.settings
 
 import android.app.Application
-import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.MediaDatabase
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.models.ModelRepository
@@ -29,8 +28,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 
-class SettingsViewModel(application: Application, private val modelRepository: ModelRepository) : AndroidViewModel(application) {
-    private val sharedPrefs = application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)
+class SettingsViewModel(
+    application: Application,
+    private val modelRepository: ModelRepository,
+    private val sharedPrefs: SharedPreferences
+) : AndroidViewModel(application) {
     private val _appSettings = MutableStateFlow(AppSettings())
     val appSettings: StateFlow<AppSettings> = _appSettings
     private val _modelEvent = MutableSharedFlow<ModelEvent>()

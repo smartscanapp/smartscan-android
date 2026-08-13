@@ -2,12 +2,11 @@ package com.fpf.smartscan.workers
 
 import android.app.Application
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.work.*
 import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -76,8 +75,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
     private val mediaJobManager: MediaJobManager by inject()
+    private val sharedPrefs: SharedPreferences by inject()
 
-    private val sharedPrefs by lazy { applicationContext.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
 
     // Disable listener for background jobs
     // Note: May later use worker specific listener

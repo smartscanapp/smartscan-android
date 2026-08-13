@@ -3,7 +3,7 @@ package com.fpf.smartscan.ui.screens.collections
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.compose.ui.platform.Clipboard
@@ -17,7 +17,6 @@ import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.constants.PrefsKeys
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.data.paging.TagPagingSource
 import com.fpf.smartscan.core.data.paging.ClusterPagingSource
@@ -55,6 +54,7 @@ class CollectionItemsViewModel(
     private val tagManager: TagManager,
     private val clusterManager: ClusterManager,
     private val mediaMetadataRepository: MediaMetadataRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "CollectionItemsViewModel"
@@ -62,8 +62,6 @@ class CollectionItemsViewModel(
 
     private val _state = MutableStateFlow(CollectionItemsState())
     val state: StateFlow<CollectionItemsState> = _state
-
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val tagItems = _state

@@ -2,6 +2,7 @@ package com.fpf.smartscan
 
 import android.os.Bundle
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
@@ -13,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.search.SearchFilter
 import com.fpf.smartscan.core.search.SearchQuery
@@ -22,10 +22,11 @@ import com.fpf.smartscan.ui.theme.ThemeManager
 import com.fpf.smartscan.core.utils.BackupUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 
 class MainActivity : ComponentActivity() {
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE) }
+    private val sharedPrefs: SharedPreferences by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

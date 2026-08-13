@@ -5,13 +5,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.fpf.smartscan.R
 import com.fpf.smartscan.MainActivity
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -62,7 +62,7 @@ class IndexService : Service(), KoinComponent {
     private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
 
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
+    private val sharedPrefs: SharedPreferences by inject()
 
     private val cloudIndexJobManager by lazy {
         CloudIndexJobManager(

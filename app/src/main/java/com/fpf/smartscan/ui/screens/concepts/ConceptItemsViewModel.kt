@@ -4,7 +4,7 @@ package com.fpf.smartscan.ui.screens.concepts
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -16,7 +16,6 @@ import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.constants.PrefsKeys
-import com.fpf.smartscan.constants.PrefsNames
 import com.fpf.smartscan.core.data.paging.ConceptPagingSource
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -39,6 +38,7 @@ import kotlin.collections.map
 class ConceptItemsViewModel(
     application: Application,
     private val mediaMetadataRepository: MediaMetadataRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ConceptItemsViewModel"
@@ -83,9 +83,6 @@ class ConceptItemsViewModel(
             }
         }
         .cachedIn(viewModelScope)
-
-    private val sharedPrefs by lazy { application.getSharedPreferences(PrefsNames.APP_PREFS, MODE_PRIVATE)}
-
 
     init {
         load()
