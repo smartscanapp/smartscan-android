@@ -49,6 +49,9 @@ dependencies {
     api("com.github.smartscanapp.smartscan-sdk:smartscan-ml:2.2.1")
     api("com.github.devdiaries41.llmconnect-android:llmconnect:1.0.0")
 
+    // crypto
+    implementation(libs.tink.android)
+
     // media loading
     api(libs.coil.compose)
     api(libs.coil.video)
