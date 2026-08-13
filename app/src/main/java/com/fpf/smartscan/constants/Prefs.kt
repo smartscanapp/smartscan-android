@@ -5,6 +5,7 @@ object PrefsNames {
 }
 
 object PrefsKeys {
+    const val SETTINGS = "app_settings" // for backward compatibility
     const val UPDATES = "UPDATES_KEY"
     const val SORT_BY_CONCEPT_ITEMS = "SORT_BY_CONCEPT_ITEMS"
     const val SORT_BY_COLLECTION_ITEMS = "SORT_BY_COLLECTION_ITEMS"
