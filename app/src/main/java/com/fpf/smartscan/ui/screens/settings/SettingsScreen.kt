@@ -207,6 +207,7 @@ fun SettingsScreen(
     val cloudProcessingSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
             label = stringResource(R.string.setting_api_keys),
+            description = stringResource(R.string.setting_api_keys_description),
             onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.API)) },
         ),
     )

@@ -70,7 +70,7 @@
 
     <!--Alerts / Message-->
     <string name="alert_space_not_allowed">Spaces are not allowed</string>
-    <string name="alert_scan_refresh_description">Manually update the index with new media (auto-updates daily).</string>
+    <string name="alert_scan_refresh_description">Manually trigger scan for new media (auto-updates daily).</string>
     <string name="alert_scan_rebuild_description">Delete and re-create the entire index.</string>
     <string name="alert_first_media_scan_content">Start the first %1$s scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
     <string name="alert_first_scan_content">Start the first media scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
@@ -176,6 +176,7 @@
     <string name="setting_source_code">Source code</string>
     <string name="setting_social_reddit">Reddit</string>
     <string name="setting_api_keys">API keys</string>
+    <string name="setting_api_keys_description">Add OpenAI API keys. Required to generate descriptions.</string>
     <string name="setting_openai_api_key">OpenAI API key</string>
     <string name="placeholders_api_key">Enter API key</string>
     <string name="setting_issues_description">Send bug reports and feature requests.</string>
