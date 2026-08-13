@@ -12,6 +12,7 @@ import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
 import com.fpf.smartscan.di.clusterModule
 import com.fpf.smartscan.di.conceptModule
+import com.fpf.smartscan.di.cryptoModule
 import com.fpf.smartscan.di.dbModule
 import com.fpf.smartscan.di.embedStoreModule
 import com.fpf.smartscan.di.mediaModule
@@ -40,7 +41,8 @@ class App : Application() {
                     conceptModule,
                     clusterModule,
                     tagModule,
-                    mediaModule
+                    mediaModule,
+                    cryptoModule,
                 )
             }
         }
@@ -58,7 +60,8 @@ class App : Application() {
                 conceptModule,
                 clusterModule,
                 tagModule,
-                mediaModule
+                mediaModule,
+                cryptoModule,
             )
         }
 
