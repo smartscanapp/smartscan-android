@@ -24,6 +24,7 @@ navigationCompose = "2.9.8"
 roomRuntime = "2.8.4"
 runner = "1.7.0"
 smartscanMl = "2.2.1"
+tinkAndroid = "1.23.0"
 ui = "1.11.4"
 workRuntimeKtx = "2.11.2"
 pagingCompose = "3.5.0"
@@ -77,6 +78,7 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

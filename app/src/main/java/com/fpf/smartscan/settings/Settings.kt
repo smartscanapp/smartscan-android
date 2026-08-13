@@ -3,13 +3,14 @@ package com.fpf.smartscan.settings
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
+import com.fpf.smartscan.constants.PrefsKeys
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-val json = Json { ignoreUnknownKeys = true }
+private val json = Json { ignoreUnknownKeys = true }
 
 fun loadSettings(sharedPrefs: SharedPreferences): AppSettings {
-    val jsonSettings = sharedPrefs.getString("app_settings", null)
+    val jsonSettings = sharedPrefs.getString(PrefsKeys.SETTINGS, null)
     return if (jsonSettings != null) {
         try {
             json.decodeFromString<AppSettings>(jsonSettings)
@@ -23,5 +24,5 @@ fun loadSettings(sharedPrefs: SharedPreferences): AppSettings {
 }
 
 fun saveSettings(sharedPrefs: SharedPreferences, settings: AppSettings) {
-    sharedPrefs.edit {putString("app_settings", json.encodeToString(settings))  }
+    sharedPrefs.edit {putString(PrefsKeys.SETTINGS, json.encodeToString(settings))  }
 }

@@ -38,7 +38,8 @@ val viewModelModule = module {
             mediaMetadataRepository = get(),
             tagManager = get(),
             clusterCrossRefRepository = get(),
-            modelRepository = get()
+            modelRepository = get(),
+            sharedPrefs = get()
         )
     }
     viewModel {
@@ -46,7 +47,8 @@ val viewModelModule = module {
             application = get(),
             mediaMetadataRepository = get(),
             clusterManager = get(),
-            tagManager = get()
+            tagManager = get(),
+            sharedPrefs = get()
         )
     }
 
@@ -64,18 +66,21 @@ val viewModelModule = module {
             clusterMetadataRepository = get(),
             conceptManager = get(),
             modelRepository = get(),
-            )
+            sharedPrefs = get()
+        )
     }
     viewModel {
         ConceptItemsViewModel(
             application = get(),
-            mediaMetadataRepository = get()
+            mediaMetadataRepository = get(),
+            sharedPrefs = get()
         )
     }
     viewModel {
         SettingsViewModel(
             application = get(),
-            modelRepository = get()
+            modelRepository = get(),
+            sharedPrefs = get()
         )
     }
 
