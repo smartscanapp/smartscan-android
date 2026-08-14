@@ -2,6 +2,7 @@ package com.fpf.smartscan
 
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -48,14 +49,13 @@ class MainViewModel(
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterManager: ClusterManager,
-    private val modelRepository: ModelRepository
+    private val modelRepository: ModelRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "MainViewModel"
     }
-
-    private val sharedPrefs = application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)
 
     // Global indexing state
     val imageIndexProgress = ImageIndexListener.progress
