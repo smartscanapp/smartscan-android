@@ -113,12 +113,12 @@ fun ConceptsScreen(
         MenuActionConfig.Button(
             label = stringResource(R.string.concepts_allowed_tag_collection_menu_action),
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.TAG)) },
-            enabled = !state.loading,
+            enabled = !state.loading && tagCollections.isNotEmpty(),
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.concepts_allowed_auto_collection_menu_action),
             onClick = { viewModel.onAction(ConceptAction.SetCollectionType(CollectionType.CLUSTER)) },
-            enabled = !state.loading,
+            enabled = !state.loading && clusterCollections.isNotEmpty(),
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.concepts_generate_summaries_menu_action),
