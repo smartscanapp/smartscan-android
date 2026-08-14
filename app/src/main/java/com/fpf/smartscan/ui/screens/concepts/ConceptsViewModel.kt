@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.concepts.ConceptManager
 import com.fpf.smartscan.core.concepts.getAllowedClusters
@@ -191,12 +192,12 @@ class ConceptsViewModel(
     }
 
     private suspend fun getAllowedTagCollections(): List<MediaCollection>{
-        val tagIds = getAllowedTags(sharedPrefs)
+        val tagIds = getAllowedTags(sharedPrefs, PrefsKeys.ALLOWED_TAG_COLLECTIONS)
         return tagRepository.getCollections(tagIds.toList())
     }
 
     private suspend fun getAllowedClusterCollections(): List<MediaCollection>{
-        val clusterIds = getAllowedClusters(sharedPrefs)
+        val clusterIds = getAllowedClusters(sharedPrefs, PrefsKeys.ALLOWED_AUTO_COLLECTIONS)
         return clusterMetadataRepository.getCollections(clusterIds.toList())
     }
 
@@ -227,9 +228,10 @@ class ConceptsViewModel(
     private fun setAllowedCollections(){
         val currentState = _state.value
         val selectedCollections = currentState.collectionsSelection.selectedItems
+        val collectionIds = selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet()
         when(currentState.selectedCollectionType){
-            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
-            CollectionType.TAG -> setAllowedTags(sharedPrefs, selectedCollections.filter{it.type == currentState.selectedCollectionType}.map{it.id}.toSet())
+            CollectionType.CLUSTER -> setAllowedClusters(sharedPrefs, PrefsKeys.ALLOWED_AUTO_COLLECTIONS, collectionIds)
+            CollectionType.TAG -> setAllowedTags(sharedPrefs, PrefsKeys.ALLOWED_TAG_COLLECTIONS, collectionIds)
             else -> {}
         }
         setCollectionType(null)
