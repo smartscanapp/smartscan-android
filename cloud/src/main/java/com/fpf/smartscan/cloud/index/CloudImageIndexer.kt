@@ -7,6 +7,7 @@ import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.jobs.MediaProcessingJob
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaMetadata
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.utils.uriToBase64
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.EmbeddingStore
@@ -16,6 +17,7 @@ import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.MemoryOptions
+import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpflabs.llmconnect.openai.OpenaiClient
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -58,6 +60,21 @@ class CloudImageIndexer(
         val storedEmbedding = StoredEmbedding(item.id, item.dateAdded, embed)
         val updatedMetadata = item.copy(description = result.summary)
         return Pair(updatedMetadata, storedEmbedding)
+    }
+
+    suspend fun index(allowedTags: List<Long>, allowedClusters: List<Long>): ProcessorResult{
+        val mediaType = MediaType.IMAGE
+        val mediaProcess = mutableSetOf<MediaMetadata>()
+
+        if(allowedTags.isNotEmpty()) {
+            val existingMediaMatchingTags = mediaMetadataRepository.getByTagsWithoutDescription(allowedTags, mediaType)
+            mediaProcess.addAll(existingMediaMatchingTags)
+        }
+        if(allowedClusters.isNotEmpty()) {
+            val existingMediaMatchingClusters = mediaMetadataRepository.getByClustersWithoutDescription(allowedClusters, mediaType)
+            mediaProcess.addAll(existingMediaMatchingClusters)
+        }
+        return run(mediaProcess.toList())
     }
 
     private fun formatOutput(output: ImageSummary): String {

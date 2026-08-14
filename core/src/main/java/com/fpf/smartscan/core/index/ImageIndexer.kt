@@ -2,8 +2,12 @@ package com.fpf.smartscan.core.index
 
 import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
 import android.provider.MediaStore
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaMetadata
+import com.fpf.smartscan.core.media.MediaStoreHelper
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.EmbeddingStore
@@ -13,6 +17,7 @@ import com.fpf.smartscansdk.core.media.getBitmapFromUri
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.MemoryOptions
+import com.fpf.smartscansdk.core.processors.ProcessorResult
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
@@ -21,6 +26,7 @@ class ImageIndexer(
     private val store: EmbeddingStore,
     private val maxImageSize: Int = 225,
     private val quantize: Boolean = false,
+    private val mediaMetadataRepository: MediaMetadataRepository,
     context: Context,
     listener: ProcessorListener<MediaMetadata>? = null,
     memoryOptions: MemoryOptions = MemoryOptions(),
@@ -44,5 +50,19 @@ class ImageIndexer(
         val output = embedder.embed(bitmap)
         val embedding = if(quantize) Embedding.QInt8(output.toQInt8()) else Embedding.F32(output)
         return Pair(item, embedding)
+    }
+
+    suspend fun index(context: Context, allowedDirs: List<Uri> = emptyList()): ProcessorResult{
+        val mediaType = MediaType.IMAGE
+        val idToDateMap = MediaStoreHelper.queryImageIdDateMap(context, allowedDirs)
+        val existingMediaIdsInEmbedStore = store.get().map{it.id}.toSet()
+        val existingMediaIdsFromRoom = mediaMetadataRepository.getIds(mediaType).toSet()
+        val newMediaIds = idToDateMap.keys.filterNot { existingMediaIdsFromRoom.contains(it) && existingMediaIdsInEmbedStore.contains(it) }
+        val newMedia = newMediaIds.mapNotNull{
+            val date = idToDateMap[it]?: return@mapNotNull null
+            MediaMetadata(it, mediaType, date)
+        }
+        mediaMetadataRepository.insert(newMedia)
+        return run(newMedia)
     }
 }

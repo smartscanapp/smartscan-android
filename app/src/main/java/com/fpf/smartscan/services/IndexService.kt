@@ -12,17 +12,15 @@ import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.fpf.smartscan.R
 import com.fpf.smartscan.MainActivity
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE
-import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.constants.EncryptedStorageKeys
+import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
@@ -56,12 +54,10 @@ class IndexService : Service(), KoinComponent {
     private val imageEmbedder by lazy { ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
     private val textEmbedder by lazy { ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2) }
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
-    private val clusterMetadataRepository: ClusterMetadataRepository by inject()
-    private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
+    private val clusterManager: ClusterManager by inject()
     private val mediaJobManager: MediaJobManager by inject()
     private val imageEmbedStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
     private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
-    private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
     private val sharedPrefs: SharedPreferences by inject()
     private val encryptedStorage: EncryptedStorage by inject()
@@ -83,10 +79,8 @@ class IndexService : Service(), KoinComponent {
             imageEmbedder = imageEmbedder,
             imageEmbedStore = imageEmbedStore,
             videoEmbedStore = videoEmbedStore,
-            clusterEmbedStore = clusterEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
-            clusterMetadataRepository = clusterMetadataRepository,
-            clusterCrossRefRepository = clusterCrossRefRepository
+            clusterManager=clusterManager
         )
     }
 
