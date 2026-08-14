@@ -22,6 +22,7 @@ import com.fpf.smartscan.core.index.VideoIndexListener
 import com.fpf.smartscan.services.rebuildIndex
 import com.fpf.smartscan.services.refreshIndex
 import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.services.stopIndexing
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
@@ -202,6 +203,11 @@ class MainViewModel(
 
     fun onInitialDedupeComplete(){
         sharedPrefs.edit { putBoolean(PrefsKeys.HAS_COMPLETED_INITIAL_DEDUPE, true) }
+    }
+
+    fun cancelIndexing(){
+        stopIndexing(application)
+        _runningMediaTypes.update { emptySet()}
     }
 
     private fun resetIndexingState(mediaType: MediaType){

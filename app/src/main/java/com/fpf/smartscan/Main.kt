@@ -336,7 +336,8 @@ fun Main(
                         videoIndexProgress = videoIndexProgress,
                         imageIndexProgress = if (cloudImageIndexStatus == IndexingStatus.ACTIVE) cloudImageIndexProgress else imageIndexProgress,
                         title = stringResource(R.string.scan_in_progress_title),
-                        message = stringResource(R.string.scan_in_progress_content)
+                        message = stringResource(R.string.scan_in_progress_content),
+                        onCancel = {mainViewModel.cancelIndexing()}
                     )
                 }
             }

@@ -84,6 +84,8 @@
     <string name="sort_title">Sort by</string>
     <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your media.</string>
     <string name="download_model_message">A new model is required to use the app. Download it now to continue.</string>
+    <string name="cancel_scan">Cancel scan</string>
+    <string name="cancel_scan_description">Are you sure you want to cancel the scan?</string>
 
     <!--Sort Options-->
     <string name="sort_date_asc_option">Date (ascending)</string>
