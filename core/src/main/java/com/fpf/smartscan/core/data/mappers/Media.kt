@@ -29,7 +29,8 @@ fun MediaMetadata.toItem(): MediaItem = MediaItem(
     dateAdded=dateAdded,
     description=description,
     isTrashed = isTrashed,
-    isDuplicate = isDuplicate
+    isDuplicate = isDuplicate,
+    isHidden = isHidden
 )
 
 fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
@@ -38,7 +39,8 @@ fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
     dateAdded=dateAdded,
     description=description,
     isTrashed = isTrashed,
-    isDuplicate = isDuplicate
+    isDuplicate = isDuplicate,
+    isHidden=isHidden
 )
 
 fun HideableMediaEntity.toDomain(): MediaMetadata = MediaMetadata(
