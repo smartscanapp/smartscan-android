@@ -269,7 +269,7 @@ interface MediaMetadataDao {
 
     // Concept queries
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -289,10 +289,10 @@ interface MediaMetadataDao {
         mediaType: MediaType?,
         minSimilarity: Float?,
         isHidden: Boolean?
-    ): List<MediaMetadataEntity>
+    ): List<HideableMediaEntity>
 
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -312,7 +312,7 @@ interface MediaMetadataDao {
         mediaType: MediaType?,
         minSimilarity: Float?,
         isHidden: Boolean?
-    ): List<MediaMetadataEntity>
+    ): List<HideableMediaEntity>
 
 
     @Query("""
@@ -336,7 +336,7 @@ interface MediaMetadataDao {
     ): List<MediaMetadataEntity>
 
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -356,10 +356,10 @@ interface MediaMetadataDao {
         mediaType: MediaType?,
         minSimilarity: Float?,
         isHidden: Boolean?
-    ): List<MediaMetadataEntity>
+    ): List<HideableMediaEntity>
 
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -379,7 +379,7 @@ interface MediaMetadataDao {
         mediaType: MediaType?,
         minSimilarity: Float?,
         isHidden: Boolean?
-    ): List<MediaMetadataEntity>
+    ): List<HideableMediaEntity>
 
     @Query("""
         DELETE FROM media_metadata

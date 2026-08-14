@@ -1,6 +1,8 @@
 package com.fpf.smartscan.core.data.mappers
 
+import com.fpf.smartscan.core.data.media.HideableMediaEntity
 import com.fpf.smartscan.core.data.media.MediaMetadataEntity
+import com.fpf.smartscan.core.media.HideableMediaItem
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaMetadata
 
@@ -40,3 +42,7 @@ fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
     isDuplicate = isDuplicate
 )
 
+fun HideableMediaEntity.toDomain(): HideableMediaItem = HideableMediaItem(
+    mediaItem = media.toDomain().toItem(),
+    isHidden = isHidden
+)
