@@ -65,6 +65,7 @@
 
     <!--Label-->
     <string name="duplicate_label">Duplicates</string>
+    <string name="show_hidden_label">Show hidden</string>
 
     <!--Buttons-->
     <string name="include_button">Include</string>

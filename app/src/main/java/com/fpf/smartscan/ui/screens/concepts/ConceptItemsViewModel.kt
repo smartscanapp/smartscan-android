@@ -100,7 +100,10 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.ResetSelection -> resetSelection()
             is ConceptItemsAction.ClearSelection -> clearSelection()
             is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
+            is ConceptItemsAction.SetShowHiddenFilter -> setShowHiddenFilter(action.showHidden)
+            is ConceptItemsAction.ResetFilters -> resetFilters()
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
+
         }
     }
 
@@ -154,6 +157,10 @@ class ConceptItemsViewModel(
 
     private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
     private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(filter = it.filter.copy(mediaType=mediaType)) }
+
+    // Null mean include hidden. True would only show hidden
+    private fun setShowHiddenFilter(showHidden: Boolean) = _state.update { it.copy(filter = it.filter.copy(showHidden = if(showHidden) null else false)) }
+    private fun resetFilters() = _state.update { it.copy(filter = it.filter.copy(showHidden = false, isDuplicate = null, mediaType = null)) }
 
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }

@@ -45,8 +45,10 @@ import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.concepts.ConceptFilterControls
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
+import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
@@ -235,17 +237,17 @@ fun ConceptItemsScreen(
         onClose = {showSortOptions = false}
     )
 
-    OptionPicker(
-        isVisible = showFilters,
-        title = stringResource(R.string.media_type_title),
-        options =  listOf("All") + mediaTypeOptions.values.toList(),
-        selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
-        onSelect = { selected ->
-            val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(mediaType))
-            showFilters = false
-        },
-        onClose = {showFilters = false}
-    )
+    BottomSheet (
+        show = showFilters,
+        onDismiss = { showFilters = false }
+    ) {
+        ConceptFilterControls(
+            filter = state.filter,
+            label = stringResource(R.string.filter_action),
+            onSetShowHidden = { viewModel.onAction(ConceptItemsAction.SetShowHiddenFilter(it))},
+            onSetMediaType = { viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(it))},
+            onResetFilters = { viewModel.onAction(ConceptItemsAction.ResetFilters)},
+        )
+    }
 
 }
