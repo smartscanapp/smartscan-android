@@ -2,6 +2,7 @@ package com.fpf.smartscan.core.data.mappers
 
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.concepts.ConceptCrossRef
+import com.fpf.smartscan.core.concepts.NewConcept
 import com.fpf.smartscan.core.data.concepts.ConceptCrossRefEntity
 import com.fpf.smartscan.core.data.concepts.ConceptEntity
 import com.fpf.smartscan.core.data.concepts.ConceptWithCount
@@ -22,6 +23,12 @@ fun Concept.toEntity(): ConceptEntity =
         updatedAt = updatedAt,
     )
 
+fun NewConcept.toEntity(): ConceptEntity =
+    ConceptEntity(
+        description = description,
+        isPinned = isPinned,
+        updatedAt = updatedAt,
+    )
 fun ConceptCrossRef.toEntity() =
    ConceptCrossRefEntity(
         conceptId = conceptId,

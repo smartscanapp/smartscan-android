@@ -29,19 +29,17 @@ class ConceptManager(
         val added: Int
     )
 
-    private var idCount: Long = 0L
-
     val allConceptsFlow = conceptRepository.getConceptsFlow()
 
     private val conceptToThresholdMap: MutableMap<Long, Double> = mutableMapOf()
 
     suspend fun createConcept(description: String, descriptionEmbed: Embedding){
-        val concept = Concept(id = generateId(), description = description, size = 0)
-        conceptRepository.insertConcept(concept)
+        val concept = NewConcept( description = description)
+        val id = conceptRepository.insertConcept(concept)
 
-        val conceptEmbed = StoredEmbedding(id = concept.id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
+        val conceptEmbed = StoredEmbedding(id = id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
         conceptEmbedStore.add(listOf(conceptEmbed))
-        findAndUpdateMediaMatchingConcept(concept)
+        findAndUpdateMediaMatchingConcept(id)
     }
 
     suspend fun editConcept(updatedConcept: Concept, descriptionEmbed: Embedding){
@@ -52,7 +50,7 @@ class ConceptManager(
         conceptEmbedStore.update(listOf(updatedEmbed))
         conceptToThresholdMap.remove(updatedConcept.id)
 
-        findAndUpdateMediaMatchingConcept(updatedConcept)
+        findAndUpdateMediaMatchingConcept(updatedConcept.id)
     }
 
     suspend fun deleteConcepts(concepts: List<Concept>){
@@ -65,9 +63,9 @@ class ConceptManager(
         conceptRepository.updateConcepts(concepts.map{it.copy(isPinned = !it.isPinned)})
     }
 
-    suspend fun findAndUpdateMediaMatchingConcept(concept: Concept){
-        val mediaMatchesMap = findMediaMatchingConcept(concept)
-        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = concept.id, similarity = it.value)}
+    suspend fun findAndUpdateMediaMatchingConcept(conceptId: Long){
+        val mediaMatchesMap = findMediaMatchingConcept(conceptId)
+        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = conceptId, similarity = it.value)}
         conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
     }
 
@@ -101,8 +99,8 @@ class ConceptManager(
         MediaType.IMAGE -> imageConceptEmbedStore
     }
 
-    private suspend fun findMediaMatchingConcept(concept: Concept): Map<Pair<Long, MediaType>, Float>{
-        val conceptEmbedding = conceptEmbedStore.get(listOf(concept.id)).firstOrNull()?: return emptyMap()
+    private suspend fun findMediaMatchingConcept(conceptId: Long): Map<Pair<Long, MediaType>, Float>{
+        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return emptyMap()
         val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore)
         val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore)
         val mediaItemSimsMap = imageResult
@@ -141,12 +139,6 @@ class ConceptManager(
             }
         }
         return crossRefsToAdd
-    }
-
-    private fun generateId(): Long {
-        val id = System.currentTimeMillis() + idCount
-        ++idCount
-        return id
     }
 }
 

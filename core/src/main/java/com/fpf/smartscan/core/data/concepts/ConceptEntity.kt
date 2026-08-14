@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "concept")
 data class ConceptEntity (
-    @PrimaryKey
-    val id: Long,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val description: String,
     val isPinned: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis()

@@ -13,3 +13,10 @@ data class Concept (
 
 ): Parcelable{
 }
+
+data class NewConcept (
+    val description: String,
+    val size: Int = 0,
+    val isPinned: Boolean = false,
+    val updatedAt: Long = System.currentTimeMillis()
+)
