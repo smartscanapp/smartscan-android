@@ -45,6 +45,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
                 conceptId INTEGER NOT NULL,
                 mediaType INTEGER NOT NULL,
                 similarity REAL NOT NULL,
+                isHidden INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY(mediaId, mediaType, conceptId),
                 FOREIGN KEY(conceptId) REFERENCES concept(id) ON DELETE CASCADE,
                 FOREIGN KEY(mediaId, mediaType) REFERENCES media_metadata(id, type) ON DELETE CASCADE
