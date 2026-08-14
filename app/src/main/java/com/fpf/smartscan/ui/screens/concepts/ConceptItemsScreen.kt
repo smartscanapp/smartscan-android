@@ -1,6 +1,7 @@
 package com.fpf.smartscan.ui.screens.concepts
 
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -8,15 +9,22 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +35,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -42,11 +51,14 @@ import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.PlayerPool
+import com.fpf.smartscan.events.ConceptItemEventType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.concepts.ConceptFilterControls
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
+import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
@@ -84,6 +96,7 @@ fun ConceptItemsScreen(
     var showSortOptions by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showItemMenu by remember { mutableStateOf(false) }
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
@@ -150,6 +163,19 @@ fun ConceptItemsScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.event.collect { event ->
+            when (event.type) {
+                ConceptItemEventType.HIDE -> {
+                    event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                    if (event.success) {
+                        conceptItems.refresh()
+                    }
+                }
+            }
+        }
+    }
+
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(ConceptItemsAction.ResetSelection)
     }
@@ -166,7 +192,10 @@ fun ConceptItemsScreen(
                 items = conceptItems,
                 playerPool = playerPool,
                 onItemClick = { viewModel.onAction(ConceptItemsAction.SetMediaToView(it)) },
-                onShowItemMenu = {}, //TODO: show menu with options to hide etc
+                onShowItemMenu = {
+                    showItemMenu = true
+                    viewModel.onAction(ConceptItemsAction.ToggleSelectedMedia(it))
+                },
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 onError = mediaViewModel::onErrorAsyncImage
@@ -235,17 +264,56 @@ fun ConceptItemsScreen(
         onClose = {showSortOptions = false}
     )
 
-    OptionPicker(
-        isVisible = showFilters,
-        title = stringResource(R.string.media_type_title),
-        options =  listOf("All") + mediaTypeOptions.values.toList(),
-        selectedOption  = mediaTypeOptions[state.filter.mediaType]?: "All",
-        onSelect = { selected ->
-            val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(mediaType))
-            showFilters = false
-        },
-        onClose = {showFilters = false}
-    )
+    BottomSheet (
+        show = showFilters,
+        onDismiss = { showFilters = false }
+    ) {
+        ConceptFilterControls(
+            filter = state.filter,
+            label = stringResource(R.string.filter_action),
+            onSetShowHidden = { viewModel.onAction(ConceptItemsAction.SetShowHiddenFilter(it))},
+            onSetMediaType = { viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(it))},
+            onResetFilters = { viewModel.onAction(ConceptItemsAction.ResetFilters)},
+        )
+    }
 
+    BottomSheet(
+        show = showItemMenu && state.selection.selectedItems.size == 1,
+        onDismiss = {
+            showItemMenu = false
+            viewModel.onAction(ConceptItemsAction.ResetSelection)
+        }
+    ) {
+        val isHidden = state.selection.selectedItems.firstOrNull()?.isHidden ?: false
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ){
+            Row (
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = {
+                            showItemMenu = false
+                            viewModel.onAction(ConceptItemsAction.ToggleHide)
+                        }
+                    )
+                    .padding(8.dp)
+            ){
+                Icon(
+                    imageVector = if(isHidden) Icons.Filled.Visibility else  Icons.Filled.VisibilityOff,
+                    contentDescription = "hide icon",
+                )
+
+                val text = if(isHidden){
+                    stringResource(R.string.show_action)
+                }else{
+                    stringResource(R.string.hide_action)
+                }
+                Text(text)
+            }
+        }
+    }
 }

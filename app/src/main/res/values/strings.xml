@@ -62,9 +62,12 @@
     <string name="reset_filters_action">Reset filters</string>
     <string name="restore_action">Restore</string>
     <string name="empty_bin_action">Empty</string>
+    <string name="hide_action">Hide</string>
+    <string name="show_action">Show</string>
 
     <!--Label-->
     <string name="duplicate_label">Duplicates</string>
+    <string name="show_hidden_label">Show hidden</string>
 
     <!--Buttons-->
     <string name="include_button">Include</string>

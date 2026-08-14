@@ -1,5 +1,6 @@
 package com.fpf.smartscan.core.data.mappers
 
+import com.fpf.smartscan.core.data.media.HideableMediaEntity
 import com.fpf.smartscan.core.data.media.MediaMetadataEntity
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaMetadata
@@ -28,7 +29,8 @@ fun MediaMetadata.toItem(): MediaItem = MediaItem(
     dateAdded=dateAdded,
     description=description,
     isTrashed = isTrashed,
-    isDuplicate = isDuplicate
+    isDuplicate = isDuplicate,
+    isHidden = isHidden
 )
 
 fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
@@ -37,6 +39,16 @@ fun MediaItem.toMetadata(): MediaMetadata = MediaMetadata(
     dateAdded=dateAdded,
     description=description,
     isTrashed = isTrashed,
-    isDuplicate = isDuplicate
+    isDuplicate = isDuplicate,
+    isHidden=isHidden
 )
 
+fun HideableMediaEntity.toDomain(): MediaMetadata = MediaMetadata(
+    id=media.id,
+    type=media.type,
+    dateAdded=media.dateAdded,
+    description=media.description,
+    isTrashed = media.isTrashed,
+    isDuplicate =media.isDuplicate,
+    isHidden = isHidden
+)

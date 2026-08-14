@@ -269,7 +269,7 @@ interface MediaMetadataDao {
 
     // Concept queries
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -277,20 +277,22 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
     suspend fun getByConceptSortedByDateDesc(
         conceptId: Long,
+        limit: Int,
+        offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        limit: Int,
-        offset: Int
-    ): List<MediaMetadataEntity>
+        showHidden: Boolean?
+    ): List<HideableMediaEntity>
 
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -298,6 +300,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded ASC, m.id ASC
     LIMIT :limit OFFSET :offset
@@ -308,25 +311,8 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-    ): List<MediaMetadataEntity>
-
-
-    @Query("""
-    SELECT m.*
-    FROM media_metadata m
-    INNER JOIN concept_crossref c
-        ON c.mediaId = m.id
-        AND c.mediaType = m.type
-    WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
-    ORDER BY m.dateAdded DESC, m.id DESC
-""")
-    suspend fun getByConceptSortedByDate(
-        conceptId: Long,
-        mediaType: MediaType?,
-        minSimilarity: Float?
-    ): List<MediaMetadataEntity>
+        showHidden: Boolean?
+    ): List<HideableMediaEntity>
 
 
     @Query("""
@@ -338,7 +324,28 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+    ORDER BY m.dateAdded DESC, m.id DESC
+""")
+    suspend fun getByConcept(
+        conceptId: Long,
+        mediaType: MediaType?,
+        minSimilarity: Float?,
+        showHidden: Boolean?
+    ): List<MediaMetadataEntity>
+
+    @Query("""
+    SELECT m.*, c.isHidden
+    FROM media_metadata m
+    INNER JOIN concept_crossref c
+        ON c.mediaId = m.id
+        AND c.mediaType = m.type
+    WHERE c.conceptId = :conceptId
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
     ORDER BY c.similarity DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
@@ -348,10 +355,11 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-    ): List<MediaMetadataEntity>
+        showHidden: Boolean?
+    ): List<HideableMediaEntity>
 
     @Query("""
-    SELECT m.*
+    SELECT m.*, c.isHidden
     FROM media_metadata m
     INNER JOIN concept_crossref c
         ON c.mediaId = m.id
@@ -359,6 +367,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY c.similarity ASC, m.id ASC
     LIMIT :limit OFFSET :offset
@@ -369,26 +378,8 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-    ): List<MediaMetadataEntity>
-
-
-    @Query("""
-    SELECT m.*
-    FROM media_metadata m
-    INNER JOIN concept_crossref c
-        ON c.mediaId = m.id
-        AND c.mediaType = m.type
-    WHERE c.conceptId = :conceptId
-        AND m.isTrashed = 0
-        AND (:mediaType IS NULL OR m.type = :mediaType)
-        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
-    ORDER BY c.similarity DESC, m.id DESC
-""")
-    suspend fun getByConceptSortedBySimilarity(
-        conceptId: Long,
-        mediaType: MediaType?,
-        minSimilarity: Float?
-    ): List<MediaMetadataEntity>
+        showHidden: Boolean?
+    ): List<HideableMediaEntity>
 
     @Query("""
         DELETE FROM media_metadata

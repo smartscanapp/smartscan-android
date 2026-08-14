@@ -6,5 +6,6 @@ data class MediaMetadata(
     val dateAdded: Long,
     val description: String? = null,
     val isDuplicate: Boolean = false,
-    val isTrashed: Boolean = false
+    val isTrashed: Boolean = false,
+    val isHidden: Boolean = false
 )
