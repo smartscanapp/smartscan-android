@@ -41,7 +41,7 @@ class MediaMetadataRepository(
     suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByClustersWithoutDescription(clusterIds, mediaType).map{it.toDomain()}
 
     // CONCEPTS
-    suspend fun getByConceptSortedByDate(conceptId: Long,  minSimilarity: Float?= null, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByConceptSortedByDate(conceptId, minSimilarity=minSimilarity, mediaType =mediaType).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long, minSimilarity: Float?= null, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByConcept(conceptId, minSimilarity=minSimilarity, mediaType =mediaType).map{it.toDomain()}
     suspend fun getByConceptSortedByDate(conceptId: Long,  minSimilarity: Float?= null, mediaType: MediaType? = null, limit: Int, offset: Int, ascending: Boolean = false): List<MediaMetadata> = if(ascending){
         dao.getByConceptSortedByDateAsc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset).map{it.toDomain()}
     }else{

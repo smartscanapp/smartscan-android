@@ -147,7 +147,7 @@ class ConceptItemsViewModel(
     private suspend fun getAllItemsInConcept(): MutableSet<MediaItem> {
         val currentState = state.value
         val concept = currentState.concept ?: return mutableSetOf()
-        return mediaMetadataRepository.getByConceptSortedByDate(concept.id).map { it.toItem() }.toMutableSet()
+        return mediaMetadataRepository.getByConcept(concept.id).map { it.toItem() }.toMutableSet()
     }
 
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }

@@ -318,11 +318,12 @@ interface MediaMetadataDao {
         ON c.mediaId = m.id
         AND c.mediaType = m.type
     WHERE c.conceptId = :conceptId
-      AND (:mediaType IS NULL OR m.type = :mediaType)
-      AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
+        AND m.isTrashed = 0
+        AND (:mediaType IS NULL OR m.type = :mediaType)
+        AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded DESC, m.id DESC
 """)
-    suspend fun getByConceptSortedByDate(
+    suspend fun getByConcept(
         conceptId: Long,
         mediaType: MediaType?,
         minSimilarity: Float?
