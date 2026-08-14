@@ -2,7 +2,6 @@ package com.fpf.smartscan.core.data.media
 
 import com.fpf.smartscan.core.data.mappers.toDomain
 import com.fpf.smartscan.core.data.mappers.toEntity
-import com.fpf.smartscan.core.media.HideableMediaItem
 import com.fpf.smartscan.core.media.MediaMetadata
 import com.fpf.smartscan.core.media.MediaType
 
@@ -43,12 +42,12 @@ class MediaMetadataRepository(
 
     // CONCEPTS
     suspend fun getByConcept(conceptId: Long, minSimilarity: Float?= null, mediaType: MediaType? = null, isHidden: Boolean? = null): List<MediaMetadata> = dao.getByConcept(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, isHidden=isHidden).map{it.toDomain()}
-    suspend fun getByConceptSortedByDate(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean? = null): List<HideableMediaItem> = if(ascending){
+    suspend fun getByConceptSortedByDate(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean? = null): List<MediaMetadata> = if(ascending){
         dao.getByConceptSortedByDateAsc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
     }else{
         dao.getByConceptSortedByDateDesc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, isHidden =isHidden).map{it.toDomain()}
     }
-    suspend fun getByConceptSortedBySimilarity(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean?=null): List<HideableMediaItem> = if(ascending){
+    suspend fun getByConceptSortedBySimilarity(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean?=null): List<MediaMetadata> = if(ascending){
         dao.getByConceptSortedBySimilarityAsc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
     }else{
         dao.getByConceptSortedBySimilarityDesc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
