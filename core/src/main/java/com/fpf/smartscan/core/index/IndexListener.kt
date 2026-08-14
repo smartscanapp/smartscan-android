@@ -43,6 +43,12 @@ abstract class BaseIndexListener(protected val tag: String) : ProcessorListener<
     override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
         Log.e(tag, "Error during processing", error)
     }
+
+    override suspend fun onCancel(context: Context) {
+        Log.w(tag, "Cloud indexing job cancelled")
+        _indexingStatus.value = IndexingStatus.CANCELLED
+    }
+
     fun reset(){
         _indexingStatus.value = IndexingStatus.IDLE
         _progress.value = 0f

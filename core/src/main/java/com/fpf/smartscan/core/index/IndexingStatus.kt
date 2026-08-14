@@ -4,5 +4,7 @@ enum class IndexingStatus {
     IDLE,
     ACTIVE,
     COMPLETE,
-    FAILED
+    FAILED,
+
+    CANCELLED
 }

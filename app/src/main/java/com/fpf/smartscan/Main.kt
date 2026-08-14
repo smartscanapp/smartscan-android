@@ -83,11 +83,15 @@ fun Main(
             videoIndexStatus == IndexingStatus.ACTIVE ||
             cloudImageIndexStatus == IndexingStatus.ACTIVE ||
             runningMediaTypes.isNotEmpty()
-    val indexCompleteTitle = stringResource(R.string.notif_title_index_complete)
+
     var showFirstScanModal by remember { mutableStateOf(false) }
     var showScanAndRebuildModal by remember { mutableStateOf(false) }
     var showRefreshScanModel by remember { mutableStateOf(false) }
     var requiredMediaTypeToIndex by remember { mutableStateOf<MediaType?>(null) }
+
+    val indexCompleteTitle = stringResource(R.string.notif_title_index_complete)
+    val cancelledTitle = stringResource(R.string.notif_content_index_scan_cancelled_title)
+    val notificationId = 100
 
     // Model downloading
     val modelDownloadStatus by mainViewModel.modelDownloadStatus.collectAsState()
@@ -107,60 +111,63 @@ fun Main(
     }
 
     LaunchedEffect(imageIndexStatus) {
-        if (imageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            when(imageIndexStatus){
-                IndexingStatus.COMPLETE -> {
-                    val content = mainViewModel.getIndexCompleteNotification(MediaType.IMAGE)
-                    content?.let {
-                        showNotification(context, title = indexCompleteTitle, text = it, 100)
-                    }
-                    mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
-                }
-                IndexingStatus.FAILED -> {
-                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.IMAGE)
-                    showNotification(context, indexFailTitle, indexFailContent, 100)
-                }
-                else -> {}
+        when(imageIndexStatus){
+            IndexingStatus.COMPLETE -> {
+                val content = mainViewModel.getIndexCompleteNotification(MediaType.IMAGE)
+                content?.let { showNotification(context, title = indexCompleteTitle, text = it, notificationId) }
+                mainViewModel.onIndexingFinished(MediaType.IMAGE)
+                mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
             }
-            mainViewModel.onIndexingFinished(MediaType.IMAGE)
+            IndexingStatus.FAILED -> {
+                val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.IMAGE)
+                showNotification(context, indexFailTitle, indexFailContent, notificationId)
+                mainViewModel.onIndexingFinished(MediaType.IMAGE)
+            }
+            IndexingStatus.CANCELLED -> {
+                showNotification(context, title=cancelledTitle, id =notificationId)
+                mainViewModel.onIndexingFinished(MediaType.IMAGE)
+            }
+            else -> {}
         }
     }
 
     LaunchedEffect(videoIndexStatus) {
-        if (videoIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            when(videoIndexStatus){
-                IndexingStatus.COMPLETE -> {
-                    val content = mainViewModel.getIndexCompleteNotification(MediaType.VIDEO)
-                    content?.let {
-                        showNotification(context, title = indexCompleteTitle, text = it, 100)
-                    }
-                }
-                IndexingStatus.FAILED -> {
-                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.VIDEO)
-                    showNotification(context, indexFailTitle, indexFailContent, 100)
-                }
-                else -> {}
+        when(videoIndexStatus){
+            IndexingStatus.COMPLETE -> {
+                val content = mainViewModel.getIndexCompleteNotification(MediaType.VIDEO)
+                content?.let { showNotification(context, title = indexCompleteTitle, text = it, notificationId) }
+                mainViewModel.onIndexingFinished(MediaType.VIDEO)
             }
-            mainViewModel.onIndexingFinished(MediaType.VIDEO)
+            IndexingStatus.FAILED -> {
+                val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.VIDEO)
+                showNotification(context, indexFailTitle, indexFailContent, notificationId)
+                mainViewModel.onIndexingFinished(MediaType.VIDEO)
+            }
+            IndexingStatus.CANCELLED -> {
+                showNotification(context, title=cancelledTitle, id =notificationId)
+                mainViewModel.onIndexingFinished(MediaType.VIDEO)
+            }
+            else -> {}
         }
     }
 
     LaunchedEffect(cloudImageIndexStatus) {
-        if (cloudImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            when(cloudImageIndexStatus){
-                IndexingStatus.COMPLETE -> {
-                    val content = mainViewModel.getCloudIndexCompleteNotification(MediaType.IMAGE)
-                    content?.let {
-                        showNotification(context, title = indexCompleteTitle, text = it, 100)
-                    }
-                }
-                IndexingStatus.FAILED -> {
-                    val (indexFailTitle, indexFailContent) = mainViewModel.getCloudIndexFailNotification(MediaType.IMAGE)
-                    showNotification(context, indexFailTitle, indexFailContent, 100)
-                }
-                else -> {}
+        when(cloudImageIndexStatus){
+            IndexingStatus.COMPLETE -> {
+                val content = mainViewModel.getCloudIndexCompleteNotification(MediaType.IMAGE)
+                content?.let { showNotification(context, title = indexCompleteTitle, text = it, notificationId) }
+                mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
             }
-            mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
+            IndexingStatus.FAILED -> {
+                val (indexFailTitle, indexFailContent) = mainViewModel.getCloudIndexFailNotification(MediaType.IMAGE)
+                showNotification(context, indexFailTitle, indexFailContent, notificationId)
+                mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
+            }
+            IndexingStatus.CANCELLED -> {
+                showNotification(context, title=cancelledTitle, id =notificationId)
+                mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
+            }
+            else -> {}
         }
     }
 
