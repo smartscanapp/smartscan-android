@@ -16,6 +16,7 @@ import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.data.DataSyncHelper
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
+import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.index.ImageIndexListener
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.VideoIndexListener
@@ -29,6 +30,7 @@ import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
+import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.models.ModelName
 import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
@@ -175,20 +177,6 @@ class MainViewModel(
         }
     }
 
-    fun onIndexingFinished(mediaType: MediaType) {
-        when(mediaType){
-            MediaType.IMAGE -> _hasIndexedImages.value = imageEmbedStore.exists
-            MediaType.VIDEO -> _hasIndexedVideos.value = videoEmbedStore.exists
-        }
-        resetIndexingState(mediaType)
-        _runningMediaTypes.update { it - mediaType}
-    }
-
-    fun onConceptIndexingFinished(mediaType: MediaType) {
-        resetConceptIndexingState(mediaType)
-        _runningMediaTypes.update { it - mediaType}
-    }
-
     fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
         if (storageAccess != StorageAccess.Denied) {
@@ -218,6 +206,49 @@ class MainViewModel(
         return notificationText
     }
 
+
+    fun getCloudIndexFailNotification(mediaType: MediaType): Pair<String, String> {
+        val app = getApplication<Application>()
+        val title = app.getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
+        val result = CloudImageIndexListener.result.value
+        val content = if (result is ProcessorResult.Failure) {
+            when (result.error) {
+                is AppException.InvalidApiKey -> app.getString(R.string.notif_content_index_error_invalid_api_key)
+                is AppException.RateLimit -> app.getString(R.string.notif_content_index_error_rate_limit)
+                else -> app.getString(R.string.notif_content_index_error_service)
+            }
+        } else {
+            app.getString(R.string.notif_content_index_error_service)
+        }
+
+        return Pair(title, content)
+    }
+
+    fun getCloudIndexCompleteNotification(mediaType: MediaType): String?{
+        val result = when(mediaType){
+            MediaType.IMAGE -> CloudImageIndexListener.result.value
+            MediaType.VIDEO -> null
+        }?: return null
+        if(result.totalProcessed == 0) return null
+        val (minutes, seconds) = getTimeInMinutesAndSeconds(result.timeElapsed)
+        val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${result.totalProcessed}, Time: ${minutes}m ${seconds}s"
+        return notificationText
+    }
+
+    fun onIndexingFinished(mediaType: MediaType) {
+        when(mediaType){
+            MediaType.IMAGE -> _hasIndexedImages.value = imageEmbedStore.exists
+            MediaType.VIDEO -> _hasIndexedVideos.value = videoEmbedStore.exists
+        }
+        resetIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
+    }
+
+    fun onCloudIndexingFinished(mediaType: MediaType) {
+        resetCloudIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
+    }
+
     fun onInitialDedupeComplete(){
         sharedPrefs.edit { putBoolean(PrefsKeys.HAS_COMPLETED_INITIAL_DEDUPE, true) }
     }
@@ -229,7 +260,7 @@ class MainViewModel(
         }
     }
 
-    private fun resetConceptIndexingState(mediaType: MediaType){
+    private fun resetCloudIndexingState(mediaType: MediaType){
         when(mediaType){
             MediaType.IMAGE -> CloudImageIndexListener.reset()
             MediaType.VIDEO -> {}

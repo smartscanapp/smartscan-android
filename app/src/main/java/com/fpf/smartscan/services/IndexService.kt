@@ -140,7 +140,9 @@ class IndexService : Service(), KoinComponent {
                         }
 
                         catch (e: CancellationException) {
-                            Log.w(TAG, "Indexing job cancelled:", e)
+                            Log.w(TAG, "Cloud indexing job cancelled:", e)
+                            val title = application.getString(R.string.notif_content_index_scan_cancelled_title)
+                            showNotification(application, title=title, id =NOTIFICATION_ID + 1)
                         }
                         catch (e: Exception) {
                             Log.e(TAG, "Cloud Indexing failed:", e)
@@ -163,6 +165,8 @@ class IndexService : Service(), KoinComponent {
                         }
                         catch (e: CancellationException) {
                             Log.w(TAG, "Indexing job cancelled:", e)
+                            val title = application.getString(R.string.notif_content_index_scan_cancelled_title)
+                            showNotification(application, title=title, id =NOTIFICATION_ID + 1)
                         }
                         catch (e: Exception) {
                             Log.e(TAG, "Indexing failed:", e)

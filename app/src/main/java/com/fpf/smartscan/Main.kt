@@ -147,7 +147,20 @@ fun Main(
 
     LaunchedEffect(cloudImageIndexStatus) {
         if (cloudImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
+            when(cloudImageIndexStatus){
+                IndexingStatus.COMPLETE -> {
+                    val content = mainViewModel.getCloudIndexCompleteNotification(MediaType.IMAGE)
+                    content?.let {
+                        showNotification(context, title = indexCompleteTitle, text = it, 100)
+                    }
+                }
+                IndexingStatus.FAILED -> {
+                    val (indexFailTitle, indexFailContent) = mainViewModel.getCloudIndexFailNotification(MediaType.IMAGE)
+                    showNotification(context, indexFailTitle, indexFailContent, 100)
+                }
+                else -> {}
+            }
+            mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
         }
     }
 
