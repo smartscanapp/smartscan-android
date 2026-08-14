@@ -17,7 +17,10 @@ import java.util.concurrent.TimeUnit
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.constants.EncryptedStorageKeys
+import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.core.cluster.ClusterManager
+import com.fpf.smartscan.core.concepts.getAllowedClusters
+import com.fpf.smartscan.core.concepts.getAllowedTags
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
@@ -81,7 +84,6 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     private val cloudIndexJobManager by lazy {
         CloudIndexJobManager(
             application = applicationContext as Application,
-            sharedPrefs=sharedPrefs,
             textEmbedder = textEmbedder,
             imageConceptsEmbedStore = imageConceptsEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
@@ -127,10 +129,12 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
                 if(it.totalProcessed > 0) mediaJobManager.findAndMarkDuplicates(MediaType.IMAGE)
             }
 
+            val allowedTags= getAllowedTags(sharedPrefs, PrefsKeys.ALLOWED_TAG_COLLECTIONS)
+            val allowedClusters = getAllowedClusters(sharedPrefs, PrefsKeys.ALLOWED_AUTO_COLLECTIONS)
             val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
             val openaiApiKey = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
             if(modelExist && !openaiApiKey.isNullOrBlank() && imageConceptsEmbedStore.exists){
-                val results = cloudIndexJobManager.run(listOf(MediaType.IMAGE), openaiApiKey) // only image is supported ATM
+                val results = cloudIndexJobManager.run(listOf(MediaType.IMAGE), openaiApiKey, allowedTags = allowedTags.toList(), allowedClusters = allowedClusters.toList()) // only image is supported ATM
             }
             return@withContext Result.success()
         } catch (e: Exception) {

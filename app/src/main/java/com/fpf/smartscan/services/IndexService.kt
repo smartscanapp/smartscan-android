@@ -20,7 +20,10 @@ import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.constants.EncryptedStorageKeys
+import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.core.cluster.ClusterManager
+import com.fpf.smartscan.core.concepts.getAllowedClusters
+import com.fpf.smartscan.core.concepts.getAllowedTags
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.jobs.MediaProcessingJob
@@ -68,7 +71,6 @@ class IndexService : Service(), KoinComponent {
     private val cloudIndexJobManager by lazy {
         CloudIndexJobManager(
             application = application,
-            sharedPrefs=sharedPrefs,
             textEmbedder = textEmbedder,
             imageConceptsEmbedStore = imageConceptsEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
@@ -126,8 +128,10 @@ class IndexService : Service(), KoinComponent {
                 val indexJob = IndexJobType.valueOf(intent?.getStringExtra(EXTRA_INDEX_JOB)?: error("Invalid job type"))
                 when(indexJob){
                     IndexJobType.CLOUD -> {
+                        val allowedTags= getAllowedTags(sharedPrefs, PrefsKeys.ALLOWED_TAG_COLLECTIONS)
+                        val allowedClusters = getAllowedClusters(sharedPrefs, PrefsKeys.ALLOWED_AUTO_COLLECTIONS)
                         val openaiApiKey = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
-                        cloudIndexJobManager.run(mediaTypes, openaiApiKey){ processorResult, mediaType ->
+                        cloudIndexJobManager.run(mediaTypes, openaiApiKey, allowedTags = allowedTags.toList(), allowedClusters = allowedClusters.toList()){ processorResult, mediaType ->
                             handleCloudIndexResult(processorResult, mediaType)
                         }
                     }

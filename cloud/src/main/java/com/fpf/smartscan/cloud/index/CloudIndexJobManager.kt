@@ -16,7 +16,6 @@ import com.fpflabs.llmconnect.openai.OpenaiClient
 
 class CloudIndexJobManager(
     private val application: Application,
-    private val sharedPrefs: SharedPreferences,
     private val textEmbedder: TextEmbeddingProvider,
     private val imageConceptsEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
@@ -31,10 +30,10 @@ class CloudIndexJobManager(
     suspend fun run(
         mediaTypes: List<MediaType>,
         apiKey: String?,
+        allowedTags: List<Long> = emptyList(),
+        allowedClusters: List<Long> = emptyList(),
         onResult: (suspend (ProcessorResult, MediaType) -> Unit )? = null
     ): Map<MediaType, ProcessorResult>{
-        val allowedTags= getAllowedTags(sharedPrefs)
-        val allowedClusters = getAllowedClusters(sharedPrefs)
         val openaiClient = OpenaiClient(
             apiKey = apiKey ?: throw AppException.MissingApiKey(),
             config = LLMProviderConfig(
@@ -59,10 +58,7 @@ class CloudIndexJobManager(
                         mediaJobManager=mediaJobManager,
                         quantize = true,
                     )
-                    val imageResult = imageIndexer.index(
-                        allowedTags = allowedTags.toList(),
-                        allowedClusters = allowedClusters.toList()
-                    )
+                    val imageResult = imageIndexer.index(allowedTags = allowedTags, allowedClusters = allowedClusters)
                     results[mediaType] = imageResult
                     onResult?.invoke(imageResult, mediaType)
                 }
