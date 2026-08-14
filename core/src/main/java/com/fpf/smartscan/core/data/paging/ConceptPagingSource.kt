@@ -19,7 +19,7 @@ class ConceptPagingSource(
                 limit=pageSize + 1,
                 offset=offset,
                 ascending=sortBy.ascending,
-                isHidden = filter.isHidden
+                showHidden = filter.showHidden
                 )
             is SortBy.Similarity -> mediaMetadataRepository.getByConceptSortedBySimilarity(
                 conceptId,
@@ -27,7 +27,7 @@ class ConceptPagingSource(
                 limit = pageSize + 1,
                 offset=offset,
                 ascending=sortBy.ascending,
-                isHidden = filter.isHidden
+                showHidden = filter.showHidden
             )
         }
 }

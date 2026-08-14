@@ -277,7 +277,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
-        AND (:isHidden IS NULL OR c.isHidden = :isHidden)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded DESC, m.id DESC
     LIMIT :limit OFFSET :offset
@@ -288,7 +288,7 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        isHidden: Boolean?
+        showHidden: Boolean?
     ): List<HideableMediaEntity>
 
     @Query("""
@@ -300,7 +300,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
-        AND (:isHidden IS NULL OR c.isHidden = :isHidden)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded ASC, m.id ASC
     LIMIT :limit OFFSET :offset
@@ -311,7 +311,7 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        isHidden: Boolean?
+        showHidden: Boolean?
     ): List<HideableMediaEntity>
 
 
@@ -324,7 +324,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
-        AND (:isHidden IS NULL OR c.isHidden = :isHidden)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY m.dateAdded DESC, m.id DESC
 """)
@@ -332,7 +332,7 @@ interface MediaMetadataDao {
         conceptId: Long,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        isHidden: Boolean?
+        showHidden: Boolean?
     ): List<MediaMetadataEntity>
 
     @Query("""
@@ -345,7 +345,7 @@ interface MediaMetadataDao {
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
-        AND (:isHidden IS NULL OR c.isHidden = :isHidden)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
     ORDER BY c.similarity DESC, m.id DESC
     LIMIT :limit OFFSET :offset
 """)
@@ -355,7 +355,7 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        isHidden: Boolean?
+        showHidden: Boolean?
     ): List<HideableMediaEntity>
 
     @Query("""
@@ -367,7 +367,7 @@ interface MediaMetadataDao {
     WHERE c.conceptId = :conceptId
         AND m.isTrashed = 0
         AND (:mediaType IS NULL OR m.type = :mediaType)
-        AND (:isHidden IS NULL OR c.isHidden = :isHidden)
+        AND (:showHidden IS NULL OR c.isHidden = :showHidden)
         AND (:minSimilarity IS NULL OR c.similarity >= :minSimilarity)
     ORDER BY c.similarity ASC, m.id ASC
     LIMIT :limit OFFSET :offset
@@ -378,7 +378,7 @@ interface MediaMetadataDao {
         offset: Int,
         mediaType: MediaType?,
         minSimilarity: Float?,
-        isHidden: Boolean?
+        showHidden: Boolean?
     ): List<HideableMediaEntity>
 
     @Query("""

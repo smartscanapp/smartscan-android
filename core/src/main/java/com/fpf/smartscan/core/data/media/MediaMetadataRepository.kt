@@ -41,16 +41,16 @@ class MediaMetadataRepository(
     suspend fun getByClustersWithoutDescription(clusterIds: List<Long>, mediaType: MediaType? = null): List<MediaMetadata> = dao.getByClustersWithoutDescription(clusterIds, mediaType).map{it.toDomain()}
 
     // CONCEPTS
-    suspend fun getByConcept(conceptId: Long, minSimilarity: Float?= null, mediaType: MediaType? = null, isHidden: Boolean? = null): List<MediaMetadata> = dao.getByConcept(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, isHidden=isHidden).map{it.toDomain()}
-    suspend fun getByConceptSortedByDate(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean? = null): List<MediaMetadata> = if(ascending){
-        dao.getByConceptSortedByDateAsc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
+    suspend fun getByConcept(conceptId: Long, minSimilarity: Float?= null, mediaType: MediaType? = null, showHidden: Boolean? = null): List<MediaMetadata> = dao.getByConcept(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, showHidden=showHidden).map{it.toDomain()}
+    suspend fun getByConceptSortedByDate(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, showHidden: Boolean? = null): List<MediaMetadata> = if(ascending){
+        dao.getByConceptSortedByDateAsc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, showHidden = showHidden).map{it.toDomain()}
     }else{
-        dao.getByConceptSortedByDateDesc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, isHidden =isHidden).map{it.toDomain()}
+        dao.getByConceptSortedByDateDesc(conceptId, minSimilarity=minSimilarity, mediaType =mediaType, limit=limit, offset=offset, showHidden =showHidden).map{it.toDomain()}
     }
-    suspend fun getByConceptSortedBySimilarity(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, isHidden: Boolean?=null): List<MediaMetadata> = if(ascending){
-        dao.getByConceptSortedBySimilarityAsc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
+    suspend fun getByConceptSortedBySimilarity(conceptId: Long, limit: Int, offset: Int, minSimilarity: Float?= null, mediaType: MediaType? = null, ascending: Boolean = false, showHidden: Boolean?=null): List<MediaMetadata> = if(ascending){
+        dao.getByConceptSortedBySimilarityAsc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, showHidden = showHidden).map{it.toDomain()}
     }else{
-        dao.getByConceptSortedBySimilarityDesc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, isHidden = isHidden).map{it.toDomain()}
+        dao.getByConceptSortedBySimilarityDesc(conceptId, minSimilarity=minSimilarity, mediaType = mediaType, limit=limit, offset=offset, showHidden = showHidden).map{it.toDomain()}
     }
     suspend fun markDuplicates(ids: List<Long>, mediaType: MediaType) = dao.markDuplicates(ids, mediaType)
     suspend fun deleteByMediaIds(ids: List<Long>, type: MediaType) = dao.deleteByIds(ids, type)
