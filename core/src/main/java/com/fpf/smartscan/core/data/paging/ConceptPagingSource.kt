@@ -14,18 +14,20 @@ class ConceptPagingSource(
 
     override suspend fun getMediaItems(filter: MediaFilter, sortBy: SortBy, pageSize: Int, offset: Int): List<MediaMetadata> = when (sortBy) {
             is SortBy.Date -> mediaMetadataRepository.getByConceptSortedByDate(
-                        conceptId,
-                        mediaType=filter.mediaType,
-                        limit=pageSize + 1,
-                        offset=offset,
-                        ascending=sortBy.ascending,
-                        )
+                conceptId,
+                mediaType=filter.mediaType,
+                limit=pageSize + 1,
+                offset=offset,
+                ascending=sortBy.ascending,
+                isHidden = filter.isHidden
+                )
             is SortBy.Similarity -> mediaMetadataRepository.getByConceptSortedBySimilarity(
                 conceptId,
                 mediaType = filter.mediaType,
                 limit = pageSize + 1,
                 offset=offset,
                 ascending=sortBy.ascending,
+                isHidden = filter.isHidden
             )
         }
 }
