@@ -28,7 +28,11 @@ class CloudIndexJobManager(
     }
 
     // TextEmbedder used here is not closed because it's a singleton as model is required throughout app.
-    suspend fun run(mediaTypes: List<MediaType>, apiKey: String?): Map<MediaType, ProcessorResult>{
+    suspend fun run(
+        mediaTypes: List<MediaType>,
+        apiKey: String?,
+        onResult: (suspend (ProcessorResult, MediaType) -> Unit )? = null
+    ): Map<MediaType, ProcessorResult>{
         val allowedTags= getAllowedTags(sharedPrefs)
         val allowedClusters = getAllowedClusters(sharedPrefs)
         val openaiClient = OpenaiClient(
@@ -60,6 +64,7 @@ class CloudIndexJobManager(
                         allowedClusters = allowedClusters.toList()
                     )
                     results[mediaType] = imageResult
+                    onResult?.invoke(imageResult, mediaType)
                 }
 
                 MediaType.VIDEO -> {/* TODO */ }

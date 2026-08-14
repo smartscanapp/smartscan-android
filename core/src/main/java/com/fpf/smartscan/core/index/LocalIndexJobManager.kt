@@ -25,7 +25,12 @@ class LocalIndexJobManager(
         private const val TAG = "LocalIndexJobManager"
     }
 
-    suspend fun run(mediaTypes: List<MediaType>, allowedImageDirs: List<Uri>, allowedVideoDirs: List<Uri>):  Map<MediaType, ProcessorResult>{
+    suspend fun run(
+        mediaTypes: List<MediaType>,
+        allowedImageDirs: List<Uri>,
+        allowedVideoDirs: List<Uri>,
+        onResult: (suspend (ProcessorResult, MediaType) -> Unit )? = null
+    ):  Map<MediaType, ProcessorResult>{
         try {
             if(!imageEmbedder.isInitialized()) imageEmbedder.initialize()
 
@@ -44,6 +49,7 @@ class LocalIndexJobManager(
                         )
                         val imagesResult = imageIndexer.index(application, allowedImageDirs)
                         results[mediaType] = imagesResult
+                        onResult?.invoke(imagesResult, mediaType)
                     }
 
                     MediaType.VIDEO -> {
@@ -59,6 +65,7 @@ class LocalIndexJobManager(
                         )
                         val videosResult = videoIndexer.index(application, allowedVideoDirs)
                         results[mediaType] = videosResult
+                        onResult?.invoke(videosResult, mediaType)
                     }
                 }
             }

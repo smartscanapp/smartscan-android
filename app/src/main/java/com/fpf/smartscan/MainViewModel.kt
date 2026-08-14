@@ -16,7 +16,6 @@ import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.data.DataSyncHelper
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
-import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.index.ImageIndexListener
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.VideoIndexListener
@@ -26,11 +25,9 @@ import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
-import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
-import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.models.ModelName
 import com.fpf.smartscansdk.ml.models.ModelRegistry
 import kotlinx.coroutines.Dispatchers
@@ -188,52 +185,6 @@ class MainViewModel(
     fun resetModelProgress() = modelRepository.reset()
 
     fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
-
-    fun getIndexFailNotification(mediaType: MediaType): Pair<String, String>{
-        val title = getApplication<Application>().getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
-        val content = getApplication<Application>().getString(R.string.notif_content_index_error_service)
-        return Pair(title, content)
-    }
-
-    fun getIndexCompleteNotification(mediaType: MediaType): String?{
-        val metrics = when(mediaType){
-            MediaType.IMAGE -> ImageIndexListener.result.value
-            MediaType.VIDEO -> VideoIndexListener.result.value
-        }?: return null
-        if(metrics.totalProcessed == 0) return null
-        val (minutes, seconds) = getTimeInMinutesAndSeconds(metrics.timeElapsed)
-        val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${metrics.totalProcessed}, Time: ${minutes}m ${seconds}s"
-        return notificationText
-    }
-
-
-    fun getCloudIndexFailNotification(mediaType: MediaType): Pair<String, String> {
-        val app = getApplication<Application>()
-        val title = app.getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
-        val result = CloudImageIndexListener.result.value
-        val content = if (result is ProcessorResult.Failure) {
-            when (result.error) {
-                is AppException.InvalidApiKey -> app.getString(R.string.notif_content_index_error_invalid_api_key)
-                is AppException.RateLimit -> app.getString(R.string.notif_content_index_error_rate_limit)
-                else -> app.getString(R.string.notif_content_index_error_service)
-            }
-        } else {
-            app.getString(R.string.notif_content_index_error_service)
-        }
-
-        return Pair(title, content)
-    }
-
-    fun getCloudIndexCompleteNotification(mediaType: MediaType): String?{
-        val result = when(mediaType){
-            MediaType.IMAGE -> CloudImageIndexListener.result.value
-            MediaType.VIDEO -> null
-        }?: return null
-        if(result.totalProcessed == 0) return null
-        val (minutes, seconds) = getTimeInMinutesAndSeconds(result.timeElapsed)
-        val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${result.totalProcessed}, Time: ${minutes}m ${seconds}s"
-        return notificationText
-    }
 
     fun onIndexingFinished(mediaType: MediaType) {
         when(mediaType){
