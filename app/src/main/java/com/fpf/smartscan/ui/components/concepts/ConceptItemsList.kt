@@ -106,6 +106,7 @@ fun ConceptItemsList(
             val layoutInfo = listState.layoutInfo
 
             val visibleVideos = layoutInfo.visibleItemsInfo.mapNotNull { info ->
+                if (info.index !in 0 until items.itemCount) return@mapNotNull null
                 val item = items[info.index] ?: return@mapNotNull null
                 if (item.type != MediaType.VIDEO) return@mapNotNull null
 
