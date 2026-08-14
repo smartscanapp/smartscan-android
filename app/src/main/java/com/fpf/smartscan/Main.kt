@@ -48,7 +48,6 @@ import com.fpf.smartscan.ui.screens.settings.SettingsDetailScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsScreen
 import com.fpf.smartscan.ui.screens.settings.SettingsViewModel
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.showNotification
 import com.fpf.smartscansdk.ml.models.ModelName
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -83,7 +82,7 @@ fun Main(
             videoIndexStatus == IndexingStatus.ACTIVE ||
             cloudImageIndexStatus == IndexingStatus.ACTIVE ||
             runningMediaTypes.isNotEmpty()
-    val indexCompleteTitle = stringResource(R.string.notif_title_index_complete)
+
     var showFirstScanModal by remember { mutableStateOf(false) }
     var showScanAndRebuildModal by remember { mutableStateOf(false) }
     var showRefreshScanModel by remember { mutableStateOf(false) }
@@ -107,47 +106,29 @@ fun Main(
     }
 
     LaunchedEffect(imageIndexStatus) {
-        if (imageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            when(imageIndexStatus){
-                IndexingStatus.COMPLETE -> {
-                    val content = mainViewModel.getIndexCompleteNotification(MediaType.IMAGE)
-                    content?.let {
-                        showNotification(context, title = indexCompleteTitle, text = it, 100)
-                    }
-                    mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
-                }
-                IndexingStatus.FAILED -> {
-                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.IMAGE)
-                    showNotification(context, indexFailTitle, indexFailContent, 100)
-                }
-                else -> {}
+        when(imageIndexStatus){
+            IndexingStatus.COMPLETE,IndexingStatus.FAILED, IndexingStatus.CANCELLED  -> {
+                mainViewModel.onIndexingFinished(MediaType.IMAGE)
             }
-            mainViewModel.onIndexingFinished(MediaType.IMAGE)
+            else -> {}
         }
     }
 
     LaunchedEffect(videoIndexStatus) {
-        if (videoIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            when(videoIndexStatus){
-                IndexingStatus.COMPLETE -> {
-                    val content = mainViewModel.getIndexCompleteNotification(MediaType.VIDEO)
-                    content?.let {
-                        showNotification(context, title = indexCompleteTitle, text = it, 100)
-                    }
-                }
-                IndexingStatus.FAILED -> {
-                    val (indexFailTitle, indexFailContent) = mainViewModel.getIndexFailNotification(MediaType.VIDEO)
-                    showNotification(context, indexFailTitle, indexFailContent, 100)
-                }
-                else -> {}
+        when(videoIndexStatus){
+            IndexingStatus.COMPLETE, IndexingStatus.FAILED, IndexingStatus.CANCELLED  -> {
+                mainViewModel.onIndexingFinished(MediaType.VIDEO)
             }
-            mainViewModel.onIndexingFinished(MediaType.VIDEO)
+            else -> {}
         }
     }
 
     LaunchedEffect(cloudImageIndexStatus) {
-        if (cloudImageIndexStatus in listOf(IndexingStatus.COMPLETE, IndexingStatus.FAILED)) {
-            mainViewModel.onConceptIndexingFinished(MediaType.IMAGE)
+        when(cloudImageIndexStatus){
+            IndexingStatus.COMPLETE,IndexingStatus.FAILED, IndexingStatus.CANCELLED  -> {
+                mainViewModel.onCloudIndexingFinished(MediaType.IMAGE)
+            }
+            else -> {}
         }
     }
 
@@ -355,7 +336,8 @@ fun Main(
                         videoIndexProgress = videoIndexProgress,
                         imageIndexProgress = if (cloudImageIndexStatus == IndexingStatus.ACTIVE) cloudImageIndexProgress else imageIndexProgress,
                         title = stringResource(R.string.scan_in_progress_title),
-                        message = stringResource(R.string.scan_in_progress_content)
+                        message = stringResource(R.string.scan_in_progress_content),
+                        onCancel = {mainViewModel.cancelIndexing()}
                     )
                 }
             }

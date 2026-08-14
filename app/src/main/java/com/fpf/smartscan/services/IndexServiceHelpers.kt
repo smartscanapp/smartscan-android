@@ -25,7 +25,7 @@ fun startIndexing(context: Context, mediaTypes: List<MediaType>, indexJob: Index
 fun refreshIndex(context: Context, mediaTypes: List<MediaType>, indexJob: IndexJobType = IndexJobType.LOCAL) {
     val running = isServiceRunning(context.applicationContext, IndexService::class.java)
     if(running){
-        context.applicationContext.stopService(Intent(context.applicationContext, IndexService::class.java))
+        stopIndexing(context)
     }
     startIndexing(context.applicationContext, mediaTypes, indexJob)
 }
@@ -45,4 +45,9 @@ suspend fun rebuildIndex(context: Context, mediaEmbeddingStores: List<Pair<Media
     }
     clusterManager.deleteAllClusters(context)
     refreshIndex(context.applicationContext, mediaEmbeddingStores.map{it.first})
+}
+
+fun stopIndexing(context: Context){
+    context.applicationContext.stopService(Intent(context.applicationContext, IndexService::class.java))
+
 }

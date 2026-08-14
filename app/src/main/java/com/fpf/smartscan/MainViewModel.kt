@@ -22,10 +22,10 @@ import com.fpf.smartscan.core.index.VideoIndexListener
 import com.fpf.smartscan.services.rebuildIndex
 import com.fpf.smartscan.services.refreshIndex
 import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.services.stopIndexing
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
-import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -175,20 +175,6 @@ class MainViewModel(
         }
     }
 
-    fun onIndexingFinished(mediaType: MediaType) {
-        when(mediaType){
-            MediaType.IMAGE -> _hasIndexedImages.value = imageEmbedStore.exists
-            MediaType.VIDEO -> _hasIndexedVideos.value = videoEmbedStore.exists
-        }
-        resetIndexingState(mediaType)
-        _runningMediaTypes.update { it - mediaType}
-    }
-
-    fun onConceptIndexingFinished(mediaType: MediaType) {
-        resetConceptIndexingState(mediaType)
-        _runningMediaTypes.update { it - mediaType}
-    }
-
     fun startConceptIndexing(mediaTypes: List<MediaType>){
         val storageAccess = getStorageAccess(getApplication())
         if (storageAccess != StorageAccess.Denied) {
@@ -201,25 +187,27 @@ class MainViewModel(
 
     fun downloadModel() = modelRepository.downloadModel(ModelRegistry[ModelName.ALL_MINILM_L6_V2]!!)
 
-    fun getIndexFailNotification(mediaType: MediaType): Pair<String, String>{
-        val title = getApplication<Application>().getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
-        val content = getApplication<Application>().getString(R.string.notif_content_index_error_service)
-        return Pair(title, content)
+    fun onIndexingFinished(mediaType: MediaType) {
+        when(mediaType){
+            MediaType.IMAGE -> _hasIndexedImages.value = imageEmbedStore.exists
+            MediaType.VIDEO -> _hasIndexedVideos.value = videoEmbedStore.exists
+        }
+        resetIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
     }
 
-    fun getIndexCompleteNotification(mediaType: MediaType): String?{
-        val metrics = when(mediaType){
-            MediaType.IMAGE -> ImageIndexListener.result.value
-            MediaType.VIDEO -> VideoIndexListener.result.value
-        }?: return null
-        if(metrics.totalProcessed == 0) return null
-        val (minutes, seconds) = getTimeInMinutesAndSeconds(metrics.timeElapsed)
-        val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${metrics.totalProcessed}, Time: ${minutes}m ${seconds}s"
-        return notificationText
+    fun onCloudIndexingFinished(mediaType: MediaType) {
+        resetCloudIndexingState(mediaType)
+        _runningMediaTypes.update { it - mediaType}
     }
 
     fun onInitialDedupeComplete(){
         sharedPrefs.edit { putBoolean(PrefsKeys.HAS_COMPLETED_INITIAL_DEDUPE, true) }
+    }
+
+    fun cancelIndexing(){
+        stopIndexing(application)
+        _runningMediaTypes.update { emptySet()}
     }
 
     private fun resetIndexingState(mediaType: MediaType){
@@ -229,7 +217,7 @@ class MainViewModel(
         }
     }
 
-    private fun resetConceptIndexingState(mediaType: MediaType){
+    private fun resetCloudIndexingState(mediaType: MediaType){
         when(mediaType){
             MediaType.IMAGE -> CloudImageIndexListener.reset()
             MediaType.VIDEO -> {}

@@ -50,7 +50,7 @@ fun getTimeInMinutesAndSeconds(milliseconds: Long): Pair<Long, Long> {
     val minutes = seconds / 60
     return Pair(minutes, seconds % 60)
 }
-fun showNotification(context: Context, title: String, text: String, id: Int = 1001) {
+fun showNotification(context: Context, title: String, text: String? = null, id: Int = 1001) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         if (ContextCompat.checkSelfPermission(
                 context,

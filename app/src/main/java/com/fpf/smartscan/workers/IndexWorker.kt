@@ -7,10 +7,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.work.*
 import com.fpf.smartscan.R
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
-import com.fpf.smartscan.di.CLUSTER_EMBED_STORE
 import com.fpf.smartscan.di.IMAGE_EMBED_STORE
 import com.fpf.smartscan.di.VIDEO_EMBED_STORE
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -20,6 +17,7 @@ import java.util.concurrent.TimeUnit
 import com.fpf.smartscan.di.CONCEPT_IMAGE_EMBED_STORE
 import com.fpf.smartscan.cloud.index.CloudIndexJobManager
 import com.fpf.smartscan.constants.EncryptedStorageKeys
+import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
@@ -66,15 +64,11 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
 
     private val modelRepository: ModelRepository by inject()
     private val imageEmbedder by lazy { ClipImageEmbedder(applicationContext, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
-
-    // Reuses singleton minilm model
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
-    private val clusterMetadataRepository: ClusterMetadataRepository by inject()
-    private val clusterCrossRefRepository: ClusterCrossRefRepository by inject()
+    private val clusterManager: ClusterManager by inject()
     private val imageEmbedStore: FileEmbeddingStore by inject(IMAGE_EMBED_STORE)
     private val videoEmbedStore: FileEmbeddingStore by inject(VIDEO_EMBED_STORE)
-    private val clusterEmbedStore: FileEmbeddingStore by inject(CLUSTER_EMBED_STORE)
     private val imageConceptsEmbedStore: FileEmbeddingStore by inject(CONCEPT_IMAGE_EMBED_STORE)
     private val mediaJobManager: MediaJobManager by inject()
     private val sharedPrefs: SharedPreferences by inject()
@@ -95,17 +89,14 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             useListener = false
         )
     }
-
     private val localIndexJobManager by lazy {
         LocalIndexJobManager(
             application = applicationContext as Application,
             imageEmbedder = imageEmbedder,
             imageEmbedStore = imageEmbedStore,
             videoEmbedStore = videoEmbedStore,
-            clusterEmbedStore = clusterEmbedStore,
             mediaMetadataRepository = mediaMetadataRepository,
-            clusterMetadataRepository = clusterMetadataRepository,
-            clusterCrossRefRepository = clusterCrossRefRepository,
+            clusterManager=clusterManager,
             useListener = false
         )
     }
@@ -130,8 +121,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             val appSettings = loadSettings(sharedPrefs)
             val allowedImageDirs = appSettings.searchableImageDirectories.map{it.toUri()}
             val allowedVideoDirs = appSettings.searchableVideoDirectories.map{it.toUri()}
-            val result = localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
-            val imageResult = result[MediaType.IMAGE]
+            val results = localIndexJobManager.run(mediaTypes, allowedImageDirs=allowedImageDirs, allowedVideoDirs=allowedVideoDirs)
+            val imageResult = results[MediaType.IMAGE]
             imageResult?.let{
                 if(it.totalProcessed > 0) mediaJobManager.findAndMarkDuplicates(MediaType.IMAGE)
             }
@@ -139,9 +130,8 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
             val modelExist = ModelManager.modelExists(applicationContext, ModelName.ALL_MINILM_L6_V2)
             val openaiApiKey = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
             if(modelExist && !openaiApiKey.isNullOrBlank() && imageConceptsEmbedStore.exists){
-                cloudIndexJobManager.run(listOf(MediaType.IMAGE), openaiApiKey) // only image is supported ATM
+                val results = cloudIndexJobManager.run(listOf(MediaType.IMAGE), openaiApiKey) // only image is supported ATM
             }
-
             return@withContext Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Background indexing errors: ${e.message}", e)

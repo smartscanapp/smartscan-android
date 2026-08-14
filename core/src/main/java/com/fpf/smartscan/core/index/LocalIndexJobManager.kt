@@ -1,51 +1,38 @@
 package com.fpf.smartscan.core.index
 
 import android.app.Application
-import android.content.Context
 import android.net.Uri
-import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.errors.AppException
-import com.fpf.smartscan.core.media.MediaMetadata
-import com.fpf.smartscan.core.media.MediaStoreHelper
-import com.fpf.smartscansdk.core.embeddings.Embedding
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.ImageEmbeddingProvider
-import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
-import kotlin.collections.map
 
 class LocalIndexJobManager(
     private val application: Application,
     private val imageEmbedder: ImageEmbeddingProvider,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
-    private val clusterEmbedStore: FileEmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
+    private val clusterManager: ClusterManager,
     private val useListener: Boolean = true
 ) {
     companion object {
         private const val TAG = "LocalIndexJobManager"
     }
 
-    suspend fun run(mediaTypes: List<MediaType>, allowedImageDirs: List<Uri>, allowedVideoDirs: List<Uri>):  MutableMap<MediaType, ProcessorResult>{
+    suspend fun run(
+        mediaTypes: List<MediaType>,
+        allowedImageDirs: List<Uri>,
+        allowedVideoDirs: List<Uri>,
+        onResult: (suspend (ProcessorResult, MediaType) -> Unit )? = null
+    ):  Map<MediaType, ProcessorResult>{
         try {
             if(!imageEmbedder.isInitialized()) imageEmbedder.initialize()
-
-            val clusterManager = ClusterManager(
-                clusterEmbedStore = clusterEmbedStore,
-                imageEmbedStore = imageEmbedStore,
-                videoEmbedStore = videoEmbedStore,
-                clusterCrossRefRepository = clusterCrossRefRepository,
-                clusterMetadataRepository = clusterMetadataRepository,
-            )
 
             val results = mutableMapOf<MediaType, ProcessorResult>()
 
@@ -57,17 +44,12 @@ class LocalIndexJobManager(
                             context = application,
                             listener = if(useListener) ImageIndexListener else null,
                             store = imageEmbedStore,
+                            mediaMetadataRepository = mediaMetadataRepository,
                             quantize = true
                         )
-                        val imagesResult = indexMedia(
-                            application,
-                            MediaType.IMAGE,
-                            imageEmbedStore,
-                            imageIndexer,
-                            mediaMetadataRepository,
-                            allowedImageDirs
-                        )
+                        val imagesResult = imageIndexer.index(application, allowedImageDirs)
                         results[mediaType] = imagesResult
+                        onResult?.invoke(imagesResult, mediaType)
                     }
 
                     MediaType.VIDEO -> {
@@ -76,19 +58,14 @@ class LocalIndexJobManager(
                             context = application,
                             listener = if(useListener) VideoIndexListener else null,
                             store = videoEmbedStore,
+                            mediaMetadataRepository = mediaMetadataRepository,
                             quantize = true,
                             width = IMAGE_SIZE_X,
                             height = IMAGE_SIZE_Y
                         )
-                        val videosResult = indexMedia(
-                            application,
-                            MediaType.VIDEO,
-                            videoEmbedStore,
-                            videoIndexer,
-                            mediaMetadataRepository,
-                            allowedVideoDirs
-                        )
+                        val videosResult = videoIndexer.index(application, allowedVideoDirs)
                         results[mediaType] = videosResult
+                        onResult?.invoke(videosResult, mediaType)
                     }
                 }
             }
@@ -104,28 +81,5 @@ class LocalIndexJobManager(
         finally {
             imageEmbedder.closeSession()
         }
-    }
-
-    private suspend fun indexMedia(
-        context: Context,
-        mediaType: MediaType,
-        store: FileEmbeddingStore,
-        indexer: BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>,
-        metadataRepo: MediaMetadataRepository,
-        allowedDirs: List<Uri> = emptyList()
-    ): ProcessorResult{
-        val idToDateMap = when(mediaType){
-            MediaType.IMAGE -> MediaStoreHelper.queryImageIdDateMap(context, allowedDirs)
-            MediaType.VIDEO ->  MediaStoreHelper.queryVideoIdDateMap(context, allowedDirs)
-        }
-        val existingMediaIdsInEmbedStore = store.get().map{it.id}.toSet()
-        val existingMediaIdsFromRoom = metadataRepo.getIds(mediaType).toSet()
-        val newMediaIds = idToDateMap.keys.filterNot { existingMediaIdsFromRoom.contains(it) && existingMediaIdsInEmbedStore.contains(it) }
-        val newMedia = newMediaIds.mapNotNull{
-            val date = idToDateMap[it]?: return@mapNotNull null
-            MediaMetadata(it, mediaType, date)
-        }
-        metadataRepo.insert(newMedia)
-        return indexer.run(newMedia)
     }
 }
