@@ -63,12 +63,6 @@ class ConceptManager(
         conceptRepository.updateConcepts(concepts.map{it.copy(isPinned = !it.isPinned)})
     }
 
-    suspend fun findAndUpdateMediaMatchingConcept(conceptId: Long){
-        val mediaMatchesMap = findMediaMatchingConcept(conceptId)
-        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = conceptId, similarity = it.value)}
-        conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
-    }
-
     suspend fun updateConceptLinks(mediaEmbed: StoredEmbedding, type: MediaType): ConceptUpdateLinksResult{
         // Check if the recently updated media still matches concepts it belongs to
         val crossRefsToDelete = findConceptLinksToRemove( mediaEmbed, type)
@@ -97,6 +91,12 @@ class ConceptManager(
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
         MediaType.VIDEO -> videoConceptEmbedStore
         MediaType.IMAGE -> imageConceptEmbedStore
+    }
+
+    private suspend fun findAndUpdateMediaMatchingConcept(conceptId: Long){
+        val mediaMatchesMap = findMediaMatchingConcept(conceptId)
+        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = conceptId, similarity = it.value)}
+        conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
     }
 
     private suspend fun findMediaMatchingConcept(conceptId: Long): Map<Pair<Long, MediaType>, Float>{
