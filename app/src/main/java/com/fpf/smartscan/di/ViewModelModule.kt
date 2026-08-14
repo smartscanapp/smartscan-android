@@ -73,6 +73,7 @@ val viewModelModule = module {
         ConceptItemsViewModel(
             application = get(),
             mediaMetadataRepository = get(),
+            conceptCrossRefRepository = get(),
             sharedPrefs = get()
         )
     }

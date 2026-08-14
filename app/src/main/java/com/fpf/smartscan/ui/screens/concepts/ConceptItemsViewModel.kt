@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.ClipData
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -16,6 +17,7 @@ import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.core.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.core.data.paging.ConceptPagingSource
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
@@ -23,10 +25,16 @@ import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.search.SortBy
+import com.fpf.smartscan.events.CollectionItemEventType
+import com.fpf.smartscan.events.ConceptItemEvent
+import com.fpf.smartscan.events.ConceptItemEventType
 import com.fpf.smartscan.ui.utils.SelectionUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -37,6 +45,7 @@ import kotlin.collections.map
 
 class ConceptItemsViewModel(
     application: Application,
+    private val conceptCrossRefRepository: ConceptCrossRefRepository,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
@@ -46,6 +55,10 @@ class ConceptItemsViewModel(
 
     private val _state = MutableStateFlow(ConceptItemsState())
     val state: StateFlow<ConceptItemsState> = _state
+
+    private val _event = MutableSharedFlow<ConceptItemEvent>()
+    val event = _event.asSharedFlow()
+
 
     val sortByOptions: Map<SortBy, String>
         get()=  mapOf(
@@ -103,7 +116,7 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.SetShowHiddenFilter -> setShowHiddenFilter(action.showHidden)
             is ConceptItemsAction.ResetFilters -> resetFilters()
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
-
+            is ConceptItemsAction.ToggleHide -> toggleHide()
         }
     }
 
@@ -115,6 +128,20 @@ class ConceptItemsViewModel(
     private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
     private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
 
+    private fun toggleHide(){
+        val concept = _state.value.concept?: return
+        val selectedItem = _state.value.selection.selectedItems.firstOrNull()?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                conceptCrossRefRepository.setCrossRefHidden(selectedItem.id, selectedItem.type, concept.id, !selectedItem.isHidden)
+                resetSelection()
+                _event.emit(ConceptItemEvent(ConceptItemEventType.HIDE, success = true))
+            }catch (e: Exception){
+                Log.e(TAG, "Error in toggleHide", e)
+                _event.emit(ConceptItemEvent(ConceptItemEventType.HIDE, success = false, message = "Failed to update item visibility"))
+            }
+        }
+    }
     private fun copyItem(clipboard: Clipboard, context: Context){
         viewModelScope.launch {
             val itemToCopy = getSelectedItems().first().uri

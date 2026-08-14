@@ -16,6 +16,7 @@ sealed interface ConceptItemsAction {
     data class SetSelectAll(val selectAll: Boolean): ConceptItemsAction
     data class SetMediaTypeFilter(val mediaType: MediaType?): ConceptItemsAction
     data class SetShowHiddenFilter(val showHidden: Boolean): ConceptItemsAction
+    data object ToggleHide: ConceptItemsAction
     data object ResetFilters: ConceptItemsAction
     data class SetSortBy(val sortBy: SortBy): ConceptItemsAction
     data object ToggleSelectionMode: ConceptItemsAction
