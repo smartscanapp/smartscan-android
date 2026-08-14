@@ -1,6 +1,7 @@
 package com.fpf.smartscan.core.data.concepts
 
 import com.fpf.smartscan.core.concepts.Concept
+import com.fpf.smartscan.core.concepts.NewConcept
 import com.fpf.smartscan.core.data.mappers.toDomain
 import com.fpf.smartscan.core.data.mappers.toEntity
 import com.fpf.smartscan.core.media.MediaType
@@ -16,8 +17,8 @@ class ConceptRepository(private val dao: ConceptDao) {
     suspend fun getLinkedConceptIds(mediaId: Long, mediaType: MediaType) = dao.getLinkedIds(mediaId,mediaType)
     suspend fun getUnlinkedConceptIds(mediaId: Long, mediaType: MediaType) = dao.getUnlinkedIds(mediaId,mediaType)
 
-    suspend fun insertConcepts(concepts: List<Concept>) = dao.insert(concepts.map{it.toEntity()})
-    suspend fun insertConcept(concept: Concept) = dao.insert(listOf(concept.toEntity()))
+    suspend fun insertConcepts(concepts: List<NewConcept>): List<Long> = dao.insert(concepts.map{it.toEntity()})
+    suspend fun insertConcept(concept: NewConcept): Long = dao.insert(concept.toEntity())
     suspend fun updateConcepts(concepts: List<Concept>) = dao.update(concepts.map{it.toEntity()})
     suspend fun updateConcept(concept: Concept) = dao.update(listOf(concept.toEntity()))
     suspend fun upsertConcepts(concepts: List<Concept>) = dao.upsert(concepts.map{it.toEntity()})

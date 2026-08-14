@@ -60,6 +60,9 @@ interface ConceptDao {
     suspend fun getUnlinkedIds(mediaId: Long, mediaType: MediaType): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(concepts: ConceptEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(concepts: List<ConceptEntity>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
