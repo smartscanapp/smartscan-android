@@ -109,9 +109,6 @@ fun Main(
         when(imageIndexStatus){
             IndexingStatus.COMPLETE,IndexingStatus.FAILED, IndexingStatus.CANCELLED  -> {
                 mainViewModel.onIndexingFinished(MediaType.IMAGE)
-                if(imageIndexStatus == IndexingStatus.COMPLETE){
-                    mediaViewModel.findAndMarkDuplicates(MediaType.IMAGE)
-                }
             }
             else -> {}
         }

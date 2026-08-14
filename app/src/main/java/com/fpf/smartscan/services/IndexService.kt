@@ -23,6 +23,7 @@ import com.fpf.smartscan.constants.EncryptedStorageKeys
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
+import com.fpf.smartscan.core.jobs.MediaProcessingJob
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.settings.loadSettings
@@ -158,6 +159,9 @@ class IndexService : Service(), KoinComponent {
                 val indexCompleteTitle = applicationContext.getString(R.string.notif_title_index_complete)
                 val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${processorResult.totalProcessed}, Time: ${minutes}m ${seconds}s"
                 showNotification(application, indexCompleteTitle, notificationText, NOTIFICATION_ID + 1)
+                if(processorResult.totalProcessed > 0 && mediaType == MediaType.IMAGE) {
+                    mediaJobManager.findAndMarkDuplicates(mediaType)
+                }
             }
             is ProcessorResult.Failure -> {
                 val title = applicationContext.getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
