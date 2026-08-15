@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.core.media.MediaItem
@@ -61,10 +63,18 @@ fun MediaItemFeedCard(
                     Text(
                         text = formattedDate,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
+
+                    if(item.isHidden) {
+                        Icon(
+                            imageVector = Icons.Filled.VisibilityOff,
+                            contentDescription = "hide icon",
+                            modifier = Modifier.size(20.dp).alpha(0.7f)
+                        )
+                    }
 
                     IconButton(
                         onClick = { onShowItemMenu(item) },
