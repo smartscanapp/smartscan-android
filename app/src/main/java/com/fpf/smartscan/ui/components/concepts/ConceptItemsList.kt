@@ -63,7 +63,7 @@ fun ConceptItemsList(
     playerPool: PlayerPool,
     items: LazyPagingItems<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
-    onShowItemMenu: (MediaItem) -> Unit,
+    onToggleHide: (MediaItem) -> Unit,
     onOffsetChange: (Int) -> Unit,
     maxCollapsePx: Int = 0,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null
@@ -214,7 +214,7 @@ fun ConceptItemsList(
                             playerPool.get(item.id)?.pause()
                         }
                     },
-                    onShowItemMenu = onShowItemMenu,
+                    onToggleHide = onToggleHide,
                     content = {
                         when (item.type) {
                             MediaType.IMAGE -> {

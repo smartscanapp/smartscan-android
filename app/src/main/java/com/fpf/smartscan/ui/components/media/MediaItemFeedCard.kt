@@ -10,16 +10,23 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fpf.smartscan.R
 
 @Composable
 fun MediaItemFeedCard(
@@ -27,7 +34,7 @@ fun MediaItemFeedCard(
     modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit,
     content: @Composable () -> Unit,
-    onShowItemMenu: (MediaItem) -> Unit,
+    onToggleHide: (MediaItem) -> Unit,
 ) {
     val description = remember(item.description) {
         item.description?.trim()?.replaceFirstChar { it.uppercase() }.orEmpty()
@@ -36,6 +43,18 @@ fun MediaItemFeedCard(
     val formattedDate = remember(item.dateAdded) {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(item.dateAdded * 1000L))
     }
+
+    var showMenu by remember { mutableStateOf(false) }
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = if(item.isHidden) stringResource(R.string.show_action) else stringResource(R.string.hide_action),
+            onClick = {
+                showMenu = false
+                onToggleHide(item)
+                      },
+        ),
+    )
 
     Box(
         modifier = modifier
@@ -76,14 +95,21 @@ fun MediaItemFeedCard(
                         )
                     }
 
-                    IconButton(
-                        onClick = { onShowItemMenu(item) },
-                        modifier = Modifier.size(24.dp)
-                        ){
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "Item menu icon",
-                            modifier = Modifier.padding(2.dp)
+                    Box{
+                        IconButton (
+                            onClick = { showMenu = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu",
+                                modifier = Modifier.padding(2.dp)
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
                         )
                     }
                 }
