@@ -114,7 +114,7 @@ class ConceptItemsViewModel(
             is ConceptItemsAction.SetShowHiddenFilter -> setShowHiddenFilter(action.showHidden)
             is ConceptItemsAction.ResetFilters -> resetFilters()
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
-            is ConceptItemsAction.ToggleHide -> toggleHide()
+            is ConceptItemsAction.ToggleHide -> toggleHide(action.item)
         }
     }
 
@@ -126,13 +126,11 @@ class ConceptItemsViewModel(
     private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
     private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
 
-    private fun toggleHide(){
+    private fun toggleHide(item: MediaItem){
         val concept = _state.value.concept?: return
-        val selectedItem = _state.value.selection.selectedItems.firstOrNull()?: return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                conceptCrossRefRepository.setCrossRefHidden(selectedItem.id, selectedItem.type, concept.id, !selectedItem.isHidden)
-                resetSelection()
+                conceptCrossRefRepository.setCrossRefHidden(item.id, item.type, concept.id, !item.isHidden)
                 _event.emit(ConceptItemEvent(ConceptItemEventType.HIDE, success = true))
             }catch (e: Exception){
                 Log.e(TAG, "Error in toggleHide", e)
