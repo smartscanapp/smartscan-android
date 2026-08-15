@@ -48,7 +48,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.events.ConceptItemEventType
@@ -248,17 +247,13 @@ fun ConceptItemsScreen(
         }
     }
 
-
     OptionPicker(
         isVisible = showSortOptions,
         title = stringResource(R.string.sort_title),
-        options =  viewModel.sortByOptions.values.toList(),
-        selectedOption  = viewModel.sortByOptions[state.sortBy]?: viewModel.sortByOptions.values.first(),
-        onSelect = { selected ->
-            val sortBy =  viewModel.sortByOptions.entries.find { it.value == selected }?.key
-            sortBy?.let{
-                viewModel.onAction(ConceptItemsAction.SetSortBy(it))
-            }
+        options =  viewModel.sortByOptions,
+        selectedOption  = state.sortBy,
+        onSelect = {
+            viewModel.onAction(ConceptItemsAction.SetSortBy(it))
             showSortOptions = false
         },
         onClose = {showSortOptions = false}

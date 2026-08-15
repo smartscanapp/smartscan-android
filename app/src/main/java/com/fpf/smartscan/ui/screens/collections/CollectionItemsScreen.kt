@@ -52,11 +52,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
+import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.settings.AppSettings
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
@@ -115,6 +117,8 @@ fun CollectionItemsScreen(
 
     // actions
     var showMenu by remember { mutableStateOf(false) }
+    var showMediaTypeOptions by remember { mutableStateOf(false) }
+    var showDuplicateOptions by remember { mutableStateOf(false) }
     var showSortOptions by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var isMoving by remember { mutableStateOf(false) }
@@ -143,7 +147,7 @@ fun CollectionItemsScreen(
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = stringResource(R.string.filter_action),
+            label = stringResource(R.string.media_type_title),
             onClick = { showFilters = true },
             enabled = !state.loading,
         ),
@@ -476,16 +480,25 @@ fun CollectionItemsScreen(
     OptionPicker(
         isVisible = showSortOptions,
         title = stringResource(R.string.sort_title),
-        options =  viewModel.sortByOptions.values.toList(),
-        selectedOption  = viewModel.sortByOptions[state.sortBy]?: viewModel.sortByOptions.values.first(),
-        onSelect = { selected ->
-            val sortBy =  viewModel.sortByOptions.entries.find { it.value == selected }?.key
-            sortBy?.let{
-                viewModel.onAction(CollectionItemAction.SetSortBy(it))
-            }
+        options =  viewModel.sortByOptions,
+        selectedOption  = state.sortBy,
+        onSelect = {
+            viewModel.onAction(CollectionItemAction.SetSortBy(it))
             showSortOptions = false
         },
         onClose = {showSortOptions = false}
+    )
+
+    OptionPicker(
+        isVisible = showMediaTypeOptions,
+        title = stringResource(R.string.media_type_title),
+        options = MediaType.entries.map{it.format() to it} + ("All" to null),
+        selectedOption = state.filter.mediaType,
+        onSelect = { selected ->
+            viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(selected))
+            showMediaTypeOptions = false
+        },
+        onClose = { showMediaTypeOptions = false }
     )
 
     BottomSheet(

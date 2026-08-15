@@ -139,10 +139,10 @@ class CollectionItemsViewModel(
     private val _event = MutableSharedFlow<CollectionItemEvent>()
     val event = _event.asSharedFlow()
 
-    val sortByOptions: Map<SortBy, String>
-        get()=  mapOf(
-            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
-            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
+    val sortByOptions: List<Pair<String, SortBy>>
+        get() = listOf(
+            getApplication<Application>().getString(R.string.sort_date_asc_option) to SortBy.Date(ascending = true),
+            getApplication<Application>().getString(R.string.sort_date_desc_option) to SortBy.Date(ascending = false),
         )
 
     init {
@@ -350,16 +350,16 @@ class CollectionItemsViewModel(
         saveSortByPref(sortBy)
     }
 
-    private fun saveSortByPref(sortBy: SortBy){
-        val option =  sortByOptions.entries.find { it.key == sortBy }?.value?: sortByOptions.values.first()
-        sharedPrefs.edit{
-            putString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, option)
+    private fun saveSortByPref(sortBy: SortBy) {
+        val option = sortByOptions.find { it.second == sortBy }?.second ?: sortByOptions.first().second
+        sharedPrefs.edit {
+            putString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, option.toString())
         }
     }
 
-    private fun getSortByPref(): SortBy{
-        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "")?: ""
-        return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    private fun getSortByPref(): SortBy {
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "") ?: ""
+        return sortByOptions.find { it.second.toString() == sortByStr }?.second ?: SortBy.Date()
     }
 
     private fun setTotalItems(){

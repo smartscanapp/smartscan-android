@@ -43,6 +43,7 @@ import com.fpf.smartscan.ui.components.settings.SettingSection
 import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeMode
 import com.fpf.smartscan.core.utils.BackupUtils.BACKUP_FILENAME
+import com.fpf.smartscan.ui.theme.format
 
 @Composable
 fun SettingsScreen(
@@ -277,12 +278,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingTheme,
         title = stringResource(id = R.string.setting_theme),
-        selectedOption = themeModeDisplayNames[appSettings.theme]!!,
-        options = themeModeDisplayNames.values.toList(),
+        selectedOption = appSettings.theme,
+        options = ThemeMode.entries.map{it.format() to it},
         onClose = { isSelectingTheme = false },
-        onSelect = { selected ->
-            val theme = themeModeDisplayNames.entries.find { it.value == selected }?.key ?: ThemeMode.SYSTEM
-            viewModel.updateTheme(theme)
+        onSelect = {
+            viewModel.updateTheme(it)
             isSelectingTheme = false
         },
     )
@@ -290,12 +290,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingColor,
         title = stringResource(id = R.string.setting_color),
-        selectedOption = colorSchemeDisplayNames[appSettings.color]!!,
-        options = colorSchemeDisplayNames.values.toList(),
+        selectedOption = appSettings.color,
+        options = ColorSchemeType.entries.map{it.format() to it},
         onClose = { isSelectingColor = false },
-        onSelect = { selected ->
-            val color = colorSchemeDisplayNames.entries.find { it.value == selected }?.key ?: ColorSchemeType.SMARTSCAN
-            viewModel.updateColorScheme(color)
+        onSelect = {
+            viewModel.updateColorScheme(it)
             isSelectingColor = false
         },
     )
@@ -303,11 +302,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingGridColumns,
         title = stringResource(id = R.string.setting_grid_columns),
-        selectedOption = appSettings.resultsPerRow.toString(),
-        options = (3 until 6).map { it.toString() },
+        selectedOption = appSettings.resultsPerRow,
+        options = (3 until 6).map { it.toString() to it },
         onClose = { isSelectingGridColumns = false },
-        onSelect = { selected ->
-            viewModel.updateResultsPerRow(selected.toInt())
+        onSelect = {
+            viewModel.updateResultsPerRow(it)
             isSelectingGridColumns = false
         }
     )
