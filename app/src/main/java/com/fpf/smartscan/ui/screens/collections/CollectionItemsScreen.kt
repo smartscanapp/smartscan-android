@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DriveFileMoveRtl
@@ -52,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaCollection
@@ -68,11 +68,9 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.components.collections.CollectionFilterControls
 import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
-import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
@@ -120,7 +118,6 @@ fun CollectionItemsScreen(
     var showMediaTypeOptions by remember { mutableStateOf(false) }
     var showDuplicateOptions by remember { mutableStateOf(false) }
     var showSortOptions by remember { mutableStateOf(false) }
-    var showFilters by remember { mutableStateOf(false) }
     var isMoving by remember { mutableStateOf(false) }
     var isCreatingCollectionAndMoving by remember { mutableStateOf(false) }
     var isAddingTag by remember { mutableStateOf(false) }
@@ -148,7 +145,12 @@ fun CollectionItemsScreen(
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.media_type_title),
-            onClick = { showFilters = true },
+            onClick = { showMediaTypeOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.duplicate_label),
+            onClick = { showDuplicateOptions = true },
             enabled = !state.loading,
         ),
     )
@@ -234,7 +236,8 @@ fun CollectionItemsScreen(
                         DropDownMenuWrapper(
                             expanded = showMenu,
                             actions = menuActions,
-                            onClose = {showMenu = false}
+                            onClose = {showMenu = false},
+                            modifier = Modifier.widthIn(144.dp)
                         )
                     }
                 }
@@ -501,16 +504,20 @@ fun CollectionItemsScreen(
         onClose = { showMediaTypeOptions = false }
     )
 
-    BottomSheet(
-        show = showFilters,
-        onDismiss = { showFilters = false }
-    ) {
-        CollectionFilterControls(
-            filter = state.filter,
-            label = stringResource(R.string.filter_action),
-            onSetMediaType = { viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(it))},
-            onSetDuplicateFilter = { viewModel.onAction(CollectionItemAction.SetDuplicateFilter(it))},
-            onResetFilters = { viewModel.onAction(CollectionItemAction.ResetFilters)},
-        )
-    }
+    OptionPicker(
+        isVisible = showDuplicateOptions,
+        title = stringResource(R.string.duplicate_label),
+        options = listOf(true, false, null).map{ when(it){
+            true -> stringResource(R.string.only_button)
+            false -> stringResource(R.string.exclude_button)
+            else -> stringResource(R.string.include_button)
+        } to it},
+        selectedOption = state.filter.isDuplicate,
+        onSelect = {
+            viewModel.onAction(CollectionItemAction.SetDuplicateFilter(it))
+            showDuplicateOptions = false
+        },
+        onClose = { showDuplicateOptions = false }
+    )
+
 }
