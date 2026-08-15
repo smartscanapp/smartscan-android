@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -49,12 +50,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.PlayerPool
+import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.events.ConceptItemEventType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
-import com.fpf.smartscan.ui.components.concepts.ConceptFilterControls
 import com.fpf.smartscan.ui.components.concepts.ConceptItemsList
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.BottomSheet
@@ -93,7 +95,7 @@ fun ConceptItemsScreen(
     val screenTitle = ""
 
     var showSortOptions by remember { mutableStateOf(false) }
-    var showFilters by remember { mutableStateOf(false) }
+    var showMediaTypeOptions by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showItemMenu by remember { mutableStateOf(false) }
 
@@ -104,8 +106,14 @@ fun ConceptItemsScreen(
             enabled = !state.loading,
         ),
         MenuActionConfig.Button(
-            label = stringResource(R.string.filter_action),
-            onClick = { showFilters = true },
+            label = stringResource(R.string.media_type_title),
+            onClick = { showMediaTypeOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Switch(
+            label = stringResource(R.string.show_hidden_label),
+            checked = state.filter.showHidden == null,
+            onCheckedChange = { viewModel.onAction(ConceptItemsAction.SetShowHiddenFilter(it)) },
             enabled = !state.loading,
         ),
     )
@@ -114,7 +122,7 @@ fun ConceptItemsScreen(
         viewModel.onAction(ConceptItemsAction.SetConceptToView(concept))
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(state.filter) {
         onTopBarChange(
             TopBarState(
                 title = screenTitle,
@@ -137,7 +145,8 @@ fun ConceptItemsScreen(
                         DropDownMenuWrapper(
                             expanded = showMenu,
                             actions = menuActions,
-                            onClose = {showMenu = false}
+                            onClose = {showMenu = false},
+                            modifier = Modifier.widthIn(144.dp)
                         )
                     }
                 }
@@ -259,18 +268,18 @@ fun ConceptItemsScreen(
         onClose = {showSortOptions = false}
     )
 
-    BottomSheet (
-        show = showFilters,
-        onDismiss = { showFilters = false }
-    ) {
-        ConceptFilterControls(
-            filter = state.filter,
-            label = stringResource(R.string.filter_action),
-            onSetShowHidden = { viewModel.onAction(ConceptItemsAction.SetShowHiddenFilter(it))},
-            onSetMediaType = { viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(it))},
-            onResetFilters = { viewModel.onAction(ConceptItemsAction.ResetFilters)},
-        )
-    }
+    OptionPicker(
+        isVisible = showMediaTypeOptions,
+        title = stringResource(R.string.media_type_title),
+        options = MediaType.entries.map{it.format() to it} + ("All" to null),
+        selectedOption = state.filter.mediaType,
+        onSelect = {
+            viewModel.onAction(ConceptItemsAction.SetMediaTypeFilter(it))
+            showMediaTypeOptions = false
+        },
+        onClose = { showMediaTypeOptions = false }
+    )
+
 
     BottomSheet(
         show = showItemMenu && state.selection.selectedItems.size == 1,
