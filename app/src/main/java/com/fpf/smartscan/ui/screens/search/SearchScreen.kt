@@ -44,6 +44,7 @@ import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.media.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
@@ -62,8 +63,9 @@ import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.media.MediaItemsList
+import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
-import com.fpf.smartscan.ui.components.search.SearchFilterControls
+import com.fpf.smartscan.ui.components.pickers.DateRangePicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.toEpochSeconds
 import kotlinx.coroutines.FlowPreview
@@ -128,7 +130,9 @@ fun SearchScreen(
     var showRecentSearches by remember { mutableStateOf(false) }
 
     // Filters
-    var showFilters by remember { mutableStateOf(false) }
+    var showMediaTypeOptions by remember { mutableStateOf(false) }
+    var showDuplicateOptions by remember { mutableStateOf(false) }
+    var showDateRangePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
@@ -147,8 +151,19 @@ fun SearchScreen(
 
     val menuActions: List<MenuActionConfig> = listOf(
         MenuActionConfig.Button(
-            label = stringResource(R.string.filter_action),
-            onClick = { showFilters = true }
+            label = stringResource(R.string.media_type_title),
+            onClick = { showMediaTypeOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.duplicate_label),
+            onClick = { showDuplicateOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.search_date_range_label),
+            onClick = { showDateRangePicker = true },
+            enabled = !state.loading,
         ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_recycle_bin),
@@ -518,19 +533,17 @@ fun SearchScreen(
     )
 
     BottomSheet(
-        show = showFilters,
-        onDismiss = { showFilters = false }
+        show = showDateRangePicker,
+        onDismiss = { showDateRangePicker = false }
     ) {
-        SearchFilterControls(
-            filter = state.filter,
-            label = stringResource(R.string.filter_action),
-            onSetMediaType = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))},
-            onSetDuplicateFilter = { searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))},
+        DateRangePicker(
+            startDate = state.filter.startDate,
+            endDate = state.filter.endDate,
+            label = stringResource(R.string.search_date_range_label),
             onSelectStartDate = {showStartDatePicker = true},
             onSelectEndDate = {showEndDatePicker = true},
             onRemoveStartDate = {searchViewModel.onAction(SearchAction.ClearStartDateFilter)},
             onRemoveEndDate = {searchViewModel.onAction(SearchAction.ClearEndDateFilter)},
-            onResetFilters = { searchViewModel.onAction(SearchAction.ResetFilters)}
         )
     }
 
@@ -544,6 +557,34 @@ fun SearchScreen(
             isAddingTag = false
         },
         onCheckAutoCompletion = searchViewModel::handleAutoCompletionCheck
+    )
+
+    OptionPicker(
+        isVisible = showMediaTypeOptions,
+        title = stringResource(R.string.media_type_title),
+        options = MediaType.entries.map{it.format() to it},
+        selectedOption = state.filter.mediaType,
+        onSelect = {
+            searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
+            showMediaTypeOptions = false
+        },
+        onClose = { showMediaTypeOptions = false }
+    )
+
+    OptionPicker(
+        isVisible = showDuplicateOptions,
+        title = stringResource(R.string.duplicate_label),
+        options = listOf(true, false, null).map{ when(it){
+            true -> stringResource(R.string.only_button)
+            false -> stringResource(R.string.exclude_button)
+            else -> stringResource(R.string.include_button)
+        } to it},
+        selectedOption = state.filter.isDuplicate,
+        onSelect = {
+            searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
+            showDuplicateOptions = false
+        },
+        onClose = { showDuplicateOptions = false }
     )
 }
 
