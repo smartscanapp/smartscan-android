@@ -45,8 +45,7 @@ android {
 dependencies {
     api(libs.androidx.core.ktx)
     api(libs.androidx.documentfile)
-//    implementation(libs.smartscan.ml)
-    api("com.github.smartscanapp.smartscan-sdk:smartscan-ml:2.2.1")
+    api(libs.smartscan.ml)
     api("com.github.devdiaries41.llmconnect-android:llmconnect:1.0.0")
 
     // crypto
