@@ -78,12 +78,12 @@ fun MediaItemFeedCard(
 
                     IconButton(
                         onClick = { onShowItemMenu(item) },
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(24.dp)
                         ){
                         Icon(
                             imageVector = Icons.Filled.MoreVert,
                             contentDescription = "Item menu icon",
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.padding(2.dp)
                         )
                     }
                 }
