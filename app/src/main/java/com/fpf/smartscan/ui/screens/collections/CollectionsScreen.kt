@@ -372,18 +372,18 @@ fun CollectionsScreen(
     )
 
     if (isMergingCollections) {
-        val labelledCollections: List<String> = state.selection.selectedItems.sortedByDescending { it.size}.map { it.name }.filterNot { it == UNLABELLED_COLLECTION }
+        val labelledCollections = state.selection.selectedItems.sortedByDescending { it.size}.map { it.name to it }.filterNot { it.first == UNLABELLED_COLLECTION }
         var useSelectorInput by remember { mutableStateOf(labelledCollections.isNotEmpty()) }
 
         if (useSelectorInput) {
             SelectorModal(
                 isVisible = labelledCollections.isNotEmpty(),
-                initialOption = labelledCollections.first(),
+                initialOption = labelledCollections.first().second,
                 title = stringResource(R.string.merge_action),
                 label = stringResource(R.string.collections_primary_collection_label),
                 options = labelledCollections,
-                onConfirm = { selected ->
-                    viewModel.onAction(CollectionAction.MergeCollections(selected))
+                onConfirm = {
+                    viewModel.onAction(CollectionAction.MergeCollections(it.name))
                     isMergingCollections = false
                 },
                 onClose = { isMergingCollections = false }

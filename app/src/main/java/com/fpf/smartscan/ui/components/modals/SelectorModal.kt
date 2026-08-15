@@ -24,27 +24,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
-import kotlinx.coroutines.FlowPreview
 
-
-@OptIn(FlowPreview::class)
 @Composable
-fun SelectorModal(
+fun <T> SelectorModal(
     isVisible: Boolean,
     title: String,
-    options: List<String>,
+    options: List<Pair<String, T>>,
     onClose: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (T) -> Unit,
     label: String,
-    initialOption: String? = null
+    initialOption: T? = null
 ) {
     if (!isVisible) return
 
     var selectedOption by remember { mutableStateOf(initialOption) }
     var showPicker by remember { mutableStateOf(false) }
 
+    val selectedLabel = options.find { it.second == selectedOption }?.first ?: "Select option"
+
     AlertDialog(
-        onDismissRequest = { },
+        onDismissRequest = {},
         title = { Text(title) },
         text = {
             Row(
@@ -53,7 +52,7 @@ fun SelectorModal(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(label)
-                OutlinedButton (
+                OutlinedButton(
                     onClick = { showPicker = true },
                     modifier = Modifier.widthIn(max = 140.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -65,7 +64,7 @@ fun SelectorModal(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = selectedOption?: "Select option" ,
+                            text = selectedLabel,
                             fontSize = 12.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -75,19 +74,22 @@ fun SelectorModal(
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Dropdown",
-                            tint =MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onClose) { Text("Cancel") }
+            TextButton(onClick = onClose) {
+                Text("Cancel")
+            }
         },
         confirmButton = {
             TextButton(
-                enabled = !selectedOption.isNullOrBlank(),
-                onClick = { selectedOption?.let{onConfirm(it) }}) {
+                enabled = selectedOption != null,
+                onClick = { selectedOption?.let(onConfirm) }
+            ) {
                 Text("Confirm")
             }
         }
@@ -98,10 +100,10 @@ fun SelectorModal(
         title = label,
         options = options,
         selectedOption = selectedOption,
-        onSelect = { selected ->
-            selectedOption = selected
+        onSelect = {
+            selectedOption = it
             showPicker = false
         },
-        onClose = {showPicker = false}
+        onClose = { showPicker = false }
     )
 }

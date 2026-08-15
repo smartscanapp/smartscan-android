@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class ColorSchemeType { DEFAULT, SMARTSCAN }
 enum class ThemeMode { LIGHT, DARK, SYSTEM }
 
+fun ColorSchemeType.format(): String = name.lowercase().replaceFirstChar {it.uppercase() }
+fun ThemeMode.format(): String = name.lowercase().replaceFirstChar {it.uppercase() }
+
 val LightColorPalette = lightColorScheme(
     primary = Peach,
     onPrimary = Color.White,

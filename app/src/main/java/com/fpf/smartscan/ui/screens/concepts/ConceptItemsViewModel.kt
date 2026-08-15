@@ -59,15 +59,13 @@ class ConceptItemsViewModel(
     private val _event = MutableSharedFlow<ConceptItemEvent>()
     val event = _event.asSharedFlow()
 
-
-    val sortByOptions: Map<SortBy, String>
-        get()=  mapOf(
-            SortBy.Date(ascending = true) to getApplication<Application>().getString(R.string.sort_date_asc_option),
-            SortBy.Date(ascending = false) to getApplication<Application>().getString(R.string.sort_date_desc_option),
-            SortBy.Similarity(ascending = true) to getApplication<Application>().getString(R.string.sort_similarity_asc_option),
-            SortBy.Similarity(ascending = false) to getApplication<Application>().getString(R.string.sort_similarity_desc_option)
+    val sortByOptions: List<Pair<String, SortBy>>
+        get() = listOf(
+            getApplication<Application>().getString(R.string.sort_date_asc_option) to SortBy.Date(ascending = true),
+            getApplication<Application>().getString(R.string.sort_date_desc_option) to SortBy.Date(ascending = false),
+            getApplication<Application>().getString(R.string.sort_similarity_asc_option) to SortBy.Similarity(ascending = true),
+            getApplication<Application>().getString(R.string.sort_similarity_desc_option) to SortBy.Similarity(ascending = false)
         )
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val conceptItems = _state
@@ -193,16 +191,17 @@ class ConceptItemsViewModel(
         _state.update { it.copy(sortBy = sortBy) }
         saveSortByPref(sortBy)
     }
-    private fun saveSortByPref(sortBy: SortBy){
-        val option =  sortByOptions.entries.find { it.key == sortBy }?.value?: sortByOptions.values.first()
-        sharedPrefs.edit{
-            putString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, option)
+
+    private fun saveSortByPref(sortBy: SortBy) {
+        val option = sortByOptions.find { it.second == sortBy }?.second ?: sortByOptions.first().second
+        sharedPrefs.edit {
+            putString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, option.toString())
         }
     }
 
-    private fun getSortByPref(): SortBy{
-        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, "")?: ""
-        return sortByOptions.entries.find{ it.value == sortByStr}?.key?: SortBy.Date()
+    private fun getSortByPref(): SortBy {
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_CONCEPT_ITEMS, "") ?: ""
+        return sortByOptions.find { it.second.toString() == sortByStr }?.second ?: SortBy.Date()
     }
 
 }
