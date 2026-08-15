@@ -12,5 +12,4 @@ data class ConceptItemsState(
     val sortBy: SortBy = SortBy.Date(),
     val loading: Boolean = false,
     val mediaToView: MediaItem? = null,
-    val selection: SelectionState<MediaItem> = SelectionState()
 )

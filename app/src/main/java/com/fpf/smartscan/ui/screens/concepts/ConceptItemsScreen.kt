@@ -1,8 +1,6 @@
 package com.fpf.smartscan.ui.screens.concepts
 
-
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -172,10 +170,6 @@ fun ConceptItemsScreen(
                 }
             }
         }
-    }
-
-    BackHandler(enabled = state.selection.isSelecting) {
-        viewModel.onAction(ConceptItemsAction.ResetSelection)
     }
 
     Box(

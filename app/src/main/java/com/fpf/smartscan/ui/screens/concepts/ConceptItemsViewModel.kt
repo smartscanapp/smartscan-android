@@ -2,11 +2,8 @@ package com.fpf.smartscan.ui.screens.concepts
 
 
 import android.app.Application
-import android.content.ClipData
-import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import androidx.compose.ui.platform.Clipboard
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,16 +16,12 @@ import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.constants.PrefsKeys
 import com.fpf.smartscan.core.data.concepts.ConceptCrossRefRepository
 import com.fpf.smartscan.core.data.paging.ConceptPagingSource
-import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.search.SortBy
-import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.events.ConceptItemEvent
 import com.fpf.smartscan.events.ConceptItemEventType
-import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,7 +34,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.map
 
 class ConceptItemsViewModel(
     application: Application,
@@ -101,18 +93,10 @@ class ConceptItemsViewModel(
 
     fun onAction(action: ConceptItemsAction){
         when(action){
-            is ConceptItemsAction.CopyMedia -> copyItem(action.clipboard, action.context)
             is ConceptItemsAction.SetMediaToView -> setMediaToView(action.item)
-            is ConceptItemsAction.ShareMedia -> shareItems(action.context)
-            is ConceptItemsAction.ToggleSelectedMedia -> toggleSelectedItem(action.item)
             is ConceptItemsAction.SetConceptToView -> setConcept(action.concept)
-            is ConceptItemsAction.SetSelectAll -> setSelectAll(action.selectAll)
-            is ConceptItemsAction.ToggleSelectionMode -> toggleSelectionMode()
-            is ConceptItemsAction.ResetSelection -> resetSelection()
-            is ConceptItemsAction.ClearSelection -> clearSelection()
             is ConceptItemsAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
             is ConceptItemsAction.SetShowHiddenFilter -> setShowHiddenFilter(action.showHidden)
-            is ConceptItemsAction.ResetFilters -> resetFilters()
             is ConceptItemsAction.SetSortBy -> setSortBy(action.sortBy)
             is ConceptItemsAction.ToggleHide -> toggleHide(action.item)
         }
@@ -121,10 +105,6 @@ class ConceptItemsViewModel(
     private fun load(){
         _state.update { it.copy(sortBy = getSortByPref()) }
     }
-
-    private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
-    private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
-    private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
 
     private fun toggleHide(item: MediaItem){
         val concept = _state.value.concept?: return
@@ -138,43 +118,6 @@ class ConceptItemsViewModel(
             }
         }
     }
-    private fun copyItem(clipboard: Clipboard, context: Context){
-        viewModelScope.launch {
-            val itemToCopy = getSelectedItems().first().uri
-            clipboard.nativeClipboard.setPrimaryClip(ClipData.newUri(context.contentResolver, "smartscan_media", itemToCopy))
-            resetSelection()
-        }
-    }
-
-    private fun shareItems(context: Context){
-        viewModelScope.launch {
-            val items = getSelectedItems()
-            shareMediaMulti(context, items.map{it.uri})
-            resetSelection()
-        }
-    }
-
-    private fun toggleSelectedItem(item: MediaItem){
-        _state.update {
-            val concept = it.concept ?: return
-            it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, concept.size))
-        }
-    }
-
-    private fun setSelectAll(selectAll: Boolean) {
-        val currentState = _state.value
-        val concept = currentState.concept?: return
-        _state.update { it.copy(selection = SelectionUtils.setSelectAll(it.selection, selectAll, concept.size))}
-
-    }
-
-    private suspend fun getSelectedItems(): Set<MediaItem> = SelectionUtils.getSelectedItems(_state.value.selection){getAllItemsInConcept()}
-
-    private suspend fun getAllItemsInConcept(): MutableSet<MediaItem> {
-        val currentState = state.value
-        val concept = currentState.concept ?: return mutableSetOf()
-        return mediaMetadataRepository.getByConcept(concept.id).map { it.toItem() }.toMutableSet()
-    }
 
     private fun setConcept(concept: Concept?) = _state.update { it.copy(concept=concept) }
 
@@ -183,7 +126,6 @@ class ConceptItemsViewModel(
 
     // Null mean include hidden. True would only show hidden
     private fun setShowHiddenFilter(showHidden: Boolean) = _state.update { it.copy(filter = it.filter.copy(showHidden = if(showHidden) null else false)) }
-    private fun resetFilters() = _state.update { it.copy(filter = it.filter.copy(showHidden = false, isDuplicate = null, mediaType = null)) }
 
     private fun setSortBy(sortBy: SortBy) {
         _state.update { it.copy(sortBy = sortBy) }
