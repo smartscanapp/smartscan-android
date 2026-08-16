@@ -42,7 +42,7 @@ object Reranker {
 
         Log.d(TAG, "Signal strengths: $signalStrengths")
 
-        return allItemsIds.map { itemId ->
+        return allItemsIds.mapNotNull { itemId ->
             var score = 0.0
             signals.forEach { signal ->
                 if (!useSTSignal && signal.type == SignalType.SENTENCE_TRANSFORMER) return@forEach
@@ -51,7 +51,11 @@ object Reranker {
                 val strength = signalStrengths[signal.type] ?: return@forEach
                 score += strength * signalScore
             }
-            itemId to score
+            if(score == 0.0){
+                null
+            }else{
+                itemId to score
+            }
         }
             .sortedByDescending { it.second }
             .toMap()
