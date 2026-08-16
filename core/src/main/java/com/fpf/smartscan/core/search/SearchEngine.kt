@@ -81,15 +81,15 @@ class SearchEngine(
         val threshold = vlmTextSimThreshold
         val queryResult = store.query(queryEmbed, Int.MAX_VALUE, threshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
-        val mainSims = queryResult.toSimsMap()
-        val clusterSims = clusterResult.toSimsMap()
-        val itemClusterSims = toScoreMap(mainSims, clusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
+        val vlmSims = queryResult.toSimsMap()
+        val vlmClusterSims = clusterResult.toSimsMap()
+        val vlmItemClusterSims = toScoreMap(vlmSims, vlmClusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
 
-        val conceptQueryEmbed = miniLmTextEmbedder.embed(query).toQInt8Embed()
+        val miniLmQueryEmbed = miniLmTextEmbedder.embed(query).toQInt8Embed()
         val conceptStore = getConceptStore(searchQuery.filter.mediaType)
-        val conceptQueryResult = conceptStore.query(conceptQueryEmbed, Int.MAX_VALUE, conceptSimThreshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
-        val conceptSims = conceptQueryResult.toSimsMap()
-        val signals = getSearchSignals(mainSims, itemClusterSims, conceptSims)
+        val conceptQueryResult = conceptStore.query(miniLmQueryEmbed, Int.MAX_VALUE, conceptSimThreshold, searchQuery.filter.ids.toSet(),  startDate = searchQuery.filter.startDate, endDate = searchQuery.filter.endDate, includeSims = true)
+        val miniLmSims = conceptQueryResult.toSimsMap()
+        val signals = getSearchSignals(vlmSims, vlmItemClusterSims, miniLmSims)
         val reranked = Reranker.rerank(signals)
         return reranked
     }
