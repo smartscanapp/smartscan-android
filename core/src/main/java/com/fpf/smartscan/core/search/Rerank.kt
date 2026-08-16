@@ -27,11 +27,10 @@ object Reranker {
             signal.key to normalizeScores(signal.scores)
         }
         val signalStrengths = signals.associate { signal ->
-            signal.key to calculateSignalStrength(signal.scores, totalResults)
+            signal.key to calculateSignalStrength(signal.scores)
         }
 
-//        Log.d(TAG, "Signal strengths: $signalStrengths")
-//        Log.d(TAG, "Signal signalWeights: $signalWeights")
+        Log.d(TAG, "Signal strengths: $signalStrengths")
 
         return allItemsIds.map { itemId ->
             var score = 0.0
@@ -47,8 +46,8 @@ object Reranker {
             .toMap()
     }
 
-    fun calculateSignalStrength(signalScores: Map<Long, Float>, totalResults: Int): Double {
-        if (signalScores.isEmpty() || totalResults <= 0) return 0.0
+    fun calculateSignalStrength(signalScores: Map<Long, Float>): Double {
+        if (signalScores.isEmpty()) return 0.0
 
         val values = signalScores.values.map { it.toDouble() }.sortedDescending()
         val topCount = maxOf(1, percentile(values, 0.2).toInt())
@@ -64,6 +63,7 @@ object Reranker {
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
         if (scores.size < minSegmentLength) return scores.average()
+        Log.d(TAG, "scores:${scores.joinToString("\n")}")
 
         // Prefix sums for O(1) linear regression error calculation.
         val prefixY = DoubleArray(n + 1)
@@ -153,23 +153,23 @@ object Reranker {
 
         segments.reverse()
 
-//        segments.forEachIndexed { index, segment ->
-//            Log.d(
-//                TAG,
-//                "Segment ${index + 1}: " +
-//                        "start=${segment.first}, " +
-//                        "finish=${segment.second}, " +
-//                        "startScore=${scores[segment.first]}, " +
-//                        "finishScore=${scores[segment.second]}"
-//            )
-//        }
+        segments.forEachIndexed { index, segment ->
+            Log.d(
+                TAG,
+                "Segment ${index + 1}: " +
+                        "start=${segment.first}, " +
+                        "finish=${segment.second}, " +
+                        "startScore=${scores[segment.first]}, " +
+                        "finishScore=${scores[segment.second]}"
+            )
+        }
 
         val cutoffIndex = when {
             segments.size == 1 -> n - 1
             scores[segments[0].second] <= scores[segments[0].first] * 0.5 -> segments[1].first
             else -> segments.last().first
         }
-//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
+        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
         return scores[cutoffIndex]
     }
 
