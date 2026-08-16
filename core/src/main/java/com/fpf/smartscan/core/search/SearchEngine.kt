@@ -113,12 +113,12 @@ class SearchEngine(
         return reranked
     }
 
-    private fun getSearchSignals(mainSims: Map<Long, Float>, itemClusterSims: Map<Long, Float>, conceptSims: Map<Long, Float>? = null): List<RerankSignal>{
-        val signals = mutableListOf<RerankSignal>()
-        val mainSignal = RerankSignal(scores = mainSims, key = 0)
-        val clusterSignal = RerankSignal(scores = itemClusterSims, key = 1)
+    private fun getSearchSignals(mainSims: Map<Long, Float>, itemClusterSims: Map<Long, Float>, conceptSims: Map<Long, Float>? = null): List<Signal>{
+        val signals = mutableListOf<Signal>()
+        val mainSignal = Signal(scores = mainSims, type = SignalType.VLM)
+        val clusterSignal = Signal(scores = itemClusterSims, type = SignalType.VLM_CLUSTER)
         signals.addAll(listOf(mainSignal, clusterSignal))
-        conceptSims?.let{ signals.add( RerankSignal(scores = conceptSims, key =2))}
+        conceptSims?.let{ signals.add(Signal(scores = conceptSims, type = SignalType.SENTENCE_TRANSFORMER))}
         return signals
     }
 

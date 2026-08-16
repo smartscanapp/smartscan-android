@@ -4,42 +4,39 @@ import android.util.Log
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-data class RerankSignal(val scores: Map<Long, Float>, val key: Int)
-
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
 
-    fun rerank(signals: List<RerankSignal> = emptyList()): List<Long> {
+    fun rerank(signals: List<Signal> = emptyList()): List<Long> {
         val scoredItems = calculateRerankScores(signals)
         if (scoredItems.size <= 1) return scoredItems.keys.toList()
         val minAllowedScore = calculateRelevanceCutoff(scoredItems.values.toList())
         return scoredItems.filter { it.value >= minAllowedScore }.keys.toList()
     }
 
-    fun calculateRerankScores(signals: List<RerankSignal>): Map<Long, Double> {
+    fun calculateRerankScores(signals: List<Signal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
         val allItemsIds: MutableSet<Long> = mutableSetOf()
         signals.forEach { allItemsIds.addAll(it.scores.keys)}
 
         val totalResults = allItemsIds.size
         val normalizedSignals = signals.associate { signal ->
-            signal.key to normalizeScores(signal.scores)
+            signal.type to normalizeScores(signal.scores)
         }
         val signalStrengths = signals.associate { signal ->
-            signal.key to calculateSignalStrength(signal.scores)
+            signal.type to calculateSignalStrength(signal.scores)
         }
 
         Log.d(TAG, "Signal strengths: $signalStrengths")
 
         return allItemsIds.map { itemId ->
             var score = 0.0
-            signals.asSequence()
-                .forEach { signal ->
-                    val signalScore = normalizedSignals[signal.key]?.get(itemId) ?: return@forEach
-                    val strength = signalStrengths[signal.key] ?: return@forEach
-                    score += strength * signalScore
-                }
+            signals.forEach { signal ->
+                val signalScore = normalizedSignals[signal.type]?.get(itemId) ?: return@forEach
+                val strength = signalStrengths[signal.type] ?: return@forEach
+                score += strength * signalScore
+            }
             itemId to score
         }
             .sortedByDescending { it.second }
