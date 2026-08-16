@@ -28,11 +28,25 @@ object Reranker {
             signal.type to calculateSignalStrength(signal.scores)
         }
 
+        val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER]
+        val strongestStrength = signalStrengths.maxOfOrNull { it.value }
+
+        // Helps the reranker adapt to whether a query is primarily benefiting from semantic or visual matching.
+        val useSTSignal = sentenceStrength != null &&
+                strongestStrength == sentenceStrength &&
+                signalStrengths.values
+                    .filter { it != sentenceStrength }
+                    .maxOrNull()
+                    ?.let { sentenceStrength >= it * 1.5 }
+                ?: true
+
         Log.d(TAG, "Signal strengths: $signalStrengths")
 
         return allItemsIds.map { itemId ->
             var score = 0.0
             signals.forEach { signal ->
+                if (!useSTSignal && signal.type == SignalType.SENTENCE_TRANSFORMER) return@forEach
+
                 val signalScore = normalizedSignals[signal.type]?.get(itemId) ?: return@forEach
                 val strength = signalStrengths[signal.type] ?: return@forEach
                 score += strength * signalScore
