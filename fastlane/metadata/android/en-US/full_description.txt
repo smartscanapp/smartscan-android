@@ -1,35 +1,47 @@
-Search and organise images and videos offline with on-device AI.
-
-<b>Key Features</b>
+Turn your images and videos into a personal knowledge base. Search, organise, and rediscover the media you've saved, with automatic collections and concepts that help you find information you might otherwise forget.
 
 <b>Search</b>
 
 <ul>
-<li><b>Search Images and Videos:</b> Search across your media library.</li>
-<li><b>Search Options:</b> Search using text or images, including pasting images into the search bar.</li>
-<li><b>Tag + Text Search:</b> Combine tags with text queries.</li>
-<li><b>Tag Search:</b> Search directly by tags.</li>
-<li><b>Hide duplicates:</b> Hides near identical search results.</li>
-<li><b>Cross-App Search:</b> Search from other apps via Share/Intent.</li>
-<li><b>Auto-Refresh Index:</b> Automatically refresh image and video indexes for new content.</li>
-<li><b>Folder Selection:</b> Optionally configure which image and video folders are indexed.</li>
-<li><b>Gallery Access:</b> Optionally open search results in the default gallery.</li>
+<li>Find images and videos using text or image search</li>
+<li>Search by tags or tag + text queries</li>
+<li>Search from other apps using share or intent</li>
+<li>Paste images directly into the search bar</li>
+</ul>
+
+<b>Automatic Collections</b>
+
+<ul>
+<li>Automatically group visually similar media into collections</li>
+<li>Browse related photos and videos without manually organising them</li>
+</ul>
+
+<b>Concepts</b>
+
+<ul>
+<li>Organise media by meaning, not just appearance</li>
+<li>Create concepts around topics or ideas and automatically find matching media using descriptions</li>
+<li>Generate image descriptions automatically or add and edit descriptions yourself</li>
 </ul>
 
 <b>Tagging</b>
 
 <ul>
-<li><b>Add Tags:</b> Add tags to media.</li>
-<li><b>Autocomplete:</b> Tag autocomplete when searching or tagging.</li>
+<li>Add tags to your media</li>
+<li>Use tag autocomplete when searching or tagging</li>
 </ul>
 
-<b>Collections</b>
+<b>Duplicate Management</b>
 
 <ul>
-<li><b>Auto Collections:</b> Automatically groups similar media.</li>
-<li><b>Tag Collections:</b> Manually curate collections using tags.</li>
-<li><b>Manage Collections:</b> Merge, move, delete, add tags.</li>
+<li>Detect duplicate media</li>
+<li>Filter your library to include, exclude, or show only duplicates</li>
 </ul>
 
-<b>Fully On-Device</b>
-All processing is handled entirely on-device, ensuring privacy, speed, and offline functionality.
+<b>Privacy</b>
+
+<ul>
+<li>SmartScan is offline-first</li>
+<li>Your media, tags, collections, concepts, and generated descriptions are stored and processed on your device</li>
+<li>Generating image descriptions optionally uses cloud processing and requires an internet connection</li>
+</ul>
