@@ -1,7 +1,8 @@
 package com.fpf.smartscan.core.search
 
 import android.util.Log
-import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 object Reranker {
@@ -20,27 +21,19 @@ object Reranker {
         val allItemsIds: MutableSet<Long> = mutableSetOf()
         signals.forEach { allItemsIds.addAll(it.scores.keys)}
 
-        val totalResults = allItemsIds.size
         val normalizedSignals = signals.associate { signal ->
             signal.type to normalizeScores(signal.scores)
         }
         val signalStrengths = signals.associate { signal ->
             signal.type to calculateSignalStrength(signal.scores)
         }
+        val signalWeights = signalStrengths.entries.sortedByDescending { it.value }.mapIndexed { index, entry ->
+            entry.key to (signalStrengths.size.toFloat() / (index + 1f)).pow(2)
+        }.toMap()
 
-        val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER]
-        val strongestStrength = signalStrengths.maxOfOrNull { it.value }
+        val useSTSignal = useSentenceTransformerSignal(signalStrengths)
 
-        // Helps the reranker adapt to whether a query is primarily benefiting from semantic or visual matching.
-        val useSTSignal = sentenceStrength != null &&
-                strongestStrength == sentenceStrength &&
-                signalStrengths.values
-                    .filter { it != sentenceStrength }
-                    .maxOrNull()
-                    ?.let { sentenceStrength >= it * 1.5 }
-                ?: true
-
-        Log.d(TAG, "Signal strengths: $signalStrengths")
+//        Log.d(TAG, "Signal strengths=$signalStrengths, useSTSignal=$useSTSignal")
 
         return allItemsIds.mapNotNull { itemId ->
             var score = 0.0
@@ -49,7 +42,8 @@ object Reranker {
 
                 val signalScore = normalizedSignals[signal.type]?.get(itemId) ?: return@forEach
                 val strength = signalStrengths[signal.type] ?: return@forEach
-                score += strength * signalScore
+                val weight = signalWeights[signal.type] ?: return@forEach
+                score += strength * weight * signalScore
             }
             if(score == 0.0){
                 null
@@ -73,12 +67,12 @@ object Reranker {
         return (0.7 * separation + 0.3 * topMean) * (1.0 + sparsityBonus)
     }
 
-    fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.05): Double {
+    fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.02): Double {
         if (scores.isEmpty()) return 0.0
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
         if (scores.size < minSegmentLength) return scores.average()
-        Log.d(TAG, "scores:${scores.joinToString("\n")}")
+//        Log.d(TAG, "scores:${scores.joinToString("\n")}")
 
         // Prefix sums for O(1) linear regression error calculation.
         val prefixY = DoubleArray(n + 1)
@@ -111,7 +105,7 @@ object Reranker {
 
             val denominator = count * sumXX - sumX * sumX
 
-            val slope = if (abs(denominator) < 1e-12) {
+            val slope = if (denominator.absoluteValue < 1e-12) {
                     0.0
                 } else {
                     (count * sumXY - sumX * sumY) / denominator
@@ -168,29 +162,59 @@ object Reranker {
 
         segments.reverse()
 
-        segments.forEachIndexed { index, segment ->
-            Log.d(
-                TAG,
-                "Segment ${index + 1}: " +
-                        "start=${segment.first}, " +
-                        "finish=${segment.second}, " +
-                        "startScore=${scores[segment.first]}, " +
-                        "finishScore=${scores[segment.second]}"
-            )
+//        segments.forEachIndexed { index, segment ->
+//            Log.d(
+//                TAG,
+//                "Segment ${index + 1}: " +
+//                        "start=${segment.first}, " +
+//                        "finish=${segment.second}, " +
+//                        "startScore=${scores[segment.first]}, " +
+//                        "finishScore=${scores[segment.second]}"
+//            )
+//        }
+
+        var lastIncludedSegment = 0
+        for (index in 1 until segments.size) {
+            if (shouldIncludeSegment(index, segments, scores)) {
+                lastIncludedSegment = index
+            } else {
+                break
+            }
         }
 
-        val cutoffIndex = when {
-            segments.size == 1 -> n - 1
-            scores[segments[0].second] <= scores[segments[0].first] * 0.5 -> segments[1].first
-            else -> segments.last().first
-        }
-        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}")
+        val selectedSegment = segments[lastIncludedSegment]
+        val cutoffIndex = selectedSegment.second
+
+//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}, lastIncludedSegment=$lastIncludedSegment")
         return scores[cutoffIndex]
     }
 
     @JvmName("calculateRelevanceCutoffFloatMap")
     fun calculateRelevanceCutoff(scoredItems: Map<Long, Float>): Double {
         return calculateRelevanceCutoff(scoredItems.values.map{it.toDouble()})
+    }
+
+    private fun shouldIncludeSegment(
+        candidateIndex: Int,
+        segments: List<Pair<Int, Int>>,
+        scores: List<Double>,
+        threshold: Double = 0.85,
+        consistencyThreshold: Double = 0.7,
+        continuationThreshold: Double = 0.5
+    ): Boolean {
+        val topScore = scores.max()
+        val candidateSegment = segments[candidateIndex]
+        val nextCandidateSegment = segments.getOrNull(candidateIndex+1)
+        val segmentAverageScore = scores.subList(candidateSegment.first, candidateSegment.second+1).average()
+        val segmentRatio = segmentAverageScore / topScore
+        val strongSegment = segmentRatio >= threshold
+        val sizes = segments.map { (start, end) -> end - start + 1 }
+        val coverageThreshold = ((1 / segments.size.toFloat()) + 0.5) / 2
+        val consistentQuality = ( segmentRatio >= consistencyThreshold) && sizes[candidateIndex] >= coverageThreshold * scores.size
+        val candidateSpread =  topScore - scores[candidateSegment.first]
+        val nextCandidateSpread = nextCandidateSegment?.let{scores[candidateSegment.first] - scores[it.first]}?: 0.0
+        val continuation = (segmentRatio >= continuationThreshold) && nextCandidateSpread >= candidateSpread
+        return strongSegment || consistentQuality || continuation
     }
 
     private fun normalizeScores(scores: Map<Long, Float>): Map<Long, Double> { if (scores.isEmpty()) return emptyMap()
@@ -201,5 +225,19 @@ object Reranker {
     private fun percentile(values: List<Double>, percent: Double): Double {
         if (values.isEmpty()) return 0.0
         return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()]
+    }
+
+    // Uses the sentence-transformer signal when it clearly dominates
+    fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 2.0): Boolean{
+        val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER] ?: return false
+        val strongestStrength = signalStrengths.maxOfOrNull { it.value } ?: return false
+        if (sentenceStrength != strongestStrength) return false
+
+        val vlm = signalStrengths[SignalType.VLM] ?: 0.0
+        val vlmCluster = signalStrengths[SignalType.VLM_CLUSTER] ?: 0.0
+        val sentenceTransformer = signalStrengths[SignalType.SENTENCE_TRANSFORMER] ?: 0.0
+        val visualSignalMean = (vlm + vlmCluster) / 2.0
+        val semanticSignalDominates = sentenceTransformer > (dominance * visualSignalMean)
+        return semanticSignalDominates
     }
 }
