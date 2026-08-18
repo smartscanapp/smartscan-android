@@ -53,12 +53,12 @@ All processing is handled on-device, ensuring privacy and offline functionality,
 * Tag Collections: manually curate collections using tags
 * Manage Collections: Merge, move, delete, add tags.
 
-## Concepts:
+### Concepts:
 * Automatically group media by meaning using media descriptions, helping you rediscover information you've saved but forgotten about.
 * Automatically generate image descriptions.
 * Manually add or edit media descriptions.
 
-## Duplicates:
+### Duplicates:
 * Detect duplicate media
 * Filter media by duplicate status (include, exclude, detect)
 
