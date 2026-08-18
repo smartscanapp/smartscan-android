@@ -49,9 +49,6 @@ dependencies {
     // SmartScan SDK
     api(libs.smartscan.ml)
 
-    // LLMs
-    implementation(libs.llmconnect.android)
-
     // crypto
     implementation(libs.tink.android)
 
