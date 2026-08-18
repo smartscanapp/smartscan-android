@@ -17,7 +17,7 @@ data class SearchState(
     val selection: SelectionState<MediaItem> = SelectionState(),
     val filter: SearchFilter = SearchFilter(mediaType = MediaType.IMAGE),
     val sortBy: SortBy = SortBy.Date(),
-    val recentSearches: Set<String> = emptySet(),
+    val recentSearches: List<String> = emptyList(),
     val duplicateCount: Int = 0
 ){
     val mediaType: MediaType
