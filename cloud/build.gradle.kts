@@ -23,4 +23,8 @@ android {
 
 dependencies {
     implementation(project(":core"))
+
+    // LLMs
+    implementation(libs.llmconnect.android)
+
 }
