@@ -1,6 +1,6 @@
 # SmartScan
 
-Search and organise images and videos offline with on-device AI.
+Turn your images and videos into a personal knowledge base. Search, organise, and rediscover the screenshots, images, and videos you've saved, with media automatically grouped into collections and concepts.
 
 <div align="center">
   <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Banner" style="border-radius: 20px;">
@@ -34,7 +34,7 @@ The app is free, but if you enjoy using it and want to support project developme
 
 ## Key Features
 
-All processing is handled entirely on-device, ensuring privacy, speed, and offline functionality.
+All processing is handled on-device, ensuring privacy and offline functionality, with optional cloud processing for generating image descriptions.
 
 ### Search:
 * Search images and videos
@@ -43,10 +43,6 @@ All processing is handled entirely on-device, ensuring privacy, speed, and offli
 * Search by tag + text query
 * Search from other apps via share/intent
 * Search by pasting image in search bar
-* Hide duplicate results (near identical search results)
-* Automatically refresh image and video indexes for new content
-* Optionally configure searchable image and video folders
-* Optionally open search results in default gallery
 
 ### Tagging:
 * Add tags to media
@@ -57,7 +53,17 @@ All processing is handled entirely on-device, ensuring privacy, speed, and offli
 * Tag Collections: manually curate collections using tags
 * Manage Collections: Merge, move, delete, add tags.
 
----
+## Concepts:
+* Automatically group media by meaning using media descriptions, helping you rediscover information you've saved but forgotten about.
+* Automatically generate image descriptions.
+* Manually add or edit media descriptions.
+
+## Duplicates:
+* Detect duplicate media
+* Filter media by duplicate status (include, exclude, detect)
+
+___
+
 
 ## Download
 
