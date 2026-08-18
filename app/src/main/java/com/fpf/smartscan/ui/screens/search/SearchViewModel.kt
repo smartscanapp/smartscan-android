@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 class SearchViewModel(
     application: Application,
@@ -383,17 +384,21 @@ class SearchViewModel(
     }
 
     private fun loadRecentSearches(){
-        val searches = sharedPrefs.getStringSet(PrefsKeys.RECENT_SEARCHES_KEY, emptySet()).orEmpty()
+        val searchesStr = sharedPrefs.getString(PrefsKeys.RECENT_SEARCHES_KEY, null).orEmpty()
+        val searches = if(searchesStr.isNotBlank()) Json.decodeFromString<List<String>>(searchesStr) else emptyList()
         _state.update { it.copy(recentSearches = searches) }
     }
 
     private fun saveRecentSearches(){
-        val searches = _state.value.recentSearches.toList().take(RECENT_SEARCHES_LIMIT).toSet()
-        sharedPrefs.edit{ putStringSet(PrefsKeys.RECENT_SEARCHES_KEY, searches) }
+        val searches = _state.value.recentSearches.take(RECENT_SEARCHES_LIMIT)
+        val searchesStr = Json.encodeToString(searches)
+        sharedPrefs.edit{ putString(PrefsKeys.RECENT_SEARCHES_KEY, searchesStr) }
     }
 
     private fun addRecentSearch(query: String){
-        val updatedRecentSearches = (listOf(query) + _state.value.recentSearches.toList()).take(RECENT_SEARCHES_LIMIT).toSet()
+        val trimmedQuery = query.trim()
+        if(trimmedQuery in _state.value.recentSearches) return
+        val updatedRecentSearches = (listOf(trimmedQuery) + _state.value.recentSearches).take(RECENT_SEARCHES_LIMIT)
         _state.update { it.copy(recentSearches = updatedRecentSearches) }
         saveRecentSearches()
     }
@@ -404,9 +409,10 @@ class SearchViewModel(
     }
 
     private fun clearRecentSearches(){
-        _state.update { it.copy(recentSearches = emptySet()) }
+        _state.update { it.copy(recentSearches = emptyList()) }
         saveRecentSearches()
     }
+
 
     override fun onCleared() {
         textEmbedder.closeSession()
