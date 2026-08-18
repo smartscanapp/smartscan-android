@@ -55,7 +55,7 @@ fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
-    size: Int? = 1728,
+    size: Int? = 1024,
     actionsEnabled: Boolean = true,
     onGetCollections: (suspend (MediaItem) -> List<Triple<Long, String, CollectionType>>)? = null,
     onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
