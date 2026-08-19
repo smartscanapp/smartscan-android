@@ -105,7 +105,7 @@ fun ConceptsScreen(
 
     val actionBarHeight = 70
     val actionBarActions: List<ActionConfig> = listOf(
-        ActionConfig( label = stringResource(R.string.edit_concept_action), onClick={ isEditingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
+        ActionConfig( label = stringResource(R.string.edit), onClick={ isEditingConcept = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
         ActionConfig(label = stringResource(R.string.pin_unpin_concept_action), onClick = {viewModel.onAction(ConceptAction.PinUnpinConcept)}, enabled = !state.loading, icon = Icons.Filled.PushPin),
         ActionConfig(label = stringResource(R.string.delete_action), { isDeletingConcept = true }, icon = Icons.Filled.Delete)
     )
