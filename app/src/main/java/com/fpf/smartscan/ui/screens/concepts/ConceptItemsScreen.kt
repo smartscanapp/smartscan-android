@@ -40,6 +40,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.PlayerPool
 import com.fpf.smartscan.core.media.format
@@ -67,6 +68,7 @@ fun ConceptItemsScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
     val state by viewModel.state.collectAsState()
     val conceptItems = viewModel.conceptItems.collectAsLazyPagingItems()
     val playerPool = remember(context) {
@@ -76,6 +78,7 @@ fun ConceptItemsScreen(
             }
         )
     }
+    var mediaItems by remember {mutableStateOf<List<MediaItem>?>(null)}
 
     // For dynamic smooth hiding effect of action bars and other components
     var offset by remember { mutableIntStateOf(0) }
@@ -172,6 +175,16 @@ fun ConceptItemsScreen(
         }
     }
 
+    LaunchedEffect(state.mediaToView, conceptItems.loadState.isIdle) {
+        if (state.mediaToView != null) {
+            if (mediaItems == null || conceptItems.loadState.isIdle) {
+                mediaItems = conceptItems.itemSnapshotList.items.toList()
+            }
+        } else {
+            mediaItems = null
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -199,12 +212,7 @@ fun ConceptItemsScreen(
     }
 
 
-    state.mediaToView?.let { item ->
-        val mediaItems by remember {
-            derivedStateOf {
-                List(conceptItems.itemCount) { index -> conceptItems[index] }.filterNotNull()
-            }
-        }
+    if(state.mediaToView != null && mediaItems != null){
         AnimatedVisibility(
             visible = true,
             enter = fadeIn(animationSpec = tween(500)) + scaleIn(
@@ -217,15 +225,18 @@ fun ConceptItemsScreen(
             )
         ) {
             MediaViewer(
-                items = mediaItems,
-                initialIndex = mediaItems.indexOf(item),
+                items = mediaItems!!,
+                initialIndex = mediaItems!!.indexOf(state.mediaToView),
                 onClose = { viewModel.onAction(ConceptItemsAction.SetMediaToView(null)) },
                 onUpdateSearchImage = null,
                 onLoadMore = {
                     val lastIndex = (conceptItems.itemCount - 1).coerceAtLeast(0)
                     conceptItems[lastIndex]
                 },
-                onSaveUpdatedItem = { updatedMedia ->
+                onSaveUpdatedItem = { updatedMedia, index->
+                    mediaItems = mediaItems?.toMutableList()?.apply {
+                        this[index] = updatedMedia
+                    }
                     mediaViewModel.updateDescription(updatedMedia)
                     conceptItems.refresh()
                 },
