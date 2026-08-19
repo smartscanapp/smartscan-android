@@ -2,6 +2,8 @@ package com.fpf.smartscan.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -24,6 +26,8 @@ fun UpdatePopUp(
 ) {
     if (!isVisible) return
 
+    val scrollState = rememberScrollState()
+
     Popup(
         onDismissRequest = { onClose() },
         properties = PopupProperties(dismissOnBackPress = true, focusable = true)
@@ -35,7 +39,7 @@ fun UpdatePopUp(
                 .padding(16.dp)
         ) {
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier.align(Alignment.Center).verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.Start
             ) {

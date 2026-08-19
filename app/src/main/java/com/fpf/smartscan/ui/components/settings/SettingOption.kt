@@ -48,7 +48,7 @@ fun SettingOption(config: SettingActionConfig, modifier: Modifier = Modifier) {
                             text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             color = textColor,
-                            modifier = Modifier.fillMaxWidth().alpha(0.8f)
+                            modifier = Modifier.fillMaxWidth().alpha(0.7f)
                         )
                     }
                 }
@@ -84,7 +84,7 @@ fun SettingOption(config: SettingActionConfig, modifier: Modifier = Modifier) {
                             text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             color = textColor,
-                            modifier = Modifier.fillMaxWidth(0.8f).alpha(0.8f)
+                            modifier = Modifier.fillMaxWidth(0.8f).alpha(0.7f)
                             )
                         }
                     }

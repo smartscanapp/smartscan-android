@@ -9,6 +9,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +42,8 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.settings.SettingSection
 import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeMode
-import com.fpf.smartscan.utils.BackupUtils.BACKUP_FILENAME
+import com.fpf.smartscan.core.utils.BackupUtils.BACKUP_FILENAME
+import com.fpf.smartscan.ui.theme.format
 
 @Composable
 fun SettingsScreen(
@@ -47,8 +52,9 @@ fun SettingsScreen(
     onTopBarChange: (TopBarState) -> Unit,
     onRestartApp: () -> Unit,
     onScanRefresh: () -> Unit,
-    onScanRebuild: () -> Unit
-) {
+    onScanRebuild: () -> Unit,
+    onBack: () -> Unit,
+    ) {
     val appSettings by viewModel.appSettings.collectAsState()
     val isBackupLoading by viewModel.isBackupLoading.collectAsState()
     val isRestoreLoading by viewModel.isRestoreLoading.collectAsState()
@@ -56,6 +62,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val sourceCodeUrl = stringResource(R.string.source_code_url)
+    val issuesUrl = stringResource(R.string.issues_url)
     val redditUrl = stringResource(R.string.reddit_url)
     val versionName: String? = try {
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -68,7 +75,17 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         onTopBarChange(
-            TopBarState(title = screenTitle)
+            TopBarState(
+                title = screenTitle,
+                navigationIcon = {
+                    IconButton (onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                },
+            ),
         )
     }
 
@@ -105,30 +122,6 @@ fun SettingsScreen(
         ),
     )
 
-    val searchSettingActions: List<SettingActionConfig> = listOf(
-        SettingActionConfig.Button(
-            label = stringResource(id = R.string.setting_strictness),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.THRESHOLD)) },
-            description = stringResource(R.string.setting_strictness_description)
-        ),
-        SettingActionConfig.Button(
-            label = stringResource(id = R.string.setting_allowed_folders),
-            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
-            description = stringResource(R.string.setting_searchable_folders_description)
-        ),
-        SettingActionConfig.Switch(
-            label=stringResource(R.string.setting_auto_open_gallery),
-            checked = appSettings.enableDirectGalleryOpen,
-            onCheckedChange = viewModel::updateEnableDirectionGalleryOpen,
-        ),
-        SettingActionConfig.Switch(
-            label=stringResource(R.string.setting_hide_duplicates),
-            checked = appSettings.enableDedupe,
-            onCheckedChange = viewModel::updateEnableDedupe,
-            description = stringResource(R.string.setting_hide_duplicates_description)
-        ),
-    )
-
     val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let { selectedUri ->
             context.contentResolver.takePersistableUriPermission(selectedUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -158,31 +151,35 @@ fun SettingsScreen(
             enabled = !isBackupLoading && !isRestoreLoading,
             label = stringResource(id = R.string.setting_restore),
             description = stringResource(R.string.setting_backup_restore_description, "Import"),
-            onClick = {
-                restoreLauncher.launch(
-                    arrayOf(
-                        "application/zip",
-                        "application/octet-stream"
-                    )
-                )
-            },
+            onClick = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
         )
     )
 
     val otherSettingActions: List<SettingActionConfig> = listOf(
         SettingActionConfig.Button(
             label = stringResource(id = R.string.title_donate),
+            description = stringResource(R.string.donate_support_message),
             onClick = { onNavigate(Routes.DONATE) }
         ),
         SettingActionConfig.Button(
             label = stringResource(id = R.string.setting_source_code),
+            description = stringResource(id = R.string.setting_source_code_description),
             onClick = {
                 val intent = Intent(Intent.ACTION_VIEW, sourceCodeUrl.toUri())
                 context.startActivity(intent)
             },
         ),
         SettingActionConfig.Button(
+            label = stringResource(id = R.string.setting_issues),
+            description = stringResource(R.string.setting_issues_description),
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, issuesUrl.toUri())
+                context.startActivity(intent)
+            },
+        ),
+        SettingActionConfig.Button(
             label = stringResource(id = R.string.setting_social_reddit),
+            description = stringResource(R.string.setting_reddit_description),
             onClick = {
                 val intent = Intent(Intent.ACTION_VIEW, redditUrl.toUri())
                 context.startActivity(intent)
@@ -191,6 +188,11 @@ fun SettingsScreen(
     )
 
     val scanSettingActions: List<SettingActionConfig> = listOf(
+        SettingActionConfig.Button(
+            label = stringResource(id = R.string.setting_allowed_folders),
+            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.ALLOWED_FOLDERS)) },
+            description = stringResource(R.string.setting_searchable_folders_description)
+        ),
         SettingActionConfig.Button(
             label = stringResource(id = R.string.scan_action),
             onClick = { onScanRefresh() },
@@ -203,6 +205,13 @@ fun SettingsScreen(
         ),
     )
 
+    val cloudProcessingSettingActions: List<SettingActionConfig> = listOf(
+        SettingActionConfig.Button(
+            label = stringResource(R.string.setting_api_keys),
+            description = stringResource(R.string.setting_api_keys_description),
+            onClick = { onNavigate(Routes.settingsDetail(SettingsRoutes.API)) },
+        ),
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -218,39 +227,23 @@ fun SettingsScreen(
                     stringResource(id = R.string.general_settings),
                     settingActionConfigs = generalSettingActions
                 )
-
-                SettingSection(
-                    stringResource(id = R.string.search_settings),
-                    settingActionConfigs = searchSettingActions
-                )
-
                 SettingSection(
                     stringResource(id = R.string.scan_action),
                     settingActionConfigs = scanSettingActions
                 )
-
+                SettingSection(
+                    stringResource(id = R.string.cloud_processing_settings),
+                    settingActionConfigs = cloudProcessingSettingActions
+                )
                 SettingSection(
                     stringResource(id = R.string.setting_backup_restore),
                     settingActionConfigs = backupSettingActions
                 )
-
                 SettingSection(
                     stringResource(id = R.string.other_settings),
                     settingActionConfigs = otherSettingActions
                 )
             }
-
-//                Text(
-//                    text = stringResource(id = R.string.advanced_settings),
-//                    style = MaterialTheme.typography.titleMedium,
-//                    modifier = Modifier.padding(vertical = 8.dp),
-//                    color = MaterialTheme.colorScheme.primary
-//                )
-//                ActionItem(
-//                    text = stringResource(id = R.string.setting_models),
-//                    onClick = { onNavigate(Routes.settingsDetail(SettingTypes.MODELS)) },
-//                )
-//                Spacer(modifier = Modifier.height(24.dp))
 
             Column(
                 modifier = Modifier
@@ -285,12 +278,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingTheme,
         title = stringResource(id = R.string.setting_theme),
-        selectedOption = themeModeDisplayNames[appSettings.theme]!!,
-        options = themeModeDisplayNames.values.toList(),
+        selectedOption = appSettings.theme,
+        options = ThemeMode.entries.map{it.format() to it},
         onClose = { isSelectingTheme = false },
-        onSelect = { selected ->
-            val theme = themeModeDisplayNames.entries.find { it.value == selected }?.key ?: ThemeMode.SYSTEM
-            viewModel.updateTheme(theme)
+        onSelect = {
+            viewModel.updateTheme(it)
             isSelectingTheme = false
         },
     )
@@ -298,12 +290,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingColor,
         title = stringResource(id = R.string.setting_color),
-        selectedOption = colorSchemeDisplayNames[appSettings.color]!!,
-        options = colorSchemeDisplayNames.values.toList(),
+        selectedOption = appSettings.color,
+        options = ColorSchemeType.entries.map{it.format() to it},
         onClose = { isSelectingColor = false },
-        onSelect = { selected ->
-            val color = colorSchemeDisplayNames.entries.find { it.value == selected }?.key ?: ColorSchemeType.SMARTSCAN
-            viewModel.updateColorScheme(color)
+        onSelect = {
+            viewModel.updateColorScheme(it)
             isSelectingColor = false
         },
     )
@@ -311,11 +302,11 @@ fun SettingsScreen(
     OptionPicker(
         isVisible = isSelectingGridColumns,
         title = stringResource(id = R.string.setting_grid_columns),
-        selectedOption = appSettings.resultsPerRow.toString(),
-        options = (3 until 6).map { it.toString() },
+        selectedOption = appSettings.resultsPerRow,
+        options = (3 until 6).map { it.toString() to it },
         onClose = { isSelectingGridColumns = false },
-        onSelect = { selected ->
-            viewModel.updateResultsPerRow(selected.toInt())
+        onSelect = {
+            viewModel.updateResultsPerRow(it)
             isSelectingGridColumns = false
         }
     )

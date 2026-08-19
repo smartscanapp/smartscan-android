@@ -16,14 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Merge
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,27 +56,27 @@ import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
 import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.events.CollectionEventType
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaCollection.Companion.UNLABELLED_COLLECTION
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaCollection.Companion.UNLABELLED_COLLECTION
 import com.fpf.smartscan.navigation.TopBarState
-import com.fpf.smartscan.ui.action.CollectionAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import org.koin.compose.viewmodel.koinViewModel
 
 
 @OptIn(FlowPreview::class)
 @Composable
 fun CollectionsScreen(
+    isMainScanRequired: Boolean,
+    hasStoragePermission: Boolean,
     onTopBarChange: (TopBarState) -> Unit,
     onViewCollection: (MediaCollection) -> Unit,
-    isIndexing: Boolean,
-    hasIndexedImages: Boolean?,
-    hasIndexedVideos: Boolean?,
-    hasStoragePermission: Boolean,
-    onIndex: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToRecyclingBin: () -> Unit,
     viewModel: CollectionsViewModel = koinViewModel(),
     ) {
 
@@ -92,6 +95,7 @@ fun CollectionsScreen(
     val context = LocalContext.current
 
     // actions
+    var showMenu by remember { mutableStateOf(false) }
     var isRenamingCollection by remember { mutableStateOf(false) }
     var isMergingCollections by remember { mutableStateOf(false) }
     var isDeletingCollection by remember { mutableStateOf(false) }
@@ -101,6 +105,17 @@ fun CollectionsScreen(
         ActionConfig(label = stringResource(R.string.merge_action), { isMergingCollections = true }, enabled = !state.loading, icon = Icons.Filled.Merge),
         ActionConfig( label = stringResource(R.string.rename_action), { isRenamingCollection = true }, enabled = state.selection.selectedItems.size == 1, icon = Icons.Filled.DriveFileRenameOutline),
         ActionConfig(label = stringResource(R.string.delete_action), { isDeletingCollection = true }, enabled = state.collectionType == CollectionType.TAG, icon = Icons.Filled.Delete)
+    )
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_recycle_bin),
+            onClick = { onNavigateToRecyclingBin() },
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.title_settings),
+            onClick = { onNavigateToSettings() },
+        ),
     )
 
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
@@ -123,14 +138,9 @@ fun CollectionsScreen(
                 CollectionEventType.MERGE -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
-                CollectionEventType.COPY -> {
-                    event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
-                }
-
                 CollectionEventType.RENAME -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
-
                 CollectionEventType.DELETE -> {
                     event.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show()}
                 }
@@ -140,34 +150,29 @@ fun CollectionsScreen(
 
     val screenTitle = stringResource(R.string.title_collections)
 
+
     LaunchedEffect(state.collectionType) {
         onTopBarChange(
             TopBarState(
                 title = screenTitle,
-//                actions = {
-//                    Box{
-//                        IconButton(onClick = { showMenu = true }) {
-//                            Icon(
-//                                imageVector = Icons.Filled.MoreVert,
-//                                contentDescription = "menu"
-//                            )
-//                        }
-//                        DropDownMenuWrapper(
-//                            expanded = showMenu,
-//                            actions = menuActions,
-//                            onClose = {showMenu = false}
-//                        )
-//                    }
-//                }
+                actions = {
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            modifier = Modifier.widthIn(min = 144.dp) ,
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false}
+                        )
+                    }
+                }
             )
         )
-    }
-
-    LaunchedEffect(hasIndexedVideos, hasIndexedImages, hasStoragePermission) {
-        val firstIndexRequired = !isIndexing && hasIndexedImages == false && hasIndexedVideos == false
-        if( firstIndexRequired && hasStoragePermission){
-            onIndex()
-        }
     }
 
     BackHandler(enabled = state.selection.isSelecting) {
@@ -202,7 +207,7 @@ fun CollectionsScreen(
             ) {
                 SelectionHeaderRow (
                     selectedCount = state.selection.selectedCount,
-                    checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
+                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalCollections),
                     onSelectAllChange = {viewModel.onAction(CollectionAction.SetSelectAll(it))}
                 )
             }
@@ -303,17 +308,23 @@ fun CollectionsScreen(
                 selectAll = state.selection.selectAll,
                 selectedItems = state.selection.selectedItems,
                 excludedItems = state.selection.excludedItems,
-                onItemClick = { viewModel.onAction(CollectionAction.SetCollectionToView(it)) },
-                onToggleSelected = { viewModel.onAction(CollectionAction.ToggleSelectedCollection(it)) },
-                onToggleSelectionMode = {
+                onItemClick = {
+                    if(state.selection.isSelecting){
+                        viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
+                    }else{
+                        viewModel.onAction(CollectionAction.SetCollectionToView(it))
+                    }
+                              },
+                onLongItemClick = {
                     viewModel.onAction(CollectionAction.ToggleSelectionMode)
+                    viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
                     offset = 0
                 },
                 onOffsetChange = {  offset = it },
                 maxCollapsePx = maxCollapsablePx,
             )
 
-            EmptyCollectionScreen(isVisible = !isCollectionVisible)
+            EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired, collectionType = state.collectionType )
         }
 
 
@@ -361,18 +372,18 @@ fun CollectionsScreen(
     )
 
     if (isMergingCollections) {
-        val labelledCollections: List<String> = state.selection.selectedItems.sortedByDescending { it.size}.map { it.name }.filterNot { it == UNLABELLED_COLLECTION }
+        val labelledCollections = state.selection.selectedItems.sortedByDescending { it.size}.map { it.name to it }.filterNot { it.first == UNLABELLED_COLLECTION }
         var useSelectorInput by remember { mutableStateOf(labelledCollections.isNotEmpty()) }
 
         if (useSelectorInput) {
             SelectorModal(
                 isVisible = labelledCollections.isNotEmpty(),
-                initialOption = labelledCollections.first(),
+                initialOption = labelledCollections.first().second,
                 title = stringResource(R.string.merge_action),
                 label = stringResource(R.string.collections_primary_collection_label),
                 options = labelledCollections,
-                onConfirm = { selected ->
-                    viewModel.onAction(CollectionAction.MergeCollections(selected))
+                onConfirm = {
+                    viewModel.onAction(CollectionAction.MergeCollections(it.name))
                     isMergingCollections = false
                 },
                 onClose = { isMergingCollections = false }

@@ -18,7 +18,8 @@ fun ProgressBar(label: String, isVisible: Boolean, progress: Float) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
         LinearProgressIndicator(
             progress = { progress },

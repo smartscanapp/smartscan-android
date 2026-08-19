@@ -1,22 +1,24 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.android.build.api.dsl.ApplicationExtension
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.0.21"
     kotlin("plugin.parcelize")
     id("com.google.devtools.ksp")
 }
 
-android {
+extensions.configure<ApplicationExtension> {
     namespace = "com.fpf.smartscan"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.fpf.smartscan"
         minSdk = 30
         targetSdk = 34
-        versionCode = 23
-        versionName = "1.3.4"
+        versionCode = 24
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -45,10 +47,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = "11"
     }
 
     buildFeatures {
@@ -80,25 +78,20 @@ android {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.documentfile)
-    implementation(libs.smartscan.ml)
+    implementation(project(":core"))
+    implementation(project(":cloud"))
 
-    implementation(platform(libs.koin.bom))
+    implementation(platform(libs.androidx.compose.bom))
 
     // Koin DI
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose.viewmodel)
+    implementation(platform(libs.koin.bom))
 
     // SplashScreen
     implementation(libs.androidx.core.splashscreen)
 
-    // media loading
-    implementation(libs.coil.compose)
-    implementation(libs.coil.video)
-    
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
@@ -112,27 +105,13 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
 
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.paging.compose)
-    ksp(libs.androidx.room.compiler)
-
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.ui)
-
     debugImplementation(libs.androidx.ui.tooling)
 
-    // JVM unit tests
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-    testImplementation(libs.mockk)
-    testImplementation(kotlin("test"))
-
-    // Android instrumented tests
-    androidTestImplementation(libs.androidx.core)
-    androidTestImplementation(libs.androidx.junit.ktx)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }

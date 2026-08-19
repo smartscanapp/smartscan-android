@@ -3,40 +3,34 @@ package com.fpf.smartscan.ui.screens.collections
 import android.app.Application
 import android.content.ClipData
 import android.content.Context
+import android.content.SharedPreferences
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.compose.ui.platform.Clipboard
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import coil3.compose.AsyncImagePainter
-import com.fpf.smartscan.cluster.ClusterManager
-import com.fpf.smartscan.data.clusters.ClusterCrossRefRepository
-import com.fpf.smartscan.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.data.tags.TagPagingSource
-import com.fpf.smartscan.data.clusters.ClusterPagingSource
-import com.fpf.smartscan.data.metadata.MediaMetadataRepository
-import com.fpf.smartscan.data.tags.TagCrossRefRepository
-import com.fpf.smartscan.data.tags.TagRepository
+import com.fpf.smartscan.R
+import com.fpf.smartscan.core.cluster.ClusterManager
+import com.fpf.smartscan.constants.PrefsKeys
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.data.paging.TagPagingSource
+import com.fpf.smartscan.core.data.paging.ClusterPagingSource
+import com.fpf.smartscan.core.data.mappers.toItem
+import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionItemEvent
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.mediaIdToUri
-import com.fpf.smartscan.media.openImageInGallery
-import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.onMediaLoadingError
-import com.fpf.smartscan.media.shareMediaMulti
-import com.fpf.smartscan.tag.TagManager
-import com.fpf.smartscan.ui.action.CollectionItemAction
-import com.fpf.smartscan.ui.state.CollectionItemsState
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.shareMediaMulti
+import com.fpf.smartscan.core.search.SortBy
+import com.fpf.smartscan.core.tag.TagManager
 import com.fpf.smartscan.ui.utils.SelectionUtils
-import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -52,45 +46,28 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.collections.map
 
 class CollectionItemsViewModel(
     application: Application,
-    private val imageStore: FileEmbeddingStore,
-    private val videoStore: FileEmbeddingStore,
-    private val clusterStore: FileEmbeddingStore,
-    private val tagRepository: TagRepository,
-    private val tagCrossRefRepository: TagCrossRefRepository,
+    private val tagManager: TagManager,
+    private val clusterManager: ClusterManager,
     private val mediaMetadataRepository: MediaMetadataRepository,
-    private val clusterMetadataRepository: ClusterMetadataRepository,
-    private val clusterCrossRefRepository: ClusterCrossRefRepository,
+    private val sharedPrefs: SharedPreferences
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "CollectionItemsViewModel"
     }
 
-    val tagManager = TagManager(
-        tagRepository=tagRepository,
-        tagCrossRefRepository=tagCrossRefRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
-
-    val clusterManager = ClusterManager(
-        clusterEmbedStore = clusterStore,
-        imageEmbedStore = imageStore,
-        videoEmbedStore = videoStore,
-        clusterCrossRefRepository = clusterCrossRefRepository,
-        clusterMetadataRepository = clusterMetadataRepository,
-        mediaMetadataRepository = mediaMetadataRepository,
-    )
     private val _state = MutableStateFlow(CollectionItemsState())
     val state: StateFlow<CollectionItemsState> = _state
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val tagItems = _state
-        .map { it.mediaType to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
 
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
@@ -104,10 +81,10 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         TagPagingSource(
-                            mediaType = mediaType,
+                            filter = filters,
+                            sortBy=sortBy,
                             tagId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -117,9 +94,9 @@ class CollectionItemsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val clusterItems = _state
-        .map { it.mediaType to it.collection }
+        .map { Triple(it.filter, it.sortBy, it.collection) }
         .distinctUntilChanged()
-        .flatMapLatest { (mediaType, collection) ->
+        .flatMapLatest { (filters, sortBy, collection) ->
             if (collection?.id == null) {
                 flowOf(PagingData.empty())
             } else {
@@ -132,10 +109,10 @@ class CollectionItemsViewModel(
                     ),
                     pagingSourceFactory = {
                         ClusterPagingSource(
-                            mediaType = mediaType,
+                            filter = filters,
+                            sortBy=sortBy,
                             clusterId = collection.id,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            mediaIdToUri = ::mediaIdToUri
                         )
                     }
                 ).flow
@@ -143,8 +120,7 @@ class CollectionItemsViewModel(
         }
         .cachedIn(viewModelScope)
 
-    val tagCollections: StateFlow<List<MediaCollection>> = tagCrossRefRepository.getTagsWithCounts()
-        .map (tagManager::toCollections)
+    val tagCollections: StateFlow<List<MediaCollection>> = tagManager.allCollectionsFlow
         .flowOn(Dispatchers.IO)
         .stateIn(
         scope = viewModelScope,
@@ -152,8 +128,7 @@ class CollectionItemsViewModel(
         initialValue = emptyList()
     )
 
-    val clusterCollections: StateFlow<List<MediaCollection>> = clusterCrossRefRepository.getClustersWithCount()
-            .map(clusterManager::toCollections)
+    val clusterCollections: StateFlow<List<MediaCollection>> = clusterManager.allCollectionsFlow
             .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,
@@ -164,12 +139,22 @@ class CollectionItemsViewModel(
     private val _event = MutableSharedFlow<CollectionItemEvent>()
     val event = _event.asSharedFlow()
 
+    val sortByOptions: List<Pair<String, SortBy>>
+        get() = listOf(
+            getApplication<Application>().getString(R.string.sort_date_asc_option) to SortBy.Date(ascending = true),
+            getApplication<Application>().getString(R.string.sort_date_desc_option) to SortBy.Date(ascending = false),
+        )
+
+    init {
+        load()
+    }
+
     fun onAction(action: CollectionItemAction){
         when(action){
             is CollectionItemAction.CopyMedia -> copyItem(action.clipboard, action.context)
             is CollectionItemAction.CreateNewCollectionAndMove -> createNewCollectionAndMove(action.newName)
-            CollectionItemAction.RemoveMedia -> removeItems()
-            is CollectionItemAction.SetMediaToView -> setMediaToView(action.context, action.item, autoOpenInGallery = action.autoOpenInGallery)
+            is CollectionItemAction.RemoveTag -> removeTag()
+            is CollectionItemAction.SetMediaToView -> setMediaToView(action.item)
             is CollectionItemAction.ShareMedia -> shareItems(action.context)
             is CollectionItemAction.ToggleSelectedMedia -> toggleSelectedItem(action.item)
             is CollectionItemAction.SetCollectionToView -> setCollection(action.collection)
@@ -180,9 +165,14 @@ class CollectionItemsViewModel(
             is CollectionItemAction.ResetSelection -> resetSelection()
             is CollectionItemAction.ClearSelection -> clearSelection()
             is CollectionItemAction.SetMediaTypeFilter -> setMediaTypeFilter(action.mediaType)
-            }
+            is CollectionItemAction.SetDuplicateFilter -> setDuplicateFilter(action.duplicateFilter)
+            is CollectionItemAction.ResetFilters -> resetFilters()
+            is CollectionItemAction.SetSortBy -> setSortBy(action.sortBy)
+            is CollectionItemAction.Delete -> deleteFromDevice(action.onDelete)
+        }
     }
 
+    private fun load() = _state.update { it.copy(sortBy = getSortByPref()) }
     private fun clearSelection() = _state.update{it.copy(selection = SelectionUtils.clearSelection(it.selection))}
     private fun resetSelection() = _state.update{it.copy(selection = SelectionUtils.resetSelection(it.selection))}
     private fun toggleSelectionMode() = _state.update { it.copy(selection = SelectionUtils.toggleSelectionMode(it.selection)) }
@@ -207,7 +197,7 @@ class CollectionItemsViewModel(
         return tagManager.checkAutoCompletion(query, substringEnd, tagCollections.value.map { it.name }, startWithHashtag)
     }
 
-    private fun removeItems(){
+    private fun removeTag(){
         val currentCollection = _state.value.collection?: return
         if(currentCollection.type != CollectionType.TAG) return // Only allowed for tag collections
 
@@ -219,10 +209,20 @@ class CollectionItemsViewModel(
                 val message = if(selectedItems.size == 1 ) "Removed ${selectedItems.size} item" else "Removed ${selectedItems.size} items"
                 _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = true, message = message))
             }catch (e: Exception){
-                val message = "Error removing items"
+                val message = "Error removing tag"
                 Log.e(TAG, "$message: ${e.message}")
                 _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = false, message = message))
             }
+        }
+    }
+
+    private fun deleteFromDevice(onDelete: (List<MediaItem>) -> Unit){
+        viewModelScope.launch{
+            val items = withContext(Dispatchers.IO) {
+                getSelectedItems().toList()
+            }
+            onDelete(items)
+            resetSelection()
         }
     }
 
@@ -297,15 +297,12 @@ class CollectionItemsViewModel(
 
    private fun toggleSelectedItem(item: MediaItem){
        _state.update {
-           val collection = it.collection ?: return
-           it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, collection.size))
+           it.copy(selection = SelectionUtils.toggleSelectedItem(it.selection, item, it.totalItems))
        }
    }
 
     private fun setSelectAll(selectAll: Boolean) {
-        val currentState = _state.value
-        val collection = currentState.collection?: return
-        _state.update { it.copy(selection = SelectionUtils.setSelectAll(it.selection, selectAll, collection.size))}
+        _state.update { it.copy(selection = SelectionUtils.setSelectAll(it.selection, selectAll, it.totalItems))}
 
     }
 
@@ -316,52 +313,76 @@ class CollectionItemsViewModel(
         val currentCollection = currentState.collection ?: return mutableSetOf()
         return when (currentCollection.type) {
             CollectionType.CLUSTER -> {
-                val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id)
-                itemsMatchingCluster.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                val itemsMatchingCluster = mediaMetadataRepository.getByCluster(currentCollection.id, isDuplicate = currentState.filter.isDuplicate)
+                itemsMatchingCluster.map { it.toItem() }.toMutableSet()
             }
 
             CollectionType.TAG -> {
-                val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id)
-                itemsMatchingTag.map {
-                    MediaItem(
-                        id = it.id,
-                        uri = mediaIdToUri(it.id, it.type),
-                        type = it.type
-                    )
-                }.toMutableSet()
+                val itemsMatchingTag = mediaMetadataRepository.getByTag(currentCollection.id, isDuplicate = currentState.filter.isDuplicate)
+                itemsMatchingTag.map { it.toItem() }.toMutableSet()
             }
         }
     }
 
-    private fun setCollection(collection: MediaCollection?) = _state.update { it.copy(collection=collection) }
+    private fun setCollection(collection: MediaCollection) {
+        _state.update { it.copy(collection = collection) }
+        setTotalItems()
+    }
+    private fun setMediaToView(item: MediaItem?) = _state.update { it.copy(mediaToView =item) }
 
-    private fun setMediaToView(context: Context, item: MediaItem?, autoOpenInGallery: Boolean? = null){
-        if(autoOpenInGallery == true) {
-            when(item?.type){
-                MediaType.IMAGE -> openImageInGallery(context, item.uri)
-                MediaType.VIDEO -> openVideoInGallery(context, item.uri)
-                else -> {}
-            }
-        }else{
-            _state.update { it.copy(mediaToView =item) }
+    private fun resetFilters() {
+        _state.update { it.copy(filter = it.filter.copy(isDuplicate = null, mediaType = null)) }
+        setTotalItems()
+    }
+    private fun setMediaTypeFilter(type: MediaType?) {
+        _state.update { it.copy(filter = it.filter.copy(mediaType = type)) }
+        setTotalItems()
+        resetSelection()
+    }
+    private fun setDuplicateFilter(duplicateFilter: Boolean?) {
+        _state.update { it.copy(filter = it.filter.copy(isDuplicate = duplicateFilter)) }
+        setTotalItems()
+        resetSelection()
+    }
+
+    private fun setSortBy(sortBy: SortBy) {
+        _state.update { it.copy(sortBy = sortBy) }
+        saveSortByPref(sortBy)
+    }
+
+    private fun saveSortByPref(sortBy: SortBy) {
+        val option = sortByOptions.find { it.second == sortBy }?.second ?: sortByOptions.first().second
+        sharedPrefs.edit {
+            putString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, option.toString())
         }
     }
 
-    private fun setMediaTypeFilter(mediaType: MediaType?) = _state.update { it.copy(mediaType=mediaType) }
+    private fun getSortByPref(): SortBy {
+        val sortByStr = sharedPrefs.getString(PrefsKeys.SORT_BY_COLLECTION_ITEMS, "") ?: ""
+        return sortByOptions.find { it.second.toString() == sortByStr }?.second ?: SortBy.Date()
+    }
 
-    fun onErrorAsyncImage(error: AsyncImagePainter.State.Error){
-        viewModelScope.launch (Dispatchers.IO){
-            onMediaLoadingError(error,
-                imageEmbedStore = imageStore,
-                videoEmbedStore = videoStore,
-                mediaMetadataRepository =mediaMetadataRepository
-                )
+    private fun setTotalItems(){
+        val currentState = _state.value
+        val collection = currentState.collection?: return
+
+        val total = when(currentState.filter.isDuplicate){
+            true -> when(currentState.filter.mediaType){
+                MediaType.IMAGE -> collection.duplicateImageCount
+                MediaType.VIDEO -> collection.duplicateVideoCount
+                else -> collection.duplicateImageCount + collection.duplicateVideoCount
+            }
+            false -> when(currentState.filter.mediaType){
+                MediaType.IMAGE -> collection.imageCount - collection.duplicateImageCount
+                MediaType.VIDEO -> collection.videoCount - collection.duplicateVideoCount
+                else -> collection.size - collection.duplicateImageCount - collection.duplicateVideoCount
+            }
+            else -> when(currentState.filter.mediaType) {
+                MediaType.IMAGE -> collection.imageCount
+                MediaType.VIDEO -> collection.videoCount
+                else -> collection.size
+            }
         }
+        _state.update { it.copy(totalItems = total) }
     }
 }

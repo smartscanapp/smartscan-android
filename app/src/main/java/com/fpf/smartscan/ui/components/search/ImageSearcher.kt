@@ -46,7 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.ui.components.media.ImageDisplay
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 
@@ -54,7 +55,7 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 fun ImageSearcher(
     uri: Uri?,
     mediaType: MediaType,
-    mediaTypeSelectorEnabled: Boolean,
+    mediaTypeSelectorEnabled: Boolean = true,
     onMediaTypeChange: (type: MediaType) -> Unit,
     onSearch: () -> Unit,
     onRemoveImage: () -> Unit,
@@ -95,9 +96,9 @@ fun ImageSearcher(
                 )
         ) {
             ImageDisplay(
-                maxSize = 1024,
+                size = 720,
                 uri = uri,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             )
             IconButton(
@@ -162,15 +163,12 @@ fun ImageSearcher(
     OptionPicker(
         isVisible = showPicker,
         title = stringResource(R.string.media_type_title),
-        options = mediaTypeOptions.values.toList(),
-        selectedOption = mediaTypeOptions[mediaType]!!,
+        options = MediaType.entries.map{it.format() to it},
+        selectedOption = mediaType,
         onSelect = { selected ->
-            val newMode = mediaTypeOptions.entries
-                .find { it.value == selected }
-                ?.key ?: MediaType.IMAGE
-            onMediaTypeChange(newMode)
+            onMediaTypeChange(selected)
             showPicker = false
         },
-        onClose = {showPicker = false}
+        onClose = { showPicker = false }
     )
 }

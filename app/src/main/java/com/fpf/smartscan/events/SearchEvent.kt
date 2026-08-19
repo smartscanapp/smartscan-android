@@ -2,7 +2,7 @@ package com.fpf.smartscan.events
 
 
 enum class SearchEventType {
-    TAG,
+    TAG, TEXT_QUERY, IMAGE_QUERY
 }
 
 data class SearchEvent (

@@ -1,34 +1,38 @@
 [versions]
 activityCompose = "1.13.0"
-agp = "8.13.2"
+agp = "9.2.1"
 coilCompose = "3.4.0"
-composeBom = "2026.05.01"
+composeBom = "2026.06.01"
 core = "1.7.0"
 coreSplashscreen = "1.2.0"
 documentfile = "1.1.0"
 junitJupiterApi = "5.10.0"
-kotlin = "2.2.21"
-coreKtx = "1.17.0"
+kotlin = "2.4.10"
+coreKtx = "1.19.0"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 appcompat = "1.7.1"
 kotlinxSerializationJson = "1.11.0"
-lifecycleViewmodelCompose = "2.10.0"
+lifecycleViewmodelCompose = "2.11.0"
+llmconnectAndroid = "1.0.0"
 material = "1.14.0"
-constraintlayout = "2.2.1"
+constraintlayout = "2.2.2"
 material3 = "1.4.0"
 materialIconsExtended = "1.7.8"
 media3Exoplayer = "1.10.1"
 mockk = "1.14.5"
 navigationCompose = "2.9.8"
 roomRuntime = "2.8.4"
-runner = "1.6.1"
-smartscanMl = "2.2.0"
-ui = "1.11.2"
+runner = "1.7.0"
+smartscanMl = "3.0.0"
+tinkAndroid = "1.23.0"
+ui = "1.11.4"
 workRuntimeKtx = "2.11.2"
 pagingCompose = "3.5.0"
 koin-bom = "4.2.1"
-
+okhttp = "5.4.0"
+junit = "4.13.2"
+androidxJunit = "1.3.0"
 
 
 [libraries]
@@ -53,15 +57,16 @@ androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "ui" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "ui" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coilCompose" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiterApi" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitJupiterApi" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxSerializationJson" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+llmconnect-android = { module = "com.github.dev-diaries41:llmconnect-android", version.ref = "llmconnectAndroid" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
@@ -72,8 +77,12 @@ koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 koin-core = { module = "io.insert-koin:koin-core" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }

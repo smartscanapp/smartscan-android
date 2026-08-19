@@ -52,19 +52,21 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchBar(
     searchFieldState: TextFieldState,
     enabled: Boolean,
+    placeholders: List<String>,
     onSearch: () -> Unit,
     onSearchImage: (Uri) -> Unit,
     onClearResults : () -> Unit,
-    placeholders: List<String>,
     modifier: Modifier = Modifier,
     placeholderChangeDuration: Long = 2000L,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    onFocusedChange: ((focused: Boolean) -> Unit)? = null
 ) {
     var currentPlaceHolder by remember { mutableStateOf(placeholders[0]) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -99,6 +101,11 @@ fun SearchBar(
         }
     }
 
+
+    LaunchedEffect(isFocused) {
+        onFocusedChange?.invoke(isFocused)
+    }
+
     LaunchedEffect(placeholders, searchFieldState.text, isFocused) {
         if (isFocused || searchFieldState.text.isNotBlank() || currentPlaceHolder !in placeholders) {
             currentPlaceHolder = placeholders[0]
@@ -106,7 +113,7 @@ fun SearchBar(
         }
 
         while (true) {
-            delay(placeholderChangeDuration)
+            delay(placeholderChangeDuration.milliseconds)
             val currentIdx = placeholders.indexOf(currentPlaceHolder)
             val nextIdx = if (currentIdx < placeholders.size - 1) currentIdx + 1 else 0
             currentPlaceHolder = placeholders[nextIdx]

@@ -1,7 +1,12 @@
 package com.fpf.smartscan.ui.screens.collections
 
+import android.app.Activity
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,12 +23,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DriveFileMoveRtl
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Icon
@@ -49,27 +53,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.media.CollectionType
-import com.fpf.smartscan.media.MediaCollection
-import com.fpf.smartscan.media.MediaType
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.settings.AppSettings
-import com.fpf.smartscan.ui.action.CollectionItemAction
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
-import com.fpf.smartscan.ui.components.TagAdder
+import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.action.SearchAction
-import com.fpf.smartscan.ui.components.collections.CollectionItemsList
+import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
+import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
+import com.fpf.smartscan.ui.shared.MediaViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -80,7 +85,9 @@ fun CollectionItemsScreen(
     appSettings: StateFlow<AppSettings>,
     collection: MediaCollection?,
     onTopBarChange: (TopBarState) -> Unit,
+    onViewCollection: (MediaCollection) -> Unit,
     onBack: () -> Unit,
+    mediaViewModel: MediaViewModel = koinViewModel(),
     viewModel: CollectionItemsViewModel = koinViewModel(),
     ) {
     if(collection == null) return
@@ -107,12 +114,46 @@ fun CollectionItemsScreen(
     }
 
     // actions
+    var showMenu by remember { mutableStateOf(false) }
+    var showMediaTypeOptions by remember { mutableStateOf(false) }
+    var showDuplicateOptions by remember { mutableStateOf(false) }
+    var showSortOptions by remember { mutableStateOf(false) }
     var isMoving by remember { mutableStateOf(false) }
     var isCreatingCollectionAndMoving by remember { mutableStateOf(false) }
     var isAddingTag by remember { mutableStateOf(false) }
     var showMoreActions by remember { mutableStateOf(false) }
-    var showMediaTypeFilter by remember { mutableStateOf(false) }
     val spaceNotAllowedMessage = stringResource(R.string.alert_space_not_allowed)
+    var pendingDeleteItems by remember { mutableStateOf<List<MediaItem>?>(null) }
+
+    val trashLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            pendingDeleteItems?.let{mediaViewModel.trash(it)}
+            items.refresh()
+            pendingDeleteItems = null
+        }else{
+            pendingDeleteItems = null
+        }
+    }
+
+    val menuActions: List<MenuActionConfig> = listOf(
+        MenuActionConfig.Button(
+            label = stringResource(R.string.sort_action),
+            onClick = { showSortOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.media_type_title),
+            onClick = { showMediaTypeOptions = true },
+            enabled = !state.loading,
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.duplicate_label),
+            onClick = { showDuplicateOptions = true },
+            enabled = !state.loading,
+        ),
+    )
 
     val mainActions: List<ActionConfig> = listOf(
         ActionConfig(
@@ -121,10 +162,9 @@ fun CollectionItemsScreen(
             icon=Icons.Filled.Share
         ),
         ActionConfig(
-            label = stringResource(R.string.remove_action),
-            onClick = { viewModel.onAction(CollectionItemAction.RemoveMedia) },
-            enabled = collection.type == CollectionType.TAG,
-            icon=Icons.Filled.RemoveCircle
+            label = stringResource(R.string.add_tag_action),
+            onClick = { isAddingTag = true },
+            icon=Icons.Filled.Tag
         ),
         ActionConfig(
             label = stringResource(R.string.move_action),
@@ -147,8 +187,19 @@ fun CollectionItemsScreen(
         ),
 
          MenuActionConfig.Button(
-             label = stringResource(R.string.add_tag_action),
-             onClick = { isAddingTag = true },
+             label = stringResource(R.string.remove_tag_action),
+             enabled = collection.type == CollectionType.TAG,
+             onClick = { viewModel.onAction(CollectionItemAction.RemoveTag) },
+             hideIfDisabled = true
+        ),
+        MenuActionConfig.Button(
+            label = stringResource(R.string.delete_action),
+            onClick = { viewModel.onAction(CollectionItemAction.Delete{ items ->
+                pendingDeleteItems = items
+                val pendingIntent = MediaStore.createTrashRequest(context.contentResolver, items.map{it.uri}, true)
+                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                trashLauncher.launch(request)
+            }) },
         ),
     )
 
@@ -175,12 +226,18 @@ fun CollectionItemsScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {showMediaTypeFilter = true}
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = null
+                    Box{
+                        IconButton (onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "menu"
+                            )
+                        }
+                        DropDownMenuWrapper(
+                            expanded = showMenu,
+                            actions = menuActions,
+                            onClose = {showMenu = false},
+                            modifier = Modifier.widthIn(144.dp)
                         )
                     }
                 }
@@ -230,50 +287,105 @@ fun CollectionItemsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top
-        ) {
-            SlideRevealBox(
-                isVisible = state.selection.isSelecting,
-                reverse = true,
-                offsetPx = offset,
+       Column(
                 modifier = Modifier
-                    .zIndex(1f)
-                    .heightIn(max = maxCollapsablePx.dp)
-                    .padding(bottom = 8.dp)
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Top
             ) {
-                SelectionHeaderRow (
-                    selectedCount = state.selection.selectedCount,
-                    checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
-                    onSelectAllChange = {viewModel.onAction(CollectionItemAction.SetSelectAll(it))}
+                SlideRevealBox(
+                    isVisible = state.selection.isSelecting,
+                    reverse = true,
+                    offsetPx = offset,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .heightIn(max = maxCollapsablePx.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    SelectionHeaderRow(
+                        selectedCount = state.selection.selectedCount,
+                        checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalItems),
+                        onSelectAllChange = {
+                            viewModel.onAction(
+                                CollectionItemAction.SetSelectAll(
+                                    it
+                                )
+                            )
+                        }
+                    )
+                }
+                MediaItemsList(
+                    isVisible = items.itemCount > 0,
+                    numGridColumns = appSettings.resultsPerRow,
+                    items = items,
+                    isSelecting = state.selection.isSelecting,
+                    selectAll = state.selection.selectAll,
+                    excludedItems = state.selection.excludedItems,
+                    selectedItems = state.selection.selectedItems,
+                    onItemClick = {
+                        if(state.selection.isSelecting){
+                            viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                        }else {
+                            viewModel.onAction(CollectionItemAction.SetMediaToView(it))
+                        }
+                    },
+                    onLongItemClick = {
+                        viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                        viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                        offset = 0
+                    },
+                    onOffsetChange = { offset = it },
+                    maxCollapsePx = maxCollapsablePx,
+                    onError = mediaViewModel::onErrorAsyncImage
+                )
+
+                EmptyItemsScreen(
+                    isVisible = items.itemCount == 0
                 )
             }
-            CollectionItemsList(
-                isVisible = items.itemCount > 0,
-                numGridColumns = appSettings.resultsPerRow,
-                items = items,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                excludedItems = state.selection.excludedItems,
-                selectedItems = state.selection.selectedItems,
-                onViewItem = { uri -> viewModel.onAction(CollectionItemAction.SetMediaToView(context, uri, appSettings.enableDirectGalleryOpen)) },
-                onToggleSelected = { viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it)) },
-                onToggleSelectionMode = {
-                    viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
-                    offset = 0
-                },
-                onOffsetChange = {  offset = it },
-                maxCollapsePx = maxCollapsablePx,
-                onError = viewModel::onErrorAsyncImage
-            )
 
-            EmptyCollectionItemsScreen(
-                isVisible = items.itemCount == 0
-            )
+        state.mediaToView?.let { item ->
+            val mediaItems by remember {
+                derivedStateOf {
+                    List(items.itemCount) { index -> items[index] }.filterNotNull()
+                }
+            }
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(500)
+                ),
+                exit = fadeOut(animationSpec = tween(300)) + scaleOut(
+                    targetScale = 0.8f,
+                    animationSpec = tween(300)
+                )
+            ) {
+                MediaViewer(
+                    items = mediaItems,
+                    initialIndex = mediaItems.indexOf(item),
+                    onClose = {
+                        viewModel.onAction(CollectionItemAction.SetMediaToView(null))
+                    },
+                    onUpdateSearchImage = null,
+                    onLoadMore = {
+                        val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
+                        items[lastIndex]
+                    },
+                    onSaveUpdatedItem = { updatedMedia->
+                        mediaViewModel.updateDescription(updatedMedia)
+                        items.refresh()
+                    },
+                    onGetCollections = mediaViewModel::getCollectionsMatchingMedia,
+                    onCollectionClick = { id, type ->
+                        mediaViewModel.viewCollection(id, type) { collection ->
+                            onViewCollection(collection)
+                        }
+                    }
+                )
+            }
         }
+
 
         SlideRevealBox(
             isVisible = state.selection.isSelecting && state.selection.selectedCount > 0,
@@ -310,34 +422,6 @@ fun CollectionItemsScreen(
             }
         }
 
-
-        state.mediaToView?.let { item ->
-            val mediaItems by remember {
-                derivedStateOf {
-                    List(items.itemCount) { index -> items[index] }.filterNotNull()
-                }
-            }
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(500)) + scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = tween(500)
-                ),
-                exit = fadeOut(animationSpec = tween(300)) + scaleOut(
-                    targetScale = 0.8f,
-                    animationSpec = tween(300)
-                )
-            ) {
-                MediaViewer(
-                    items = mediaItems,
-                    initialIndex = mediaItems.indexOf(item),
-                    onClose = { viewModel.onAction(CollectionItemAction.SetMediaToView(context, null))},
-                    onUpdateSearchImage = null,
-                    onLoadMore = { val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
-                        items[lastIndex]}
-                )
-            }
-            }
         AnimatedVisibility(
             visible = isMoving,
             enter = fadeIn(animationSpec = tween(500)) + scaleIn(
@@ -397,16 +481,43 @@ fun CollectionItemsScreen(
     )
 
     OptionPicker(
-        isVisible = showMediaTypeFilter,
-        title = stringResource(R.string.media_type_title),
-        options =  listOf("All") + mediaTypeOptions.values.toList(),
-        selectedOption  = mediaTypeOptions[state.mediaType]?: "All",
-        onSelect = { selected ->
-            val mediaType = mediaTypeOptions.entries.find { it.value == selected }?.key
-            viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(mediaType))
-            showMediaTypeFilter = false
+        isVisible = showSortOptions,
+        title = stringResource(R.string.sort_title),
+        options =  viewModel.sortByOptions,
+        selectedOption  = state.sortBy,
+        onSelect = {
+            viewModel.onAction(CollectionItemAction.SetSortBy(it))
+            showSortOptions = false
         },
-        onClose = {showMediaTypeFilter = false}
+        onClose = {showSortOptions = false}
+    )
+
+    OptionPicker(
+        isVisible = showMediaTypeOptions,
+        title = stringResource(R.string.media_type_title),
+        options = MediaType.entries.map{it.format() to it} + ("All" to null),
+        selectedOption = state.filter.mediaType,
+        onSelect = { selected ->
+            viewModel.onAction(CollectionItemAction.SetMediaTypeFilter(selected))
+            showMediaTypeOptions = false
+        },
+        onClose = { showMediaTypeOptions = false }
+    )
+
+    OptionPicker(
+        isVisible = showDuplicateOptions,
+        title = stringResource(R.string.duplicate_label),
+        options = listOf(true, false, null).map{ when(it){
+            true -> stringResource(R.string.only_button)
+            false -> stringResource(R.string.exclude_button)
+            else -> stringResource(R.string.include_button)
+        } to it},
+        selectedOption = state.filter.isDuplicate,
+        onSelect = {
+            viewModel.onAction(CollectionItemAction.SetDuplicateFilter(it))
+            showDuplicateOptions = false
+        },
+        onClose = { showDuplicateOptions = false }
     )
 
 }

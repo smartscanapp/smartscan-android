@@ -1,17 +1,18 @@
 package com.fpf.smartscan.ui.screens.settings
 
 import android.app.Application
-import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fpf.smartscan.constants.PrefsNames
-import com.fpf.smartscan.data.MediaDatabase
+import com.fpf.smartscan.constants.EncryptedStorageKeys
+import com.fpf.smartscan.core.data.MediaDatabase
+import com.fpf.smartscan.core.errors.AppException
+import com.fpf.smartscan.core.models.ModelRepository
+import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.events.BackupEvent
 import com.fpf.smartscan.events.BackupEventType
 import com.fpf.smartscan.events.ModelEvent
-import com.fpf.smartscan.events.ModelEventType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,23 +22,25 @@ import com.fpf.smartscan.settings.saveSettings
 import com.fpf.smartscan.ui.theme.ColorSchemeType
 import com.fpf.smartscan.ui.theme.ThemeManager
 import com.fpf.smartscan.ui.theme.ThemeMode
-import com.fpf.smartscan.utils.BackupUtils
-import com.fpf.smartscansdk.core.SmartScanException
+import com.fpf.smartscan.core.utils.BackupUtils
 import com.fpf.smartscansdk.ml.models.ModelInfo
-import com.fpf.smartscansdk.ml.models.ModelManager
 import com.fpf.smartscansdk.ml.models.ModelName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
-    private val sharedPrefs = application.getSharedPreferences(PrefsNames.APP_PREFS, Context.MODE_PRIVATE)
+class SettingsViewModel(
+    application: Application,
+    private val modelRepository: ModelRepository,
+    private val sharedPrefs: SharedPreferences,
+    private val encryptedStorage: EncryptedStorage
+) : AndroidViewModel(application) {
     private val _appSettings = MutableStateFlow(AppSettings())
     val appSettings: StateFlow<AppSettings> = _appSettings
 
-    private val _importedModels = MutableStateFlow(ModelManager.listModels(application))
-    val importedModels: StateFlow<List<ModelName>> = _importedModels
+    private val _openaiApiKey = MutableStateFlow<String?>(null)
+    val openaiApiKey: StateFlow<String?> = _openaiApiKey
     private val _modelEvent = MutableSharedFlow<ModelEvent>()
     val modelEvent = _modelEvent.asSharedFlow()
 
@@ -50,6 +53,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _isRestoreLoading = MutableStateFlow(false)
     val isRestoreLoading: StateFlow<Boolean> = _isRestoreLoading
 
+    val installedModels = modelRepository.installedModels
+
+    val availableModelRegistry: Map<ModelName, ModelInfo>
+        get() = modelRepository.getAvailableModelRegistry()
 
 
     companion object {
@@ -58,41 +65,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         _appSettings.value = loadSettings(sharedPrefs)
-    }
-
-    fun updateTextQueryStrictness(strictness: Float) {
-        val currentSettings = _appSettings.value
-        _appSettings.value = currentSettings.copy(textQueryStrictness = strictness)
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
-
-    fun updateImageQueryStrictness(strictness: Float) {
-        val currentSettings = _appSettings.value
-        _appSettings.value = currentSettings.copy(imageQueryStrictness = strictness)
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
-
-    fun onImportModel( uri: Uri, modelInfo: ModelInfo) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                ModelManager.importModel(getApplication(), modelInfo, uri)
-                _importedModels.value = ModelManager.listModels(getApplication())
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = true, "Model imported successfully"))
-            }catch (e: SmartScanException.InvalidModelFile){
-                Log.e(TAG, "${e.message}")
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = false, e.message?: "Model import failed"))
-            }
-            catch (e: Exception) {
-                Log.e(TAG, "${e.message}")
-                _modelEvent.emit(ModelEvent(ModelEventType.IMPORT, success = false,  "Model import failed"))
-            }
-        }
-    }
-
-    fun onDeleteModel(modelInfo: ModelInfo){
-        if(ModelManager.deleteModel(getApplication(), modelInfo)) {
-            _importedModels.value = ModelManager.listModels(getApplication())
-        }
+        _openaiApiKey.value = encryptedStorage.getString(EncryptedStorageKeys.OPENAI_API_KEY)
     }
 
     fun addSearchableImageDirectory(dir: String) {
@@ -142,10 +115,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             try {
                 BackupUtils.backup(getApplication(), uri)
                 _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = true, "Backup successful"))
-            }catch (e: Exception){
-                Log.e(TAG, "Error backing up: ${e.message}")
-                val appEventMessage = if(e.message == "Missing index file(s)")  "Missing index file(s)" else "Backup failed"
-                _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = false, appEventMessage))
+            }catch (e: AppException.BackupException){
+                _backupEvent.emit(BackupEvent(BackupEventType.BACKUP, success = false, e.message))
             }finally {
                 _isBackupLoading.emit(false)
             }
@@ -159,26 +130,31 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             try {
                 BackupUtils.restore(getApplication(), uri)
                 _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = true, "Restore successful"))
-            }catch (e: Exception){
-                Log.e(TAG, "Error restoring: ${e.message}")
-                _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = false, "Invalid backup file"))
-            }finally {
+            }
+            catch (e: AppException.RestoreException){
+                _backupEvent.emit(BackupEvent(BackupEventType.RESTORE, success = false, e.message))
+            }
+            finally {
                 _isRestoreLoading.emit(false)
             }
         }
     }
 
-    fun updateEnableDirectionGalleryOpen(enable: Boolean){
-        _appSettings.update{currentSettings -> currentSettings.copy(enableDirectGalleryOpen = enable)}
-        saveSettings(sharedPrefs, _appSettings.value)
-    }
     fun updateResultsPerRow(n: Int){
         _appSettings.update{currentSettings -> currentSettings.copy(resultsPerRow = n)}
         saveSettings(sharedPrefs, _appSettings.value)
     }
 
-    fun updateEnableDedupe(enable: Boolean){
-        _appSettings.update{currentSettings -> currentSettings.copy(enableDedupe = enable)}
-        saveSettings(sharedPrefs, _appSettings.value)
+    fun updateOpenaiApiKey(apiKey: String){
+        _openaiApiKey.value = apiKey
+        if(apiKey.isBlank()){
+            encryptedStorage.remove(EncryptedStorageKeys.OPENAI_API_KEY)
+        }else{
+            encryptedStorage.putString(EncryptedStorageKeys.OPENAI_API_KEY, apiKey)
+        }
     }
+
+    fun downloadModel(modelInfo: ModelInfo) = modelRepository.downloadModel(modelInfo)
+
+    fun deleteModel(modelInfo: ModelInfo) = modelRepository.deleteModel(modelInfo)
 }

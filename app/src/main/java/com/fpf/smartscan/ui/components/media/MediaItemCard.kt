@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
-import com.fpf.smartscan.media.MediaItem
+import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.ui.components.common.CircularCheckbox
 
 
@@ -33,10 +33,9 @@ fun MediaItemCard(
     item: MediaItem,
     isSelecting: Boolean,
     isChecked: () -> Boolean,
-    onToggleSelected: (MediaItem) -> Unit,
     onItemClick: (MediaItem) -> Unit,
+    onLongItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
-    onToggleSelectionMode: () -> Unit,
     onError:((AsyncImagePainter.State.Error) -> Unit)? = null,
 ){
     Box(
@@ -47,14 +46,11 @@ fun MediaItemCard(
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = {
-                    if (isSelecting) onToggleSelected(item) else onItemClick(item)
-                },
-                onLongClick = {
-                    if (!isSelecting) {
-                        onToggleSelectionMode()
-                        onToggleSelected(item)
-                    }
+                onClick = { onItemClick(item) },
+                onLongClick = if (isSelecting) {
+                    null
+                } else {
+                    { onLongItemClick(item) }
                 }
             )
     ) {
@@ -68,7 +64,7 @@ fun MediaItemCard(
         if(isSelecting) {
             CircularCheckbox(
                 checked = isChecked() ,
-                onCheckedChange = { onToggleSelected(item) },
+                onCheckedChange = { onItemClick(item) },
                 modifier = Modifier
                     .offset(x = 8.dp, y = 8.dp)
                     .align(Alignment.TopStart),

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.ui.action.MenuActionConfig
@@ -24,9 +25,11 @@ fun DropDownMenuWrapper(
     actions: List<MenuActionConfig>,
     expanded: Boolean,
     onClose: () -> Unit,
+    modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(x = 0.dp, y = (-40).dp),
 ){
     DropdownMenu(
+        modifier = modifier,
         expanded = expanded,
         onDismissRequest = { onClose() },
         offset = offset,
@@ -35,10 +38,15 @@ fun DropDownMenuWrapper(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         for (action in actions){
+            if(!action.enabled && action.hideIfDisabled) continue
             when(action){
                 is MenuActionConfig.Button -> DropdownMenuItem(
                     enabled = action.enabled,
-                    text = { Text(action.label) },
+                    text = {
+                        Text(
+                            text = action.label,
+                            style = MaterialTheme.typography.bodyLarge
+                        ) },
                     onClick = {
                         onClose()
                         action.onClick()
@@ -53,7 +61,8 @@ fun DropDownMenuWrapper(
                 ) {
                     Text(
                         text = action.label,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyLarge
                     )
 
                     Switch(

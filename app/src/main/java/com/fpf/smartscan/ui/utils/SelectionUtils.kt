@@ -1,6 +1,6 @@
 package com.fpf.smartscan.ui.utils
 
-import com.fpf.smartscan.ui.state.common.SelectionState
+import com.fpf.smartscan.ui.shared.state.SelectionState
 
 object SelectionUtils {
     fun <T>clearSelection(state: SelectionState<T>): SelectionState<T> = state.copy(selectedItems = emptySet(), excludedItems = emptySet(), selectAll = false, selectedCount = 0)

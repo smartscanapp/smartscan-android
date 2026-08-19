@@ -1,3 +1,25 @@
+## v2.0.0 - 19/08/2026
+
+### Added
+* Added concepts feature
+* Added recent searches
+* Added ability to manually add/edit media descriptions in MediaViewer
+* Added ability to generate image descriptions (requires api key)
+* Added support from deleting media from device
+* Added setting to add OpenAI API key
+
+### Changed
+* Improved filtering and sorting
+* Improved MediaViewer design
+* Improved search by making it uses media descriptions which handles text-heavy images and video searches better
+* Improved auto collection adaptability
+* Created core (offline) and cloud modules
+
+### Removed
+* Removed strictness and auto open in gallery settings
+
+___
+
 ## v1.3.4 - 08/07/2026
 
 ### Added

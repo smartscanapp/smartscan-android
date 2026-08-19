@@ -4,7 +4,6 @@ enum class CollectionEventType {
     MERGE,
     DELETE,
     RENAME,
-    COPY
 }
 data class CollectionEvent (
     val type: CollectionEventType,

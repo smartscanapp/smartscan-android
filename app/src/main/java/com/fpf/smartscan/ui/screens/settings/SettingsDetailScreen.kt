@@ -32,15 +32,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fpf.smartscan.ui.components.pickers.DirectoryPicker
 import com.fpf.smartscan.R
-import com.fpf.smartscan.ui.components.common.CustomSlider
 import com.fpf.smartscan.navigation.SettingsRoutes
 import com.fpf.smartscan.navigation.TopBarState
+import com.fpf.smartscan.ui.components.common.TextInput
 import com.fpf.smartscan.ui.components.models.ModelsList
-import com.fpf.smartscansdk.ml.models.ModelManager
-import com.fpf.smartscansdk.ml.models.ModelName
-import com.fpf.smartscansdk.ml.models.ModelRegistry
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,9 +50,9 @@ fun SettingsDetailScreen(
     onBack: () -> Unit,
 ) {
     val appSettings by viewModel.appSettings.collectAsState()
-    val importedModelNames by viewModel.importedModels.collectAsState()
+    val openaiApiKey by viewModel.openaiApiKey.collectAsState()
+    val installedModels by viewModel.installedModels.collectAsState()
     val context = LocalContext.current
-    val availableModels = ModelRegistry.filter {item -> item.key in listOf(ModelName.ALL_MINILM_L6_V2, ModelName.DINOV2_SMALL)}
 
     LaunchedEffect(Unit) {
         viewModel.modelEvent.collect { event ->
@@ -63,10 +61,10 @@ fun SettingsDetailScreen(
     }
 
     val screenTitle = when (type) {
-        SettingsRoutes.THRESHOLD -> stringResource(R.string.setting_strictness)
         SettingsRoutes.MODELS -> stringResource(R.string.setting_models)
         SettingsRoutes.MANAGE_MODELS -> stringResource(R.string.setting_manage_models)
         SettingsRoutes.ALLOWED_FOLDERS -> stringResource(R.string.setting_allowed_folders)
+        SettingsRoutes.API -> stringResource(R.string.setting_api_keys)
         else -> ""
     }
 
@@ -88,37 +86,18 @@ fun SettingsDetailScreen(
 
 
     Box(
-        modifier = Modifier.padding(16.dp).fillMaxSize()
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize()
     ) {
         Column {
             when (type) {
-                SettingsRoutes.THRESHOLD -> {
-                    CustomSlider(
-                        label = stringResource(R.string.setting_strictness_threshold_label, "text queries"),
-                        minValue = 0.0f,
-                        maxValue = 1f,
-                        initialValue = appSettings.textQueryStrictness,
-                        onValueChange = { value ->
-                            viewModel.updateTextQueryStrictness(value)
-                        },
-                    )
-                    CustomSlider(
-                        label = stringResource(R.string.setting_strictness_threshold_label, "image queries"),
-                        minValue = 0.0f,
-                        maxValue = 1f,
-                        initialValue = appSettings.imageQueryStrictness,
-                        onValueChange = { value ->
-                            viewModel.updateImageQueryStrictness(value)
-                        },
-                    )
-                }
                 SettingsRoutes.MODELS -> {
                     ModelsList(
-                        importedModels = importedModelNames,
-                        availableModels = availableModels.values.toList(),
-                        onDownload = {url -> ModelManager.downloadModelExternal(context, url)},
-                        onDelete = viewModel::onDeleteModel,
-                        onImport=viewModel::onImportModel
+                        installedModels = installedModels,
+                        modelList = viewModel.availableModelRegistry.values.toList(),
+                        onDownload= { viewModel.downloadModel(it) },
+                        onDelete = viewModel::deleteModel,
                     )
                 }
 
@@ -211,6 +190,19 @@ fun SettingsDetailScreen(
                         )
                     }
 
+                }
+                SettingsRoutes.API-> {
+                    TextInput(
+                        label = stringResource(R.string.setting_openai_api_key),
+                        value = openaiApiKey?:"",
+                        onValueChange = viewModel::updateOpenaiApiKey,
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.placeholders_api_key),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                    )
                 }
                 else -> {}
             }

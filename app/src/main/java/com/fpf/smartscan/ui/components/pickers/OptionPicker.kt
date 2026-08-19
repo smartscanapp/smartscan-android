@@ -17,17 +17,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun OptionPicker(
+fun <T> OptionPicker(
     isVisible: Boolean,
     title: String,
-    selectedOption: String?,
-    options: List<String>,
+    selectedOption: T?,
+    options: List<Pair<String, T>>,
     onClose: () -> Unit,
-    onSelect: (String) -> Unit,
-    ) {
-    if(!isVisible) return
+    onSelect: (T) -> Unit,
+) {
+    if (!isVisible) return
+
     AlertDialog(
-        onDismissRequest = { onClose() },
+        onDismissRequest = onClose,
         title = { Text(text = title) },
         text = {
             Column {
@@ -35,22 +36,22 @@ fun OptionPicker(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onSelect(option) }
+                            .clickable { onSelect(option.second) }
                             .padding(vertical = 8.dp, horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = option == selectedOption,
+                            selected = option.second == selectedOption,
                             onClick = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = option)
+                        Text(text = option.first)
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton (onClick = { onClose() }) {
+            TextButton(onClick = onClose) {
                 Text("Cancel")
             }
         }

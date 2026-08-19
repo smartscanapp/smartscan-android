@@ -1,202 +1,354 @@
 package com.fpf.smartscan.ui.components.media
 
-import android.content.ClipData
 import android.net.Uri
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import com.fpf.smartscan.media.MediaItem
-import com.fpf.smartscan.media.MediaType
-import com.fpf.smartscan.media.openImageInGallery
-import com.fpf.smartscan.media.openVideoInGallery
-import com.fpf.smartscan.media.shareMedia
-import com.fpf.smartscan.ui.components.common.ActionRowWithFade
-import com.fpf.smartscan.utils.canOpenUri
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.MediaItem as ExoMediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.media.MediaItem
+import com.fpf.smartscan.core.media.MediaType
+import kotlin.math.max
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
+    size: Int? = 1024,
+    actionsEnabled: Boolean = true,
+    onGetCollections: (suspend (MediaItem) -> List<Triple<Long, String, CollectionType>>)? = null,
+    onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
-    maxSize: Int? = 1024
+    onSaveUpdatedItem: ((MediaItem) -> Unit)? = null,
 ) {
     if (items.isEmpty()) return
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
-    var currentIndex by remember {
-        mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex))
+    var detailsExpanded by remember { mutableStateOf(false) }
+    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
+
+    // Media details
+    var currentIndex by remember { mutableIntStateOf(initialIndex.coerceIn(0, items.lastIndex)) }
+    val currentItem = items[currentIndex]
+    var currentItemWidth by remember(currentItem.id) { mutableIntStateOf(0) }
+    var currentItemHeight by remember(currentItem.id) { mutableIntStateOf(0) }
+    var collections by remember { mutableStateOf<List<Triple<Long, String, CollectionType>>>(emptyList()) }
+    val collectionCache = remember { mutableStateMapOf<Pair<Long, MediaType>, List<Triple<Long, String, CollectionType>>>() }
+    val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
+
+    // Pinch to zoom / scaling animations
+    var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
+    var targetOffset by remember(currentItem.id) { mutableStateOf(Offset.Zero) }
+    val scale by animateFloatAsState(targetScale, label = "scale")
+    val offset by animateOffsetAsState(targetOffset, label = "offset")
+    val transitionProgress = remember { Animatable(0f) }
+    val progress = transitionProgress.value
+    val detailsExpandedScale by animateFloatAsState(
+        targetValue = calculateMediaScale(expanded = detailsExpanded, width = currentItemWidth, height = currentItemHeight),
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "detailsExpandedScale"
+    )
+
+    val transformableState = rememberTransformableState { _, zoomChange, panChange, _ ->
+        val newScale = (targetScale * zoomChange).coerceIn(1f, 5f)
+        targetScale = newScale
+
+        if (newScale <= 1f || viewportSize.width == 0 || viewportSize.height == 0 || currentItemWidth == 0 || currentItemHeight == 0) {
+            targetOffset = Offset.Zero
+            return@rememberTransformableState
+        }
+
+        val viewportWidth = viewportSize.width.toFloat()
+        val viewportHeight = viewportSize.height.toFloat()
+        val imageAspect = currentItemWidth.toFloat() / currentItemHeight.toFloat()
+        val fittedWidth: Float
+        val fittedHeight: Float
+
+        if (imageAspect > viewportWidth / viewportHeight) {
+            fittedWidth = viewportWidth
+            fittedHeight = viewportWidth / imageAspect
+        } else {
+            fittedWidth = viewportHeight * imageAspect
+            fittedHeight = viewportHeight
+        }
+
+        val scale = newScale * detailsExpandedScale
+        val maxX = ((fittedWidth * scale - viewportWidth) / 2f).coerceAtLeast(0f)
+        val maxY = ((fittedHeight * scale - viewportHeight) / 2f).coerceAtLeast(0f)
+
+        targetOffset = Offset(
+            x = (targetOffset.x + panChange.x).coerceIn(-maxX, maxX),
+            y = (targetOffset.y + panChange.y).coerceIn(-maxY, maxY)
+        )
     }
 
-    val currentItem = items[currentIndex]
+    DisposableEffect(videoPlayer) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                videoPlayer.pause()
+            }
+        }
 
-    Popup(
-        onDismissRequest = { onClose() },
-        properties = PopupProperties(
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            videoPlayer.release()
+        }
+    }
+
+    LaunchedEffect(detailsExpanded) {
+        transitionProgress.animateTo(
+            targetValue = if (detailsExpanded) 1f else 0f,
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = FastOutSlowInEasing
+            )
+        )
+    }
+
+    LaunchedEffect(currentItem.uri) {
+        if (currentItem.type == MediaType.VIDEO) {
+            videoPlayer.setMediaItem(ExoMediaItem.fromUri(currentItem.uri))
+            videoPlayer.prepare()
+            videoPlayer.playWhenReady = true
+        }else{
+            videoPlayer.clearMediaItems()
+        }
+    }
+
+    LaunchedEffect(currentItem.id, currentItem.type) {
+        onGetCollections?.let{
+            collections = collectionCache.getOrPut(currentItem.id to currentItem.type) { onGetCollections(currentItem) }
+        }
+        targetScale = 1f
+        targetOffset = Offset.Zero
+    }
+
+    fun showNextItem() {
+        if (scale > 1f) return
+
+        if (currentIndex < items.lastIndex) {
+            currentIndex++
+
+            if (currentIndex == items.lastIndex - 1) {
+                onLoadMore?.invoke()
+            }
+        }
+    }
+
+    fun showPreviousItem() {
+        if (scale > 1f) return
+
+        if (currentIndex > 0) {
+            currentIndex--
+        }
+    }
+
+    Dialog(
+        onDismissRequest = {
+            if (detailsExpanded) {
+                detailsExpanded = false
+                isActionsVisible = true
+            } else {
+                onClose()
+            }
+        },
+        properties = DialogProperties(
             dismissOnBackPress = true,
-            focusable = true
+            dismissOnClickOutside = false,
+            decorFitsSystemWindows = false,
+            usePlatformDefaultWidth = false
         )
     ) {
+
         Box(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (currentItem.type == MediaType.IMAGE) {
-                ImageDisplay(
-                    uri = currentItem.uri,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(currentIndex) {
-                            detectHorizontalDragGestures(
-                                onDragEnd = {
-                                    // handled by drag direction below
-                                },
-                                onHorizontalDrag = { _, dragAmount ->
-                                    if (dragAmount < -20 && currentIndex < items.lastIndex) {
-                                        currentIndex += 1
-                                        if(currentIndex == items.lastIndex - 1){
-                                         onLoadMore?.invoke()
-                                        }
-                                    } else if (dragAmount > 20 && currentIndex > 0) {
-                                        currentIndex -= 1
-                                    }
-                                }
-                            )
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .mediaViewerGestures(
+                        gestureKey = currentItem.id,
+                        isZoomed = scale > 1f,
+                        onTap = { isActionsVisible = !isActionsVisible },
+                        onDoubleTap = {
+                            if(detailsExpanded) return@mediaViewerGestures
+                            if (targetScale > 1f) {
+                                targetScale = 1f
+                                targetOffset = Offset.Zero
+                            } else {
+                                targetScale = 3f
+                                targetOffset = Offset.Zero
+                            }
                         },
-                    contentScale = ContentScale.FillWidth,
-                    maxSize = maxSize,
-                    mediaType = currentItem.type
-                )
-            } else {
-                VideoDisplay(
-                    uri = currentItem.uri,
-                    modifier = Modifier.fillMaxSize(),
-                    onTap = { isActionsVisible = !isActionsVisible },
-                    onSwipeLeft = {
-                        if (currentIndex < items.lastIndex) {
-                            currentIndex += 1
-                            if (currentIndex == items.lastIndex - 1) {
-                                onLoadMore?.invoke()
+                        onSwipeLeft = { showNextItem() },
+                        onSwipeRight = { showPreviousItem() },
+                        onSwipeUp = {
+                            detailsExpanded = true
+                            isActionsVisible = false
+                        },
+
+                        onSwipeDown = {
+                            detailsExpanded = false
+                            isActionsVisible = true
+                        }
+                    )
+            ) {
+
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+
+                    val mediaHeight = maxHeight * (1f - (progress * 0.5f))
+
+                    Box(
+                        Modifier
+                            .transformable(transformableState)
+                            .fillMaxWidth()
+                            .height(mediaHeight)
+                            .onSizeChanged { viewportSize = it }
+                            .align(Alignment.TopCenter)
+                            .clipToBounds()
+                    ) {
+                        when (currentItem.type) {
+                            MediaType.IMAGE -> {
+                                ImageDisplay(
+                                    uri = currentItem.uri,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            scaleX = scale * detailsExpandedScale
+                                            scaleY = scale * detailsExpandedScale
+                                            translationX = offset.x
+                                            translationY = offset.y
+                                        },
+                                    contentScale = ContentScale.Fit,
+                                    size = size,
+                                    mediaType = currentItem.type,
+                                    onSizeChanged = { width, height ->
+                                        currentItemWidth = width
+                                        currentItemHeight = height
+                                    }
+                                )
+                            }
+
+                            MediaType.VIDEO -> {
+                                VideoDisplay(
+                                    videoId = currentItem.id,
+                                    player = videoPlayer,
+                                    showControls = !detailsExpanded,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            scaleX = detailsExpandedScale
+                                            scaleY = detailsExpandedScale
+                                        },
+                                    onTap = { isActionsVisible = !isActionsVisible },
+                                    onSizeChanged = { width, height ->
+                                        currentItemWidth = width
+                                        currentItemHeight = height
+                                    }
+                                )
                             }
                         }
-                    },
-                    onSwipeRight = {
-                        if (currentIndex > 0) {
-                            currentIndex -= 1
+                    }
+
+
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(maxHeight * 0.5f)
+                            .align(Alignment.BottomCenter)
+                            .graphicsLayer {
+                                translationY = maxHeight.toPx() * 0.5f * (1f - progress)
+                            }
+                    ) {
+
+                        if (progress > 0f) {
+                            key(currentItem.id, currentItem.type) {
+                                MediaDetailsCard(
+                                    modifier = Modifier.fillMaxSize(),
+                                    description = currentItem.description,
+                                    collections = collections,
+                                    onCollectionClick = onCollectionClick,
+                                    onSaveDescription = onSaveUpdatedItem?.let {
+                                        { onSaveUpdatedItem(currentItem.copy(description = it)) }
+                                    },
+                                )
+                            }
                         }
                     }
-                )
+                }
             }
 
-            ActionRow(
-                uri = currentItem.uri,
-                type = currentItem.type,
+            MediaViewerActionRow(
+                item = currentItem,
                 onClose = onClose,
                 onUpdateSearchImage = onUpdateSearchImage,
-                isVisible = isActionsVisible
+                toggleMenu = { showMenu = !showMenu },
+                showMenu = showMenu,
+                onViewDescription = { detailsExpanded = true },
+                isVisible = isActionsVisible,
+                actionsEnabled = actionsEnabled
             )
         }
     }
 }
 
-@Composable
-fun ActionRow(
-    uri: Uri,
-    type: MediaType,
-    onClose: () -> Unit,
-    onUpdateSearchImage: ((uri: Uri) -> Unit)?,
-    isVisible: Boolean
-) {
-    val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val isUriAccessible = canOpenUri(context, uri)
-
-    ActionRowWithFade(visible = isVisible) {
-        IconButton(onClick = { onClose() }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Close Image",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        if (isUriAccessible) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                IconButton(onClick = { shareMedia(context, uri) }) {
-                    Icon(
-                        Icons.Filled.Share,
-                        contentDescription = "Share",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                if(type == MediaType.IMAGE) {
-                    IconButton(onClick = {
-                        clipboard.nativeClipboard.setPrimaryClip(
-                            ClipData.newUri(context.contentResolver, "smartscan_media", uri)
-                        )
-                    }) {
-                        Icon(
-                            Icons.Filled.ContentCopy,
-                            contentDescription = "Copy to clipboard",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                IconButton(onClick = {
-                    if (type == MediaType.IMAGE) {
-                        openImageInGallery(context, uri)
-                    } else {
-                        openVideoInGallery(context, uri)
-                    }
-                }) {
-                    Icon(
-                        Icons.Filled.PhotoLibrary,
-                        contentDescription = "Open in Gallery",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                if (type == MediaType.IMAGE && onUpdateSearchImage != null) {
-                    IconButton(onClick = { onUpdateSearchImage(uri) }) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = "Search image",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
-    }
+fun calculateMediaScale(expanded: Boolean, width: Int, height: Int): Float {
+    if (!expanded || width <= 0 || height <= 0) return 1f
+    val aspect = width.toFloat() / height.toFloat()
+    return max(aspect, 1f / aspect)
 }
-

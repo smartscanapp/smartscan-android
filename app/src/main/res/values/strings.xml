@@ -3,7 +3,35 @@
     <string name="app_name">SmartScan</string>
     <string name="copyright">© 2026 D41 Dev</string>
     <string name="source_code_url">https://github.com/dev-diaries41/smartscan</string>
+    <string name="issues_url">https://github.com/smartscanapp/smartscan-android/issues</string>
     <string name="reddit_url">https://www.reddit.com/r/SmartScan/</string>
+
+    <!-- Screen titles-->
+    <string name="title_explore">Explore</string>
+    <string name="title_concepts">Concepts</string>
+    <string name="title_collections">Collections</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_donate">Donate</string>
+    <string name="title_recycle_bin">Recycle bin</string>
+
+
+    <!-- Notifications -->
+    <string name="worker_channel_id">Background Tasks</string>
+    <string name="worker_channel_name">Background Tasks Notifications</string>
+    <string name="worker_channel_description">Notifications for background tasks</string>
+    <string name="service_media_index_channel_id">Media Index</string>
+    <string name="service_media_index_channel_name">Media Index Notifications</string>
+    <string name="notif_title_media_index_service">Scanning media</string>
+    <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
+    <string name="notif_title_index_error_service">%1$s scan error</string>
+    <string name="notif_content_index_error_service">An error occurred during scan. Try re-scanning.</string>
+    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try re-scanning.</string>
+    <string name="notif_content_missing_api_key_error_service">Missing required API key. Add it in settings and re-scan.</string>
+    <string name="notif_content_index_error_invalid_api_key">Invalid API key. Check your API key and try again.</string>
+    <string name="notif_content_index_error_rate_limit">Too many requests. Please wait and try again.</string>
+    <string name="notif_content_index_scan_cancelled_title">Scan cancelled</string>
+    <string name="notif_title_index_complete">Scan complete</string>
+
 
     <!--___Actions___-->
     <string name="share_action">Share</string>
@@ -13,6 +41,7 @@
     <string name="more_action">More</string>
     <string name="copy_action">Copy</string>
     <string name="add_tag_action">Add tag</string>
+    <string name="remove_tag_action">Remove tag</string>
     <string name="add_collection_action">Add collection</string>
     <string name="copy_to_clipboard_action">Copy to clipboard</string>
     <string name="cancel_action">Cancel</string>
@@ -25,36 +54,47 @@
     <string name="scan_action">Scan</string>
     <string name="scan_media_action">Scan %1$s</string>
     <string name="scan_rebuild_action">Scan (Rebuild)</string>
+    <string name="view_details_action">Details</string>
+    <string name="open_in_gallery_action">Open in gallery</string>
+    <string name="download_model_action">Download model</string>
+    <string name="filter_action">Filter</string>
+    <string name="sort_action">Sort</string>
+    <string name="reset_filters_action">Reset filters</string>
+    <string name="restore_action">Restore</string>
+    <string name="empty_bin_action">Empty</string>
+    <string name="hide_action">Hide</string>
+    <string name="show_action">Show</string>
 
-    <!-- Screen titles-->
-    <string name="title_search">Search</string>
-    <string name="title_collections">Collections</string>
-    <string name="title_settings">Settings</string>
-    <string name="title_donate">Donate</string>
+    <!--Label-->
+    <string name="duplicate_label">Duplicates</string>
+    <string name="show_hidden_label">Show hidden</string>
 
-    <!-- Notifications -->
-    <string name="worker_channel_id">Background Tasks</string>
-    <string name="worker_channel_name">Background Tasks Notifications</string>
-    <string name="worker_channel_description">Notifications for background tasks</string>
-    <string name="service_media_index_channel_id">Media Index</string>
-    <string name="service_media_index_channel_name">Media Index Notifications</string>
-    <string name="notif_title_media_index_service">Scanning media</string>
-    <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
-    <string name="notif_title_index_error_service">%1$s scan error</string>
-    <string name="notif_content_index_error_service">An error occurred during scan. Try manually re-scanning.</string>
-    <string name="notif_content_cluster_error_service">A clustering error occurred during scan. Try manually re-scanning.</string>
-    <string name="notif_title_index_complete">Scan complete</string>
+    <!--Buttons-->
+    <string name="include_button">Include</string>
+    <string name="exclude_button">Exclude</string>
+    <string name="only_button">Only</string>
 
-    <!--Alerts-->
+    <!--Alerts / Message-->
     <string name="alert_space_not_allowed">Spaces are not allowed</string>
-    <string name="alert_scan_refresh_description">Manually update the index with new media (auto-updates daily).</string>
+    <string name="alert_scan_refresh_description">Manually trigger scan for new media (auto-updates daily).</string>
     <string name="alert_scan_rebuild_description">Delete and re-create the entire index.</string>
-    <string name="alert_first_media_scan_content">Start the first %1$s scan. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
-    <string name="alert_first_scan_content">Start the first media scan. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
+    <string name="alert_first_media_scan_content">Start the first %1$s scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
+    <string name="alert_first_scan_content">Start the first media scan. This is required to use all core features of the app. You can run it manually anytime from settings and optionally select which folders are allowed to be scanned.</string>
     <string name="media_types_to_scan">Select media types</string>
     <string name="scan_in_progress_title">Scan In Progress</string>
     <string name="scan_in_progress_content">This may take a moment. You can continue using the app once the scan completes.</string>
     <string name="media_type_title">Media type</string>
+    <string name="sort_title">Sort by</string>
+    <string name="alert_initial_scan_required">To use this feature, you need to complete the initial scan of your media.</string>
+    <string name="download_model_message">A new model is required to use the app. Download it now to continue.</string>
+    <string name="cancel_scan">Cancel scan</string>
+    <string name="cancel_scan_description">Are you sure you want to cancel the scan?</string>
+
+    <!--Sort Options-->
+    <string name="sort_date_asc_option">Date (ascending)</string>
+    <string name="sort_date_desc_option">Date (descending)</string>
+    <string name="sort_similarity_asc_option">Relevance (ascending)</string>
+    <string name="sort_similarity_desc_option">Relevance (descending)</string>
 
     <!-- Search screen -->
     <string name="search_storage_permissions">Storage permission required to search.</string>
@@ -66,12 +106,43 @@
     <string name="search_error_index_loading">Error loading index.</string>
     <string name="search_image_scan_progress_bar_label">Scanning images</string>
     <string name="search_video_scan_progress_bar_label">Scanning videos</string>
+    <string name="search_tags_label">Tags</string>
+    <string name="search_recent_searches_label">Recent searches</string>
+    <string name="search_date_range_label">Date range</string>
+    <string name="search_start_date_label">Start date</string>
+    <string name="search_end_date_label">End date</string>
+    <string name="search_any_time_label">Any time</string>
+
+    <!--Concepts Screen-->
+    <string name="concepts_empty_screen_title">No Concepts</string>
+    <string name="concepts_empty_screen_intro">Concepts automatically group media by meaning using media descriptions, helping you rediscover information you\'ve saved but forgotten about.\n\nYou can manually add descriptions in the Media Viewer or generate descriptions automatically in the menu.</string>
+    <string name="concepts_required_api_key_note">An OpenAI API key is required to generate descriptions. Don\'t have one? Get in touch via GitHub or Reddit.</string>
+    <string name="concepts_image_description_note">Generating image descriptions is intended for text-heavy images.</string>
+    <string name="concepts_storage_permissions">Storage permission required to create concepts.</string>
+    <string name="concepts_delete_alert_title">Delete concepts</string>
+    <string name="concepts_delete_alert_description">Delete %1$d %2$s?</string>
+    <plurals name="concept_count">
+        <item quantity="one">concept</item>
+        <item quantity="other">concepts</item>
+    </plurals>
+    <string name="create_concept_modal_title">Create concept</string>
+    <string name="edit_concept_modal_title">Edit concept</string>
+    <string name="edit_concept_action">Edit</string>
+    <string name="pin_unpin_concept_action">Pin / Unpin </string>
+    <string name="placeholders_add_concept">Describe your new concept</string>
+    <string name="concepts_wifi_warning_alert_title">Not connected to Wi-Fi</string>
+    <string name="concepts_wifi_warning_alert_content">Generating descriptions can use a lot of network data. Do you want to continue without connecting to Wi-Fi?</string>
+    <string name="concepts_allowed_tag_collection_menu_action">Allowed tag collections</string>
+    <string name="concepts_allowed_auto_collection_menu_action">Allowed auto collections</string>
+    <string name="concepts_generate_summaries_menu_action">Generate image descriptions</string>
+    <string name="concepts_updating_matching_media">Updating matching media…</string>
 
     <!--Collections Screen-->
     <string name="collections_storage_permissions">Storage permission required to create collections.</string>
     <string name="collections_no_collections_title">No Collections</string>
     <string name="collections_no_collections_items_title">No items</string>
-    <string name="collections_no_collections_description">Collections are created by automatically grouping similar items or when you tag items.</string>
+    <string name="collections_auto_collections_description">Auto collections are created by automatically grouping visually similar media after a scan.</string>
+    <string name="collections_tag_collections_description">Tag collections are created when you tag media.</string>
     <string name="collections_delete_collections_alert_title">Delete collections</string>
     <string name="collections_delete_collections_alert_description">Delete %1$d %2$s, removing all related tags?</string>
     <plurals name="collection_count">
@@ -90,13 +161,12 @@
     <string name="donate_kofi_url">https://ko-fi.com/d41dev/tip</string>
     <string name="donate_support_message">The app is free and open-source. If you enjoy using it, you can support the development with a tip. </string>
 
-    <!-- Settings-Screen -->
-    <string name="search_settings">Search</string>
+    <!--Settings screen-->
+    <string name="media_settings">Media</string>
     <string name="advanced_settings">Advanced</string>
     <string name="other_settings">Other</string>
     <string name="general_settings">General</string>
-
-    <!--General Settings-->
+    <string name="cloud_processing_settings">Cloud processing</string>
     <string name="setting_theme">Theme</string>
     <string name="setting_color">Color</string>
     <string name="setting_backup_restore">Backup &amp; Restore</string>
@@ -104,26 +174,24 @@
     <string name="setting_restore">Restore</string>
     <string name="setting_backup_restore_description">%1$s index files and database</string>
     <string name="setting_grid_columns">Items per row</string>
-
-    <!--Search Settings-->
-    <string name="setting_auto_open_gallery">Auto-open in gallery</string>
-    <string name="setting_strictness">Strictness</string>
-    <string name="setting_strictness_threshold_label">Strictness (%1$s)</string>
-    <string name="setting_strictness_description">Higher values filter out less similar matches.</string>
-    <string name="setting_max_search_results">Max search results</string>
     <string name="setting_hide_duplicates">Hide duplicates</string>
-    <string name="setting_hide_duplicates_description">Hide near identical search results.</string>
     <string name="setting_allowed_folders">Allowed folders</string>
     <string name="setting_searchable_folders_description">Manually select folders which can be scanned. All images and videos are scanned by default.</string>
-
-    <!--Advanced Settings-->
     <string name="setting_models">Models</string>
     <string name="setting_models_description">Download models for additional search and organisation features.</string>
     <string name="setting_manage_models">Manage models</string>
-
-    <!--Other Settings-->
+    <string name="setting_issues">Issues</string>
     <string name="setting_source_code">Source code</string>
     <string name="setting_social_reddit">Reddit</string>
+    <string name="setting_api_keys">API keys</string>
+    <string name="setting_api_keys_description">Add OpenAI API keys. Required to generate descriptions.</string>
+    <string name="setting_openai_api_key">OpenAI API key</string>
+    <string name="placeholders_api_key">Enter API key</string>
+    <string name="setting_issues_description">Send bug reports and feature requests.</string>
+    <string name="setting_reddit_description">Discuss the app and stay up-to-date with changes.</string>
+    <string name="setting_source_code_description">View the app’s source code on GitHub.</string>
+    <!--Bin Screen-->
+    <string name="bin_description">Any media you delete will stay in the Recycle bin for 30 days before they\'re permanently deleted.</string>
 
     <!--Model Manager-->
     <string name="delete_model_alert_title">Delete model</string>
@@ -139,12 +207,15 @@
     <string name="placeholders_search_videos">Search videos</string>
     <string name="placeholders_search_by_tag">Search by tag: #tag</string>
     <string name="placeholders_search_by_tag_query">Search by tag: #tag query</string>
+    <string name="placeholders_media_detail_description">Describe what this is about and or why it\'s important or useful.</string>
 
     <!--Updates-->
-    <string name="update_quantized_embeddings">Added support for quantized embeddings, reducing memory usage by 4x</string>
-    <string name="update_tagging">No longer reset selection after tagging to avoid having to reselect if adding multiple tags</string>
-    <string name="update_fixed_mediastore_collision_bug">Fixed bug that may cause some videos not to be scanned</string>
-    <string name="update_strictness">Made search results more responsive to strictness</string>
-    <string name="update_backups">Removed support for backups that used old data. Make a new backup if needed</string>
-
+    <string name="update_concepts">Added concepts feature.</string>
+    <string name="update_recent_searches">Added recent searches.</string>
+    <string name="update_edit_descriptions">Added ability to manually add media descriptions in the Media Viewer.</string>
+    <string name="update_generate_descriptions">Added ability to generate image descriptions.</string>
+    <string name="update_openai_api_key">Added setting to add an OpenAI API key for generating descriptions.</string>
+    <string name="update_recycle_bin">Added ability to delete media from the device.</string>
+    <string name="update_description_search">Improved search for text-heavy images and videos by using descriptions.</string>
+    <string name="update_auto_collection">Improved auto collection adaptability.</string>
 </resources>
