@@ -228,7 +228,7 @@ object Reranker {
     }
 
     // Uses the sentence-transformer signal when it clearly dominates
-    fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 2.0): Boolean{
+    fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 1.75): Boolean{
         val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER] ?: return false
         val strongestStrength = signalStrengths.maxOfOrNull { it.value } ?: return false
         if (sentenceStrength != strongestStrength) return false
