@@ -48,7 +48,7 @@ fun TextInputModal(
                     placeholder = {
                         Text(placeholder, style = MaterialTheme.typography.bodyLarge)
                     },
-                    leadingIcon = { leadingIcon?.invoke() }
+                    leadingIcon = leadingIcon
                 )
             }
         },
