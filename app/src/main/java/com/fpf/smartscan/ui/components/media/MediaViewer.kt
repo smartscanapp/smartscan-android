@@ -64,7 +64,7 @@ fun MediaViewer(
     onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     onUpdateSearchImage: ((uri: Uri) -> Unit)? = null,
-    onSaveUpdatedItem: ((MediaItem) -> Unit)? = null,
+    onSaveUpdatedItem: ((MediaItem, Int) -> Unit)? = null,
 ) {
     if (items.isEmpty()) return
 
@@ -356,7 +356,7 @@ fun MediaViewer(
         onClose = { showDescriptionEditor = false },
         onConfirm = {
             showDescriptionEditor = false
-            onSaveUpdatedItem?.invoke(currentItem.copy(description = it))
+            onSaveUpdatedItem?.invoke(currentItem.copy(description = it), currentIndex)
         },
     )
 }

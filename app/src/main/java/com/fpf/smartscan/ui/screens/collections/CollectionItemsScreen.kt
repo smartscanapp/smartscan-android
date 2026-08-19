@@ -2,6 +2,7 @@ package com.fpf.smartscan.ui.screens.collections
 
 import android.app.Activity
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -112,6 +113,7 @@ fun CollectionItemsScreen(
         CollectionType.TAG -> tagCollections
         CollectionType.CLUSTER -> clusterCollections
     }
+    var mediaItems by remember {mutableStateOf<List<MediaItem>?>(null)}
 
     // actions
     var showMenu by remember { mutableStateOf(false) }
@@ -279,6 +281,15 @@ fun CollectionItemsScreen(
         }
     }
 
+    LaunchedEffect(state.mediaToView, items.loadState.isIdle) {
+        if (state.mediaToView != null) {
+            if (mediaItems == null || items.loadState.isIdle) {
+                mediaItems = items.itemSnapshotList.items.toList()
+            }
+        } else {
+            mediaItems = null
+        }
+    }
 
     BackHandler(enabled = state.selection.isSelecting) {
         viewModel.onAction(CollectionItemAction.ResetSelection)
@@ -344,12 +355,7 @@ fun CollectionItemsScreen(
                 )
             }
 
-        state.mediaToView?.let { item ->
-            val mediaItems by remember {
-                derivedStateOf {
-                    List(items.itemCount) { index -> items[index] }.filterNotNull()
-                }
-            }
+        if(state.mediaToView != null && mediaItems != null){
             AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(animationSpec = tween(500)) + scaleIn(
@@ -362,8 +368,8 @@ fun CollectionItemsScreen(
                 )
             ) {
                 MediaViewer(
-                    items = mediaItems,
-                    initialIndex = mediaItems.indexOf(item),
+                    items = mediaItems!!,
+                    initialIndex = mediaItems!!.indexOf(state.mediaToView),
                     onClose = {
                         viewModel.onAction(CollectionItemAction.SetMediaToView(null))
                     },
@@ -372,7 +378,10 @@ fun CollectionItemsScreen(
                         val lastIndex = (items.itemCount - 1).coerceAtLeast(0)
                         items[lastIndex]
                     },
-                    onSaveUpdatedItem = { updatedMedia->
+                    onSaveUpdatedItem = { updatedMedia, index->
+                        mediaItems = mediaItems?.toMutableList()?.apply {
+                            this[index] = updatedMedia
+                        }
                         mediaViewModel.updateDescription(updatedMedia)
                         items.refresh()
                     },

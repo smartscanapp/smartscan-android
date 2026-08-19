@@ -112,6 +112,7 @@ fun SearchScreen(
         stringResource(R.string.placeholders_search_by_tag_query),
     )
     val searchResultsVisible = searchResults.itemCount > 0
+    var mediaItems by remember {mutableStateOf<List<MediaItem>?>(null)}
 
     // Dynamic hide animation
     val isActionBarVisible =  state.selection.isSelecting && state.selection.selectedCount > 0
@@ -294,6 +295,16 @@ fun SearchScreen(
         }
     }
 
+    LaunchedEffect(state.resultToView, searchResults.loadState.isIdle) {
+        if (state.resultToView != null) {
+            if (mediaItems == null || searchResults.loadState.isIdle) {
+                mediaItems = searchResults.itemSnapshotList.items.toList()
+            }
+        } else {
+            mediaItems = null
+        }
+    }
+
     BackHandler(enabled = state.selection.isSelecting || state.resultIds.isNotEmpty()) {
         searchViewModel.onAction(SearchAction.Reset)
     }
@@ -441,26 +452,25 @@ fun SearchScreen(
             )
         }
 
-        state.resultToView?.let { item ->
-            val mediaItems by remember {
-                derivedStateOf {
-                    List(searchResults.itemCount) { index -> searchResults[index] }.filterNotNull()
-                }
-            }
+        if(state.resultToView != null && mediaItems != null){
+           val result = state.resultToView!!
             AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.8f, animationSpec = tween(500)),
                 exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
             ) {
                 MediaViewer(
-                    items = mediaItems,
-                    initialIndex = mediaItems.indexOf(item),
+                    items = mediaItems!!,
+                    initialIndex = mediaItems!!.indexOf(result),
                     onClose = { searchViewModel.onAction(SearchAction.ClearResultView)},
                     onUpdateSearchImage = {
                         searchViewModel.onAction(SearchAction.ClearResultView)
-                        searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(item.uri))
+                        searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(result.uri))
                     },
-                    onSaveUpdatedItem = { updatedMedia ->
+                    onSaveUpdatedItem = { updatedMedia, index ->
+                        mediaItems = mediaItems?.toMutableList()?.apply {
+                            this[index] = updatedMedia
+                        }
                         mediaViewModel.updateDescription(updatedMedia)
                         searchResults.refresh()
                     },
