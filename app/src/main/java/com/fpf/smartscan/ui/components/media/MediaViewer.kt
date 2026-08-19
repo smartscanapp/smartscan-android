@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -44,9 +45,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import com.fpf.smartscan.R
 import com.fpf.smartscan.core.media.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
+import com.fpf.smartscan.ui.components.modals.TextInputModal
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,6 +84,8 @@ fun MediaViewer(
     var collections by remember { mutableStateOf<List<Triple<Long, String, CollectionType>>>(emptyList()) }
     val collectionCache = remember { mutableStateMapOf<Pair<Long, MediaType>, List<Triple<Long, String, CollectionType>>>() }
     val videoPlayer = remember(context) { ExoPlayer.Builder(context).build() }
+    var showDescriptionEditor by remember { mutableStateOf(false) }
+    val canEdit = onSaveUpdatedItem != null
 
     // Pinch to zoom / scaling animations
     var targetScale by remember(currentItem.id) { mutableFloatStateOf(1f) }
@@ -323,9 +328,7 @@ fun MediaViewer(
                                     description = currentItem.description,
                                     collections = collections,
                                     onCollectionClick = onCollectionClick,
-                                    onSaveDescription = onSaveUpdatedItem?.let {
-                                        { onSaveUpdatedItem(currentItem.copy(description = it)) }
-                                    },
+                                    onEditDescription = if(canEdit) {{ showDescriptionEditor = true }} else null
                                 )
                             }
                         }
@@ -345,6 +348,17 @@ fun MediaViewer(
             )
         }
     }
+    TextInputModal(
+        isVisible = showDescriptionEditor,
+        initialValue = currentItem.description?: "",
+        title= if(currentItem.description.isNullOrBlank()) stringResource(R.string.add_description) else stringResource(R.string.edit_description),
+        placeholder = stringResource(R.string.placeholders_media_detail_description),
+        onClose = { showDescriptionEditor = false },
+        onConfirm = {
+            showDescriptionEditor = false
+            onSaveUpdatedItem?.invoke(currentItem.copy(description = it))
+        },
+    )
 }
 
 fun calculateMediaScale(expanded: Boolean, width: Int, height: Int): Float {
