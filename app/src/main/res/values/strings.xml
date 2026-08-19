@@ -68,6 +68,10 @@
     <!--Label-->
     <string name="duplicate_label">Duplicates</string>
     <string name="show_hidden_label">Show hidden</string>
+    <string name="add_description">Add description</string>
+    <string name="edit_description">Edit description</string>
+    <string name="description">Description</string>
+    <string name="edit">Edit</string>
 
     <!--Buttons-->
     <string name="include_button">Include</string>
@@ -127,7 +131,6 @@
     </plurals>
     <string name="create_concept_modal_title">Create concept</string>
     <string name="edit_concept_modal_title">Edit concept</string>
-    <string name="edit_concept_action">Edit</string>
     <string name="pin_unpin_concept_action">Pin / Unpin </string>
     <string name="placeholders_add_concept">Describe your new concept</string>
     <string name="concepts_wifi_warning_alert_title">Not connected to Wi-Fi</string>
