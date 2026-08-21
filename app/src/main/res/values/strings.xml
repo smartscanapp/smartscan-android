@@ -16,11 +16,11 @@
 
 
     <!-- Notifications -->
-    <string name="worker_channel_id">Background Tasks</string>
-    <string name="worker_channel_name">Background Tasks Notifications</string>
-    <string name="worker_channel_description">Notifications for background tasks</string>
-    <string name="service_media_index_channel_id">Media Index</string>
-    <string name="service_media_index_channel_name">Media Index Notifications</string>
+    <string name="index_channel_name">Scan notifications</string>
+    <string name="concept_reminders_channel_name">Concept reminder notifications</string>
+    <string name="concept_reminders_channel_description">Notifications for concept reminders</string>
+    <string name="index_channel_description">Notifications for scan updates</string>
+    <string name="service_index_channel_name">Index foreground service notification</string>
     <string name="notif_title_media_index_service">Scanning media</string>
     <string name="notif_content_media_index_service">Scan in progress, this can take a few minutes.</string>
     <string name="notif_title_index_error_service">%1$s scan error</string>
