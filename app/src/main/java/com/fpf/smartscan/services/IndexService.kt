@@ -1,7 +1,5 @@
 package com.fpf.smartscan.services
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
@@ -26,13 +24,12 @@ import com.fpf.smartscan.core.concepts.getAllowedClusters
 import com.fpf.smartscan.core.concepts.getAllowedTags
 import com.fpf.smartscan.core.index.IndexJobType
 import com.fpf.smartscan.core.index.LocalIndexJobManager
-import com.fpf.smartscan.core.jobs.MediaProcessingJob
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.storage.EncryptedStorage
 import com.fpf.smartscan.notifications.NotificationChannels
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
-import com.fpf.smartscan.utils.showNotification
+import com.fpf.smartscan.notifications.showNotification
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.models.ModelAssetSource
@@ -152,7 +149,7 @@ class IndexService : Service(), KoinComponent {
                 val (minutes, seconds) = getTimeInMinutesAndSeconds(processorResult.timeElapsed)
                 val indexCompleteTitle = applicationContext.getString(R.string.notif_title_index_complete)
                 val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${processorResult.totalProcessed}, Time: ${minutes}m ${seconds}s"
-                showNotification(application, indexCompleteTitle, notificationText, NOTIFICATION_ID + 1)
+                showNotification(application, indexCompleteTitle, text = notificationText, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
                 if(processorResult.totalProcessed > 0 && mediaType == MediaType.IMAGE) {
                     mediaJobManager.findAndMarkDuplicates(mediaType)
                 }
@@ -160,7 +157,7 @@ class IndexService : Service(), KoinComponent {
             is ProcessorResult.Failure -> {
                 val title = applicationContext.getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
                 val content = applicationContext.getString(R.string.notif_content_index_error_service)
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
+                showNotification(application, title, text=content, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
         }
     }
@@ -171,7 +168,7 @@ class IndexService : Service(), KoinComponent {
                 val (minutes, seconds) = getTimeInMinutesAndSeconds(processorResult.timeElapsed)
                 val indexCompleteTitle = applicationContext.getString(R.string.notif_title_index_complete)
                 val notificationText = "Total ${mediaType.name.lowercase()}s indexed: ${processorResult.totalProcessed}, Time: ${minutes}m ${seconds}s"
-                showNotification(application, indexCompleteTitle, notificationText, NOTIFICATION_ID + 1)
+                showNotification(application, indexCompleteTitle, text=notificationText, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
             is ProcessorResult.Failure -> {
                 val title = applicationContext.getString(R.string.notif_title_index_error_service, mediaType.name.lowercase().replaceFirstChar { it.uppercase() })
@@ -180,7 +177,7 @@ class IndexService : Service(), KoinComponent {
                     is AppException.RateLimit -> application.getString(R.string.notif_content_index_error_rate_limit)
                     else -> application.getString(R.string.notif_content_index_error_service)
                 }
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
+                showNotification(application, title, text=content, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
         }
     }
@@ -192,22 +189,22 @@ class IndexService : Service(), KoinComponent {
             is AppException. ClusterException ->  {
                 val title = application.getString(R.string.notif_title_index_error_service, "Media")
                 val content = application.getString(R.string.notif_content_cluster_error_service)
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
+                showNotification(application, title, text = content, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
             is CancellationException -> {
                 val cancelledTitle = applicationContext.getString(R.string.notif_content_index_scan_cancelled_title)
-                showNotification(applicationContext, title=cancelledTitle, id =NOTIFICATION_ID + 1)
+                showNotification(applicationContext, title=cancelledTitle, channelId = NotificationChannels.INDEX, id =NOTIFICATION_ID + 1)
             }
 
             is AppException.MissingApiKey -> {
                 val title = application.getString(R.string.notif_title_index_error_service, "Media")
                 val content = application.getString(R.string.notif_content_missing_api_key_error_service)
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
+                showNotification(application, title, text = content, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
             else -> {
                 val title = application.getString(R.string.notif_title_index_error_service, "Media")
                 val content = application.getString(R.string.notif_content_index_error_service)
-                showNotification(application, title, content, NOTIFICATION_ID + 1)
+                showNotification(application, title, text=content, channelId = NotificationChannels.INDEX, id=NOTIFICATION_ID + 1)
             }
         }
     }
