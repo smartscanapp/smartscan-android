@@ -31,7 +31,7 @@ class ConceptManager(
 
     val allConceptsFlow = conceptRepository.getConceptsFlow()
 
-    private val conceptToThresholdMap: MutableMap<Long, Double> = mutableMapOf()
+    val exists = conceptEmbedStore.exists
 
     suspend fun createConcept(description: String, descriptionEmbed: Embedding){
         val concept = NewConcept( description = description)
@@ -48,15 +48,12 @@ class ConceptManager(
 
         val updatedEmbed = StoredEmbedding(id = updatedConcept.id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
         conceptEmbedStore.update(listOf(updatedEmbed))
-        conceptToThresholdMap.remove(updatedConcept.id)
-
         findAndUpdateMediaMatchingConcept(updatedConcept.id)
     }
 
     suspend fun deleteConcepts(concepts: List<Concept>){
         conceptRepository.deleteConcepts(concepts)
         conceptEmbedStore.remove(concepts.map{it.id})
-        for(c in concepts) conceptToThresholdMap.remove(c.id)
     }
 
     suspend fun pinOrUnpinConcepts(concepts: List<Concept>){
