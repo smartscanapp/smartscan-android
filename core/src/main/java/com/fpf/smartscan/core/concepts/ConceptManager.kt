@@ -88,6 +88,20 @@ class ConceptManager(
         mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
+    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, topN: Int = 5): List<Pair<Long, MediaType>>{
+        val matchingConcepts = mutableMapOf<Long, Float>()
+        for(embed in recentSearchesEmbeddings){
+            val queryResult = conceptEmbedStore.query(embed.toQInt8Embed(), Int.MAX_VALUE, similarityThreshold, includeSims = true)
+            queryResult.toSimsMap().forEach { (conceptId, sim) -> matchingConcepts.merge(conceptId, sim, Float::plus) }
+        }
+        val bestConceptMatch = matchingConcepts.maxByOrNull { it.value }?.key
+
+        return bestConceptMatch?.let {
+            val crossrefs = conceptCrossRefRepository.getByConceptIds(listOf(it))
+            crossrefs.sortedByDescending { ref ->  ref.similarity }.take(topN).map{ ref -> ref.mediaId to ref.mediaType}
+        }?: emptyList()
+    }
+
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
         MediaType.VIDEO -> videoConceptEmbedStore
         MediaType.IMAGE -> imageConceptEmbedStore
@@ -101,16 +115,10 @@ class ConceptManager(
 
     private suspend fun findMediaMatchingConcept(conceptId: Long): Map<Pair<Long, MediaType>, Float>{
         val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return emptyMap()
-        val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore)
-        val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore)
-        val mediaItemSimsMap = imageResult
-            .mapKeys { (id, _) -> id to MediaType.IMAGE } + videoResult.mapKeys { (id, _) -> id to MediaType.VIDEO }
+        val imageResult = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+        val videoResult = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+        val mediaItemSimsMap = imageResult.mapKeys { (id, _) -> id to MediaType.IMAGE } + videoResult.mapKeys { (id, _) -> id to MediaType.VIDEO }
         return mediaItemSimsMap
-    }
-
-    private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore): Map<Long, Float>{
-        val result = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
-        return  result.toSimsMap()
     }
 
     private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
