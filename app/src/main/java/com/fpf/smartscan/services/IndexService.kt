@@ -29,6 +29,7 @@ import com.fpf.smartscan.core.index.LocalIndexJobManager
 import com.fpf.smartscan.core.jobs.MediaProcessingJob
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.storage.EncryptedStorage
+import com.fpf.smartscan.notifications.NotificationChannels
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.utils.getTimeInMinutesAndSeconds
 import com.fpf.smartscan.utils.showNotification
@@ -91,7 +92,6 @@ class IndexService : Service(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
         startForegroundServiceNotification()
     }
 
@@ -101,7 +101,7 @@ class IndexService : Service(), KoinComponent {
             this, 0, activityIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, getString(R.string.service_media_index_channel_id))
+        val notification = NotificationCompat.Builder(this, NotificationChannels.INDEX_SERVICE)
             .setContentTitle(getString(R.string.notif_title_media_index_service))
             .setContentText(getString(R.string.notif_content_media_index_service))
             .setSmallIcon(R.drawable.smartscan_logo)
@@ -109,16 +109,6 @@ class IndexService : Service(), KoinComponent {
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
-    }
-
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            getString(R.string.service_media_index_channel_id),
-            getString(R.string.service_media_index_channel_name),
-            NotificationManager.IMPORTANCE_LOW
-        )
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(channel)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
