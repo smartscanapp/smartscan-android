@@ -33,10 +33,10 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
         private const val REMINDER_HOUR = "reminder_hour"
         private const val REMINDER_MINUTE = "reminder_minute"
 
-        fun scheduleWorker(context: Context, frequency: Pair<Long, TimeUnit>, reminderTime: Pair<Int, Int>, delay: Pair<Long, TimeUnit>? = null) {
+        fun scheduleWorker(context: Context, frequency: Pair<Long, TimeUnit>, reminderTime: Pair<Int, Int>?=null, delay: Pair<Long, TimeUnit>? = null) {
             val inputData = workDataOf(
-                REMINDER_HOUR to reminderTime.first,
-                REMINDER_MINUTE to reminderTime.second
+                REMINDER_HOUR to reminderTime?.first,
+                REMINDER_MINUTE to reminderTime?.second
             )
 
             val workRequestBuilder = PeriodicWorkRequestBuilder<ConceptsReminderWorker>(frequency.first, frequency.second)
