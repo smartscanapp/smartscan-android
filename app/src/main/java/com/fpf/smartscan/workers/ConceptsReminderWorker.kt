@@ -61,6 +61,7 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             if(!conceptManager.exists) return@withContext Result.success()
+            if(!textEmbedder.isInitialized()) textEmbedder.initialize()
 
             val reminderHour = inputData.getInt(REMINDER_HOUR, 8)
             val reminderMinute = inputData.getInt(REMINDER_MINUTE, 30)
