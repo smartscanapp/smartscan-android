@@ -31,7 +31,7 @@ class ConceptManager(
 
     val allConceptsFlow = conceptRepository.getConceptsFlow()
 
-    private val conceptToThresholdMap: MutableMap<Long, Double> = mutableMapOf()
+    val exists = conceptEmbedStore.exists
 
     suspend fun createConcept(description: String, descriptionEmbed: Embedding){
         val concept = NewConcept( description = description)
@@ -48,15 +48,12 @@ class ConceptManager(
 
         val updatedEmbed = StoredEmbedding(id = updatedConcept.id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
         conceptEmbedStore.update(listOf(updatedEmbed))
-        conceptToThresholdMap.remove(updatedConcept.id)
-
         findAndUpdateMediaMatchingConcept(updatedConcept.id)
     }
 
     suspend fun deleteConcepts(concepts: List<Concept>){
         conceptRepository.deleteConcepts(concepts)
         conceptEmbedStore.remove(concepts.map{it.id})
-        for(c in concepts) conceptToThresholdMap.remove(c.id)
     }
 
     suspend fun pinOrUnpinConcepts(concepts: List<Concept>){
@@ -88,6 +85,17 @@ class ConceptManager(
         mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
+    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, recentReminders: Set<Pair<Long, MediaType>> = emptySet(), topN: Int = 5): List<Pair<Long, MediaType>>{
+        val matchMedia = mutableMapOf<Pair<Long, MediaType>, Float>()
+        for(embed in recentSearchesEmbeddings){
+            val imageResult = imageConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+            val videoResult = videoConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+            imageResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.IMAGE), sim, Float::plus) }
+            videoResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.VIDEO), sim, Float::plus) }
+        }
+        return matchMedia.entries.filter{it.key !in recentReminders}.sortedByDescending { it.value }.take(topN).map{it.key}
+    }
+
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
         MediaType.VIDEO -> videoConceptEmbedStore
         MediaType.IMAGE -> imageConceptEmbedStore
@@ -95,25 +103,21 @@ class ConceptManager(
 
     private suspend fun findAndUpdateMediaMatchingConcept(conceptId: Long){
         val mediaMatchesMap = findMediaMatchingConcept(conceptId)
-        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = conceptId, similarity = it.value)}
+        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.first, mediaType=it.second, conceptId = conceptId, similarity = it.third)}
         conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
     }
 
-    private suspend fun findMediaMatchingConcept(conceptId: Long): Map<Pair<Long, MediaType>, Float>{
-        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return emptyMap()
-        val imageResult = query(conceptEmbedding.embedding, imageConceptEmbedStore)
-        val videoResult = query(conceptEmbedding.embedding, videoConceptEmbedStore)
-        val mediaItemSimsMap = imageResult
-            .mapKeys { (id, _) -> id to MediaType.IMAGE } + videoResult.mapKeys { (id, _) -> id to MediaType.VIDEO }
-        return mediaItemSimsMap
+    private suspend fun findMediaMatchingConcept(conceptId: Long): List<Triple<Long, MediaType, Float>>{
+        val matchMedia = mutableListOf<Triple<Long, MediaType, Float>>()
+        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return matchMedia
+        val imageResult = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+        val videoResult = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+        matchMedia.addAll(imageResult.map{Triple(it.key, MediaType.IMAGE, it.value)})
+        matchMedia.addAll(videoResult.map{Triple(it.key, MediaType.VIDEO, it.value)})
+        return matchMedia
     }
 
-    private suspend fun query(queryEmbed: Embedding, store: FileEmbeddingStore): Map<Long, Float>{
-        val result = store.query(queryEmbed, Int.MAX_VALUE, similarityThreshold, includeSims = true)
-        return  result.toSimsMap()
-    }
-
-    private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+    private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): List<ConceptCrossRef>{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaEmbed.id, type)
         val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
@@ -127,7 +131,7 @@ class ConceptManager(
         return crossRefsToDelete
     }
 
-    private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+    private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): List<ConceptCrossRef>{
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
         val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(mediaEmbed.id, type)
         val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)

@@ -27,6 +27,7 @@ import com.fpf.smartscan.services.stopIndexing
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
+import com.fpf.smartscan.workers.ConceptsReminderWorker
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -144,6 +145,7 @@ class MainViewModel(
             }
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
+            if(!isWorkScheduled(context = application, workName = ConceptsReminderWorker.TAG)) scheduleConceptsReminderWorker()
 
             _hasIndexedImages.update { imageEmbedStore.exists }
             _hasIndexedVideos.update { videoEmbedStore.exists }
@@ -229,7 +231,9 @@ class MainViewModel(
 
     private fun scheduleIndexWorker(){
         if (!imageEmbedStore.exists && !videoEmbedStore.exists) return
-        // Delay is required to prevent race condition issues on first index
         IndexWorker.scheduleWorker(getApplication(), Pair(1L, TimeUnit.DAYS), Pair(1L, TimeUnit.DAYS))
+    }
+    private fun scheduleConceptsReminderWorker(){
+        ConceptsReminderWorker.scheduleWorker(getApplication(), Pair(7L, TimeUnit.DAYS))
     }
 }
