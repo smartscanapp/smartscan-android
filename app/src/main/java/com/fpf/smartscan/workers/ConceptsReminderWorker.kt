@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import androidx.core.content.getSystemService
 import androidx.work.*
 import com.fpf.smartscan.constants.PrefsKeys
@@ -20,6 +21,7 @@ import com.fpf.smartscansdk.core.embeddings.embedBatch
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.ZonedDateTime
@@ -32,6 +34,10 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
         const val TAG = "ConceptsReminderWorker"
         private const val REMINDER_HOUR = "reminder_hour"
         private const val REMINDER_MINUTE = "reminder_minute"
+
+        private const val CANDIDATES_LIMIT = 7 // 1 per day of the week
+
+        private const val RECENT_REMINDERS_LIMIT = 28
 
         fun scheduleWorker(context: Context, frequency: Pair<Long, TimeUnit>, reminderTime: Pair<Int, Int>?=null, delay: Pair<Long, TimeUnit>? = null) {
             val inputData = workDataOf(
@@ -67,7 +73,9 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
             val reminderMinute = inputData.getInt(REMINDER_MINUTE, 30)
             val searches = getRecentSearches(sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)
             val recentSearchesEmbeds = embedBatch(applicationContext, textEmbedder, searches).map { it.toQInt8Embed() }
-            val candidates = conceptManager.getReminderCandidates(recentSearchesEmbeds)
+
+            val recentReminders = getRecentReminders()
+            val candidates = conceptManager.getReminderCandidates(recentSearchesEmbeds, recentReminders = recentReminders.toSet(), topN = CANDIDATES_LIMIT)
             val (imageCandidates, videoCandidates) = candidates.partition { it.second == MediaType.IMAGE }
             val mediaCandidates = mutableListOf<MediaMetadata>()
             mediaCandidates.addAll(mediaMetadataRepository.getByIds(imageCandidates.map { it.first }, MediaType.IMAGE))
@@ -76,6 +84,9 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
             mediaCandidates.filter { it.description != null }.forEachIndexed { index, media ->
                 scheduleReminder(applicationContext, getReminderTriggerTime(index, reminderHour, reminderMinute), media.description!!, media.id.hashCode())
             }
+
+            recentReminders.addAll(candidates)
+            saveRecentReminders(recentReminders.takeLast(RECENT_REMINDERS_LIMIT))
 
             Result.success()
         } catch (e: Exception) {
@@ -102,5 +113,14 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
         var trigger = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
         if (!trigger.isAfter(now)) trigger = trigger.plusDays(1)
         return trigger.plusDays(index.toLong()).toInstant().toEpochMilli()
+    }
+
+    private fun getRecentReminders(): MutableList<Pair<Long, MediaType>>{
+        val recentRemindersStr = sharedPrefs.getString(PrefsKeys.RECENT_CONCEPT_REMINDERS, null)?: return mutableListOf()
+        return Json.decodeFromString<List<Pair<Long, MediaType>>>(recentRemindersStr).toMutableList()
+    }
+
+    private fun saveRecentReminders(candidates: List<Pair<Long, MediaType>>){
+        sharedPrefs.edit { putString(PrefsKeys.RECENT_CONCEPT_REMINDERS, Json.encodeToString<List<Pair<Long, MediaType>>>(candidates)) }
     }
 }
