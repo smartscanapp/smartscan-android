@@ -6,6 +6,10 @@ import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+// Keep similarity scores rather than using rank/RRF: rank-based fusion discards
+// score magnitude, so it cannot distinguish a dense set of highly similar results
+// from a sparse set with only a few strong matches. Per-signal normalization and
+// signal-strength weighting account for differences in score scales across models.
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
@@ -17,7 +21,7 @@ object Reranker {
         return scoredItems.filter { it.value >= minAllowedScore }.keys.toList()
     }
 
-    fun calculateRerankScores(signals: List<Signal>): Map<Long, Double> {
+    private fun calculateRerankScores(signals: List<Signal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
         val allItemsIds: MutableSet<Long> = mutableSetOf()
         signals.forEach { allItemsIds.addAll(it.scores.keys)}
@@ -34,7 +38,7 @@ object Reranker {
 
         val useSTSignal = useSentenceTransformerSignal(signalStrengths)
 
-//        Log.d(TAG, "Signal strengths=$signalStrengths, useSTSignal=$useSTSignal")
+        Log.d(TAG, "Signal strengths=$signalStrengths, useSTSignal=$useSTSignal")
 
         return allItemsIds.mapNotNull { itemId ->
             var score = 0.0
@@ -56,7 +60,7 @@ object Reranker {
             .toMap()
     }
 
-    fun calculateSignalStrength(signalScores: Map<Long, Float>): Double {
+    private fun calculateSignalStrength(signalScores: Map<Long, Float>): Double {
         if (signalScores.isEmpty()) return 0.0
 
         val values = signalScores.values.map { it.toDouble() }.sortedDescending()
@@ -68,7 +72,7 @@ object Reranker {
         return (0.7 * separation + 0.3 * topMean) * (1.0 + sparsityBonus)
     }
 
-    fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.02): Double {
+    private fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.02): Double {
         if (scores.isEmpty()) return 0.0
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
@@ -163,16 +167,16 @@ object Reranker {
 
         segments.reverse()
 
-//        segments.forEachIndexed { index, segment ->
-//            Log.d(
-//                TAG,
-//                "Segment ${index + 1}: " +
-//                        "start=${segment.first}, " +
-//                        "finish=${segment.second}, " +
-//                        "startScore=${scores[segment.first]}, " +
-//                        "finishScore=${scores[segment.second]}"
-//            )
-//        }
+        segments.forEachIndexed { index, segment ->
+            Log.d(
+                TAG,
+                "Segment ${index + 1}: " +
+                        "start=${segment.first}, " +
+                        "finish=${segment.second}, " +
+                        "startScore=${scores[segment.first]}, " +
+                        "finishScore=${scores[segment.second]}"
+            )
+        }
 
         var lastIncludedSegment = 0
         for (index in 1 until segments.size) {
@@ -186,13 +190,8 @@ object Reranker {
         val selectedSegment = segments[lastIncludedSegment]
         val cutoffIndex = selectedSegment.second
 
-//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}, lastIncludedSegment=$lastIncludedSegment")
+        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}, lastIncludedSegment=$lastIncludedSegment")
         return scores[cutoffIndex]
-    }
-
-    @JvmName("calculateRelevanceCutoffFloatMap")
-    fun calculateRelevanceCutoff(scoredItems: Map<Long, Float>): Double {
-        return calculateRelevanceCutoff(scoredItems.values.map{it.toDouble()})
     }
 
     private fun shouldIncludeSegment(
@@ -223,13 +222,9 @@ object Reranker {
         return scores.mapValues { (_, value) -> (value.toDouble() / maxScore).coerceIn(0.0, 1.0) }
     }
 
-    private fun percentile(values: List<Double>, percent: Double): Double {
-        if (values.isEmpty()) return 0.0
-        return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()]
-    }
 
     // Uses the sentence-transformer signal when it clearly dominates
-    fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 1.75): Boolean{
+    private fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 1.75): Boolean{
         val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER] ?: return false
         val strongestStrength = signalStrengths.maxOfOrNull { it.value } ?: return false
         if (sentenceStrength != strongestStrength) return false
