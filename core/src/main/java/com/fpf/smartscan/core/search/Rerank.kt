@@ -2,6 +2,7 @@ package com.fpf.smartscan.core.search
 
 import android.util.Log
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -59,7 +60,7 @@ object Reranker {
         if (signalScores.isEmpty()) return 0.0
 
         val values = signalScores.values.map { it.toDouble() }.sortedDescending()
-        val topCount = maxOf(1, percentile(values, 0.2).toInt())
+        val topCount = maxOf(1, ceil(values.size * 0.2).toInt())
         val topMean = values.take(topCount).average()
         val bottomMean = values.drop(topCount).ifEmpty { listOf(0.0) }.average()
         val separation = (topMean - bottomMean).coerceAtLeast(0.0)
