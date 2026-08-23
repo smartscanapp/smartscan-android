@@ -85,8 +85,7 @@ class ConceptManager(
         mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
-    //TODO: store candidates and filter ones used recently to prevent showing the same info
-    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, topN: Int = 5): List<Pair<Long, MediaType>>{
+    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, recentCandidates: Set<Pair<Long, MediaType>> = emptySet(), topN: Int = 5): List<Pair<Long, MediaType>>{
         val matchMedia = mutableMapOf<Pair<Long, MediaType>, Float>()
         for(embed in recentSearchesEmbeddings){
             val imageResult = imageConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
@@ -94,7 +93,7 @@ class ConceptManager(
             imageResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.IMAGE), sim, Float::plus) }
             videoResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.VIDEO), sim, Float::plus) }
         }
-        return matchMedia.entries.sortedByDescending { it.value }.take(topN).map{it.key.first to it.key.second}
+        return matchMedia.entries.filter{it.key !in recentCandidates}.sortedByDescending { it.value }.take(topN).map{it.key}
     }
 
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
@@ -104,19 +103,21 @@ class ConceptManager(
 
     private suspend fun findAndUpdateMediaMatchingConcept(conceptId: Long){
         val mediaMatchesMap = findMediaMatchingConcept(conceptId)
-        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.key.first, mediaType=it.key.second, conceptId = conceptId, similarity = it.value)}
+        val crossrefs = mediaMatchesMap.map{ConceptCrossRef(mediaId = it.first, mediaType=it.second, conceptId = conceptId, similarity = it.third)}
         conceptCrossRefRepository.insertConceptCrossRefs(crossrefs)
     }
 
-    private suspend fun findMediaMatchingConcept(conceptId: Long): Map<Pair<Long, MediaType>, Float>{
-        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return emptyMap()
+    private suspend fun findMediaMatchingConcept(conceptId: Long): List<Triple<Long, MediaType, Float>>{
+        val matchMedia = mutableListOf<Triple<Long, MediaType, Float>>()
+        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return matchMedia
         val imageResult = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
         val videoResult = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
-        val mediaItemSimsMap = imageResult.mapKeys { (id, _) -> id to MediaType.IMAGE } + videoResult.mapKeys { (id, _) -> id to MediaType.VIDEO }
-        return mediaItemSimsMap
+        matchMedia.addAll(imageResult.map{Triple(it.key, MediaType.IMAGE, it.value)})
+        matchMedia.addAll(videoResult.map{Triple(it.key, MediaType.VIDEO, it.value)})
+        return matchMedia
     }
 
-    private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+    private suspend fun findConceptLinksToRemove(mediaEmbed: StoredEmbedding, type: MediaType): List<ConceptCrossRef>{
         val crossRefsToDelete = mutableListOf<ConceptCrossRef>()
         val linkedConceptIds = conceptRepository.getLinkedConceptIds(mediaEmbed.id, type)
         val conceptEmbeds = conceptEmbedStore.get(linkedConceptIds)
@@ -130,7 +131,7 @@ class ConceptManager(
         return crossRefsToDelete
     }
 
-    private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): MutableList<ConceptCrossRef>{
+    private suspend fun findConceptLinksToAdd(mediaEmbed: StoredEmbedding, type: MediaType): List<ConceptCrossRef>{
         val crossRefsToAdd = mutableListOf<ConceptCrossRef>()
         val unlinkedConceptIds = conceptRepository.getUnlinkedConceptIds(mediaEmbed.id, type)
         val unlinkedConceptEmbeds = conceptEmbedStore.get(unlinkedConceptIds)
