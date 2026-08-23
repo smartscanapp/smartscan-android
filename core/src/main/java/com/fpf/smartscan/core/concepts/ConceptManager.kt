@@ -85,7 +85,7 @@ class ConceptManager(
         mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
-    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, recentCandidates: Set<Pair<Long, MediaType>> = emptySet(), topN: Int = 5): List<Pair<Long, MediaType>>{
+    suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, recentReminders: Set<Pair<Long, MediaType>> = emptySet(), topN: Int = 5): List<Pair<Long, MediaType>>{
         val matchMedia = mutableMapOf<Pair<Long, MediaType>, Float>()
         for(embed in recentSearchesEmbeddings){
             val imageResult = imageConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
@@ -93,7 +93,7 @@ class ConceptManager(
             imageResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.IMAGE), sim, Float::plus) }
             videoResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.VIDEO), sim, Float::plus) }
         }
-        return matchMedia.entries.filter{it.key !in recentCandidates}.sortedByDescending { it.value }.take(topN).map{it.key}
+        return matchMedia.entries.filter{it.key !in recentReminders}.sortedByDescending { it.value }.take(topN).map{it.key}
     }
 
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
