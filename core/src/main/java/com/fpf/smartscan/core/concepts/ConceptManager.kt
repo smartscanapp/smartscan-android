@@ -85,18 +85,16 @@ class ConceptManager(
         mediaConceptEmbedStore.remove(listOf(mediaStoreId))
     }
 
+    //TODO: store candidates and filter ones used recently to prevent showing the same info
     suspend fun getReminderCandidates(recentSearchesEmbeddings: List<Embedding>, topN: Int = 5): List<Pair<Long, MediaType>>{
-        val matchingConcepts = mutableMapOf<Long, Float>()
+        val matchMedia = mutableMapOf<Pair<Long, MediaType>, Float>()
         for(embed in recentSearchesEmbeddings){
-            val queryResult = conceptEmbedStore.query(embed.toQInt8Embed(), Int.MAX_VALUE, similarityThreshold, includeSims = true)
-            queryResult.toSimsMap().forEach { (conceptId, sim) -> matchingConcepts.merge(conceptId, sim, Float::plus) }
+            val imageResult = imageConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+            val videoResult = videoConceptEmbedStore.query(embed, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
+            imageResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.IMAGE), sim, Float::plus) }
+            videoResult.forEach { (mediaId, sim) -> matchMedia.merge(Pair(mediaId, MediaType.VIDEO), sim, Float::plus) }
         }
-        val bestConceptMatch = matchingConcepts.maxByOrNull { it.value }?.key
-
-        return bestConceptMatch?.let {
-            val crossrefs = conceptCrossRefRepository.getByConceptIds(listOf(it))
-            crossrefs.sortedByDescending { ref ->  ref.similarity }.take(topN).map{ ref -> ref.mediaId to ref.mediaType}
-        }?: emptyList()
+        return matchMedia.entries.sortedByDescending { it.value }.take(topN).map{it.key.first to it.key.second}
     }
 
     fun getMediaConceptEmbedStore(mediaType: MediaType): FileEmbeddingStore = when(mediaType){
