@@ -72,7 +72,7 @@ class MediaJobManager(
     }
 
     private suspend fun updateDescriptionAndConceptLinksJob(updatedMedia: MediaItem){
-        mediaMetadataRepository.update(listOf(updatedMedia.toMetadata()))
+        mediaMetadataRepository.update(updatedMedia.toMetadata())
 
         val updatedEmbed = createAndUpdateDescriptionEmbed(updatedMedia)
         if (updatedEmbed == null) {
@@ -123,7 +123,7 @@ class MediaJobManager(
         val newRawEmbedding = withContext(Dispatchers.Default){
             textEmbedder.embed(updatedMedia.description)
         }
-        val existingMediaEmbed = mediaConceptEmbedStore.get(listOf(updatedMedia.id)).firstOrNull()
+        val existingMediaEmbed = mediaConceptEmbedStore.get(updatedMedia.id)
         val updatedOrNewMediaEmbed = existingMediaEmbed?.copy(embedding = newRawEmbedding.toQInt8Embed())
             ?: StoredEmbedding(
                 updatedMedia.id,
@@ -131,9 +131,9 @@ class MediaJobManager(
                 newRawEmbedding.toQInt8Embed()
             )
         if (existingMediaEmbed != null) {
-            mediaConceptEmbedStore.update(listOf(updatedOrNewMediaEmbed))
+            mediaConceptEmbedStore.update(updatedOrNewMediaEmbed)
         } else {
-            mediaConceptEmbedStore.add(listOf(updatedOrNewMediaEmbed))
+            mediaConceptEmbedStore.add(updatedOrNewMediaEmbed)
         }
         return updatedOrNewMediaEmbed
     }

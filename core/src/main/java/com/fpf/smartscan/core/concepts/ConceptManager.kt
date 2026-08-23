@@ -47,7 +47,7 @@ class ConceptManager(
         conceptRepository.upsertConcept(updatedConcept)
 
         val updatedEmbed = StoredEmbedding(id = updatedConcept.id, date = System.currentTimeMillis(), descriptionEmbed.toQInt8Embed())
-        conceptEmbedStore.update(listOf(updatedEmbed))
+        conceptEmbedStore.update(updatedEmbed)
         findAndUpdateMediaMatchingConcept(updatedConcept.id)
     }
 
@@ -109,7 +109,7 @@ class ConceptManager(
 
     private suspend fun findMediaMatchingConcept(conceptId: Long): List<Triple<Long, MediaType, Float>>{
         val matchMedia = mutableListOf<Triple<Long, MediaType, Float>>()
-        val conceptEmbedding = conceptEmbedStore.get(listOf(conceptId)).firstOrNull()?: return matchMedia
+        val conceptEmbedding = conceptEmbedStore.get(conceptId)?: return matchMedia
         val imageResult = imageConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
         val videoResult = videoConceptEmbedStore.query(conceptEmbedding.embedding, Int.MAX_VALUE, similarityThreshold, includeSims = true).toSimsMap()
         matchMedia.addAll(imageResult.map{Triple(it.key, MediaType.IMAGE, it.value)})
