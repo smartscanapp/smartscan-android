@@ -38,7 +38,7 @@ object Reranker {
 
         val useSTSignal = useSentenceTransformerSignal(signalStrengths)
 
-        Log.d(TAG, "Signal strengths=$signalStrengths, useSTSignal=$useSTSignal")
+//        Log.d(TAG, "Signal strengths=$signalStrengths, useSTSignal=$useSTSignal")
 
         return allItemsIds.mapNotNull { itemId ->
             var score = 0.0
@@ -167,16 +167,16 @@ object Reranker {
 
         segments.reverse()
 
-        segments.forEachIndexed { index, segment ->
-            Log.d(
-                TAG,
-                "Segment ${index + 1}: " +
-                        "start=${segment.first}, " +
-                        "finish=${segment.second}, " +
-                        "startScore=${scores[segment.first]}, " +
-                        "finishScore=${scores[segment.second]}"
-            )
-        }
+//        segments.forEachIndexed { index, segment ->
+//            Log.d(
+//                TAG,
+//                "Segment ${index + 1}: " +
+//                        "start=${segment.first}, " +
+//                        "finish=${segment.second}, " +
+//                        "startScore=${scores[segment.first]}, " +
+//                        "finishScore=${scores[segment.second]}"
+//            )
+//        }
 
         var lastIncludedSegment = 0
         for (index in 1 until segments.size) {
@@ -190,7 +190,7 @@ object Reranker {
         val selectedSegment = segments[lastIncludedSegment]
         val cutoffIndex = selectedSegment.second
 
-        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}, lastIncludedSegment=$lastIncludedSegment")
+//        Log.d(TAG, "Relevance cutoff: index=$cutoffIndex, score=${scores[cutoffIndex]}, lastIncludedSegment=$lastIncludedSegment")
         return scores[cutoffIndex]
     }
 
@@ -203,17 +203,23 @@ object Reranker {
         continuationThreshold: Double = 0.5
     ): Boolean {
         val topScore = scores.max()
+        val topSegment = segments.first()
         val candidateSegment = segments[candidateIndex]
         val nextCandidateSegment = segments.getOrNull(candidateIndex+1)
         val segmentAverageScore = scores.subList(candidateSegment.first, candidateSegment.second+1).average()
         val segmentRatio = segmentAverageScore / topScore
         val strongSegment = segmentRatio >= threshold
+
+        // Additional criteria: the drop in the first segment must be 10% or less and require minimum coverage
+        val topSegmentSpreadRatio = scores[topSegment.second] / scores[topSegment.first]
         val sizes = segments.map { (start, end) -> end - start + 1 }
         val coverageThreshold = ((1 / segments.size.toFloat()) + 0.5) / 2
-        val consistentQuality = ( segmentRatio >= consistencyThreshold) && sizes[candidateIndex] >= coverageThreshold * scores.size
+        val consistentQuality = ( segmentRatio >= consistencyThreshold) && (sizes[candidateIndex] >= coverageThreshold * scores.size) && (topSegmentSpreadRatio >= 0.9)
+
         val candidateSpread =  topScore - scores[candidateSegment.first]
         val nextCandidateSpread = nextCandidateSegment?.let{scores[candidateSegment.first] - scores[it.first]}?: 0.0
         val continuation = (segmentRatio >= continuationThreshold) && nextCandidateSpread >= candidateSpread
+      /*  Log.d(TAG, "segmentRatio=$segmentRatio, strongSegment=$strongSegment, consistentQuality=$consistentQuality, continuation=$continuation")*/
         return strongSegment || consistentQuality || continuation
     }
 
