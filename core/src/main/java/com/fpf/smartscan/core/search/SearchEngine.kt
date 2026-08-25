@@ -133,8 +133,7 @@ fun toScoreMap(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clus
             items.forEach { itemId -> put(itemId, clusterId) }
         }
     }
-
-    return itemSimMap.keys.associateWith { itemId -> itemToCluster[itemId]?.let(clusterSims::get) ?: 0f }
+    return itemSimMap.keys.associateWith { itemId -> itemToCluster[itemId]?.let(clusterSims::get)}.filter{it.value != null} as Map<Long, Float>
 }
 
 fun QueryResult.toSimsMap(): Map<Long, Float> = this.sims?.let(this.ids::zip)?.toMap() ?: emptyMap()
