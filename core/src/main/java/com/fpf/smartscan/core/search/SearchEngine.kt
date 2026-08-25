@@ -42,11 +42,11 @@ class SearchEngine(
     private val miniLmTextEmbedder by lazy {modelRepository.getMiniLmTextEmbedder()}
 
     suspend fun search(context: Context, searchQuery: SearchQuery): List<Long>{
-        require(searchQuery.filter.mediaType != null){"Media type is require"} // TODO: null searches both?
-        val store = getStore(searchQuery.filter.mediaType!!)
-        if(!store.exists) return emptyList()
-
         try {
+            require(searchQuery.filter.mediaType != null){"Media type is require"} // TODO: null searches both?
+            val store = getStore(searchQuery.filter.mediaType!!)
+            if(!store.exists) return emptyList()
+
             return when(searchQuery) {
                 is SearchQuery.ImageQuery -> imageSearch(context, searchQuery)
                 is SearchQuery.TextQuery -> textSearch(searchQuery)
