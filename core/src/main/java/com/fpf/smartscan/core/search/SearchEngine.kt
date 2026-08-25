@@ -83,7 +83,7 @@ class SearchEngine(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
         val vlmSims = queryResult.toSimsMap()
         val vlmClusterSims = clusterResult.toSimsMap()
-        val vlmItemClusterSims = toScoreMap(vlmSims, vlmClusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
+        val vlmItemClusterSims = mapItemsToClusterScores(vlmSims, vlmClusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
 
         val miniLmQueryEmbed = miniLmTextEmbedder.embed(query).toQInt8Embed()
         val conceptStore = getConceptStore(searchQuery.filter.mediaType)
@@ -107,7 +107,7 @@ class SearchEngine(
         val clusterResult = clusterEmbedStore.query(queryEmbed, Int.MAX_VALUE, threshold, includeSims = true)
         val mainSims = queryResult.toSimsMap()
         val clusterSims = clusterResult.toSimsMap()
-        val itemClusterSims = toScoreMap(mainSims, clusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
+        val itemClusterSims = mapItemsToClusterScores(mainSims, clusterSims, getItemToClusterSimMap(searchQuery.filter.mediaType))
         val signals = getSearchSignals(mainSims, itemClusterSims)
         val reranked = Reranker.rerank(signals)
         return reranked
@@ -127,13 +127,13 @@ class SearchEngine(
     private suspend fun getItemToClusterSimMap(mediaType: MediaType) = clusterCrossRefRepository.getClusterToMediaIdsMap().filterKeys{it.second == mediaType}.map{it.key.first to it.value}.associate { it.first to it.second }
 }
 
-fun toScoreMap(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clusterToMediaMap:  Map<Long, MutableSet<Long>>): Map<Long, Float>{
+private fun mapItemsToClusterScores(itemSimMap: Map<Long, Float>, clusterSims: Map<Long, Float>, clusterToMediaMap:  Map<Long, MutableSet<Long>>): Map<Long, Float>{
     val itemToCluster = buildMap {
         clusterToMediaMap.forEach { (clusterId, items) ->
             items.forEach { itemId -> put(itemId, clusterId) }
         }
     }
-    return itemSimMap.keys.associateWith { itemId -> itemToCluster[itemId]?.let(clusterSims::get)}.filter{it.value != null} as Map<Long, Float>
+    return itemSimMap.keys.mapNotNull { itemId -> itemToCluster[itemId]?.let { clusterSims[it]?.let { sim -> itemId to sim } } }.toMap()
 }
 
 fun QueryResult.toSimsMap(): Map<Long, Float> = this.sims?.let(this.ids::zip)?.toMap() ?: emptyMap()
