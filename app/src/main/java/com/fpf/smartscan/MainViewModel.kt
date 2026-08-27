@@ -145,7 +145,8 @@ class MainViewModel(
             }
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
-            if(!isWorkScheduled(context = application, workName = ConceptsReminderWorker.TAG)) scheduleConceptsReminderWorker()
+            //TODO: test more before release
+//            if(!isWorkScheduled(context = application, workName = ConceptsReminderWorker.TAG)) scheduleConceptsReminderWorker()
 
             _hasIndexedImages.update { imageEmbedStore.exists }
             _hasIndexedVideos.update { videoEmbedStore.exists }
