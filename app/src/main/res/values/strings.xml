@@ -213,12 +213,5 @@
     <string name="placeholders_media_detail_description">Describe what this is about and or why it\'s important or useful.</string>
 
     <!--Updates-->
-    <string name="update_concepts">Added concepts feature.</string>
-    <string name="update_recent_searches">Added recent searches.</string>
-    <string name="update_edit_descriptions">Added ability to manually add media descriptions in the Media Viewer.</string>
-    <string name="update_generate_descriptions">Added ability to generate image descriptions.</string>
-    <string name="update_openai_api_key">Added setting to add an OpenAI API key for generating descriptions.</string>
-    <string name="update_recycle_bin">Added ability to delete media from the device.</string>
-    <string name="update_description_search">Improved search for text-heavy images and videos by using descriptions.</string>
-    <string name="update_auto_collection">Improved auto collection adaptability.</string>
+    <string name="update_fix_image_quality">Improved image display quality in media viewer</string>
 </resources>
