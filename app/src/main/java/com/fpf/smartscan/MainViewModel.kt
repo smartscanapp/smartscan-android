@@ -27,6 +27,7 @@ import com.fpf.smartscan.services.stopIndexing
 import com.fpf.smartscan.settings.loadSettings
 import com.fpf.smartscan.ui.permissions.StorageAccess
 import com.fpf.smartscan.ui.permissions.getStorageAccess
+import com.fpf.smartscan.workers.ConceptsReminderWorker
 import com.fpf.smartscan.workers.IndexWorker
 import com.fpf.smartscan.workers.isWorkScheduled
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
@@ -45,7 +46,6 @@ class MainViewModel(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
-    private val clusterEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterManager: ClusterManager,
@@ -102,14 +102,7 @@ class MainViewModel(
 
     fun getUpdates(): List<String> {
         return listOf(
-            application.getString(R.string.update_concepts),
-            application.getString(R.string.update_recent_searches),
-            application.getString(R.string.update_edit_descriptions),
-            application.getString(R.string.update_generate_descriptions),
-            application.getString(R.string.update_openai_api_key),
-            application.getString(R.string.update_recycle_bin),
-            application.getString(R.string.update_auto_collection),
-            application.getString(R.string.update_description_search),
+            application.getString(R.string.update_fix_image_quality),
             )
     }
 
@@ -117,13 +110,6 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val appSettings = loadSettings(sharedPrefs)
 
-            DataSyncHelper.quantEmbedStoresIfNeeded(
-                mapOf(
-                    File(application.filesDir, EmbeddingStoresFiles.IMAGE) to imageEmbedStore,
-                    File(application.filesDir, EmbeddingStoresFiles.VIDEO) to videoEmbedStore,
-                    File(application.filesDir, EmbeddingStoresFiles.MEDIA_CLUSTER) to clusterEmbedStore
-                )
-            )
             // Always run on app start to handle media that may have been deleted from the device
             DataSyncHelper.sync(
                 application,
@@ -144,6 +130,8 @@ class MainViewModel(
             }
 
             if(!isWorkScheduled(context = application, workName = IndexWorker.TAG)) scheduleIndexWorker()
+            //TODO: test more before release
+//            if(!isWorkScheduled(context = application, workName = ConceptsReminderWorker.TAG)) scheduleConceptsReminderWorker()
 
             _hasIndexedImages.update { imageEmbedStore.exists }
             _hasIndexedVideos.update { videoEmbedStore.exists }
@@ -229,7 +217,9 @@ class MainViewModel(
 
     private fun scheduleIndexWorker(){
         if (!imageEmbedStore.exists && !videoEmbedStore.exists) return
-        // Delay is required to prevent race condition issues on first index
         IndexWorker.scheduleWorker(getApplication(), Pair(1L, TimeUnit.DAYS), Pair(1L, TimeUnit.DAYS))
+    }
+    private fun scheduleConceptsReminderWorker(){
+        ConceptsReminderWorker.scheduleWorker(getApplication(), Pair(7L, TimeUnit.DAYS))
     }
 }

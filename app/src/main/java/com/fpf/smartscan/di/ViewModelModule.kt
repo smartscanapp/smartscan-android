@@ -22,7 +22,6 @@ val viewModelModule = module {
             videoEmbedStore = get(VIDEO_EMBED_STORE),
             imageConceptEmbedStore = get(CONCEPT_IMAGE_EMBED_STORE),
             videoConceptEmbedStore = get(CONCEPT_VIDEO_EMBED_STORE),
-            clusterEmbedStore = get(CLUSTER_EMBED_STORE),
             clusterManager = get(),
             modelRepository = get(),
             sharedPrefs = get()

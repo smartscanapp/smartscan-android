@@ -34,6 +34,8 @@ import com.fpf.smartscan.core.media.shareMediaMulti
 import com.fpf.smartscan.core.models.ModelRepository
 import com.fpf.smartscan.core.search.SearchEngine
 import com.fpf.smartscan.core.search.SearchFilter
+import com.fpf.smartscan.core.search.getRecentSearches
+import com.fpf.smartscan.core.search.saveRecentSearches
 import com.fpf.smartscan.core.search.toMediaFilter
 import com.fpf.smartscan.core.tag.Tag
 import com.fpf.smartscan.ui.shared.state.SelectionState
@@ -384,15 +386,7 @@ class SearchViewModel(
     }
 
     private fun loadRecentSearches(){
-        val searchesStr = sharedPrefs.getString(PrefsKeys.RECENT_SEARCHES_KEY, null).orEmpty()
-        val searches = if(searchesStr.isNotBlank()) Json.decodeFromString<List<String>>(searchesStr) else emptyList()
-        _state.update { it.copy(recentSearches = searches) }
-    }
-
-    private fun saveRecentSearches(){
-        val searches = _state.value.recentSearches.take(RECENT_SEARCHES_LIMIT)
-        val searchesStr = Json.encodeToString(searches)
-        sharedPrefs.edit{ putString(PrefsKeys.RECENT_SEARCHES_KEY, searchesStr) }
+        _state.update { it.copy(recentSearches = getRecentSearches(sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)) }
     }
 
     private fun addRecentSearch(query: String){
@@ -400,19 +394,18 @@ class SearchViewModel(
         if(trimmedQuery in _state.value.recentSearches) return
         val updatedRecentSearches = (listOf(trimmedQuery) + _state.value.recentSearches).take(RECENT_SEARCHES_LIMIT)
         _state.update { it.copy(recentSearches = updatedRecentSearches) }
-        saveRecentSearches()
+        saveRecentSearches(updatedRecentSearches, sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)
     }
 
     private fun removeRecentSearch(query: String){
         _state.update { it.copy(recentSearches = it.recentSearches - query) }
-        saveRecentSearches()
+        saveRecentSearches(_state.value.recentSearches, sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)
     }
 
     private fun clearRecentSearches(){
         _state.update { it.copy(recentSearches = emptyList()) }
-        saveRecentSearches()
+        saveRecentSearches(_state.value.recentSearches, sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)
     }
-
 
     override fun onCleared() {
         textEmbedder.closeSession()

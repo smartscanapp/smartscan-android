@@ -16,9 +16,9 @@ extensions.configure<ApplicationExtension> {
     defaultConfig {
         applicationId = "com.fpf.smartscan"
         minSdk = 30
-        targetSdk = 34
-        versionCode = 24
-        versionName = "2.0.0"
+        targetSdk = 36
+        versionCode = 25
+        versionName = "2.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

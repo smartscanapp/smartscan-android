@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
@@ -58,7 +59,6 @@ fun MediaViewer(
     items: List<MediaItem>,
     initialIndex: Int,
     onClose: () -> Unit,
-    size: Int? = 1024,
     actionsEnabled: Boolean = true,
     onGetCollections: (suspend (MediaItem) -> List<Triple<Long, String, CollectionType>>)? = null,
     onCollectionClick: ((itemId: Long, type: CollectionType) -> Unit)? = null,
@@ -70,6 +70,7 @@ fun MediaViewer(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val screenHeight = LocalWindowInfo.current.containerSize.height
 
     var showMenu by remember { mutableStateOf(false) }
     var isActionsVisible by remember { mutableStateOf(true) }
@@ -280,7 +281,7 @@ fun MediaViewer(
                                             translationY = offset.y
                                         },
                                     contentScale = ContentScale.Fit,
-                                    size = size,
+                                    size = screenHeight,
                                     mediaType = currentItem.type,
                                     onSizeChanged = { width, height ->
                                         currentItemWidth = width

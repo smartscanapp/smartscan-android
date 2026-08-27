@@ -20,6 +20,7 @@ import com.fpf.smartscan.di.modelsModule
 import com.fpf.smartscan.di.storageModule
 import com.fpf.smartscan.di.tagModule
 import com.fpf.smartscan.di.viewModelModule
+import com.fpf.smartscan.notifications.NotificationChannels
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -78,17 +79,40 @@ class App : Application() {
                 .build()
         }
 
-        createNotificationChannel(
-            channelId = getString(R.string.worker_channel_id),
-            channelName = getString(R.string.worker_channel_name),
-            description = getString(R.string.worker_channel_description)
-        )
+        createNotificationChannels()
     }
-    private fun createNotificationChannel(channelId: String, channelName: String, description: String) {
+    private fun createNotificationChannels() {
         val notificationManager = getSystemService(NotificationManager::class.java)
-        val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH
-        ).apply { this.description = description }
-        notificationManager.createNotificationChannel(channel)
+
+        val indexChannel = NotificationChannel(
+            NotificationChannels.INDEX,
+            getString(R.string.index_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = getString(R.string.index_channel_description)
+        }
+
+        val indexServiceChannel = NotificationChannel(
+            NotificationChannels.INDEX_SERVICE,
+            getString(R.string.service_index_channel_name),
+            NotificationManager.IMPORTANCE_LOW
+        )
+
+        val conceptRemindersChannel = NotificationChannel(
+            NotificationChannels.CONCEPT_REMINDERS,
+            getString(R.string.concept_reminders_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = getString(R.string.concept_reminders_channel_description)
+        }
+
+        notificationManager.createNotificationChannels(
+            listOf(indexChannel, indexServiceChannel, conceptRemindersChannel)
+        )
+
+        // Delete old channels.
+        notificationManager.deleteNotificationChannel(NotificationChannels.OLD_INDEX)
+        notificationManager.deleteNotificationChannel(NotificationChannels.OLD_BACKGROUND)
     }
 
 }

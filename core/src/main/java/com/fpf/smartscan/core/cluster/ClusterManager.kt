@@ -76,11 +76,11 @@ class ClusterManager(
         embeddings.addAll(videoEmbedStore.get(videoCrossRefs.map{it.mediaId}).map{it.embedding})
 
         val (prototypeEmbedding, meanSim, stdSim) = computeClusterMetrics(embeddings)
-        val oldStoredEmbed = clusterEmbedStore.get(listOf(clusterId)).firstOrNull()?: error("Cluster embedding not found")
+        val oldStoredEmbed = clusterEmbedStore.get(clusterId)?: error("Cluster embedding not found")
         val updatedStoredEmbed = oldStoredEmbed.copy(embedding = prototypeEmbedding)
         val clusterMetadata = clusterMetadataRepository.getMetadata(clusterId)?: return
         val updatedMetadata = clusterMetadata.copy(meanSimilarity = meanSim, stdSimilarity = stdSim, prototypeSize = embeddings.size)
-        clusterEmbedStore.update(listOf(updatedStoredEmbed))
+        clusterEmbedStore.update(updatedStoredEmbed)
         clusterMetadataRepository.updateMetadata(updatedMetadata)
     }
 

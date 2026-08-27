@@ -2,9 +2,14 @@ package com.fpf.smartscan.core.search
 
 import android.util.Log
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+// Keep similarity scores rather than using rank/RRF: rank-based fusion discards
+// score magnitude, so it cannot distinguish a dense set of highly similar results
+// from a sparse set with only a few strong matches. Per-signal normalization and
+// signal-strength weighting account for differences in score scales across models.
 object Reranker {
     private const val TAG = "Reranker"
     private const val EPS = 1e-6
@@ -16,7 +21,7 @@ object Reranker {
         return scoredItems.filter { it.value >= minAllowedScore }.keys.toList()
     }
 
-    fun calculateRerankScores(signals: List<Signal>): Map<Long, Double> {
+    private fun calculateRerankScores(signals: List<Signal>): Map<Long, Double> {
         if (signals.isEmpty()) return emptyMap()
         val allItemsIds: MutableSet<Long> = mutableSetOf()
         signals.forEach { allItemsIds.addAll(it.scores.keys)}
@@ -55,11 +60,11 @@ object Reranker {
             .toMap()
     }
 
-    fun calculateSignalStrength(signalScores: Map<Long, Float>): Double {
+    private fun calculateSignalStrength(signalScores: Map<Long, Float>): Double {
         if (signalScores.isEmpty()) return 0.0
 
         val values = signalScores.values.map { it.toDouble() }.sortedDescending()
-        val topCount = maxOf(1, percentile(values, 0.2).toInt())
+        val topCount = maxOf(1, ceil(values.size * 0.2).toInt())
         val topMean = values.take(topCount).average()
         val bottomMean = values.drop(topCount).ifEmpty { listOf(0.0) }.average()
         val separation = (topMean - bottomMean).coerceAtLeast(0.0)
@@ -67,7 +72,7 @@ object Reranker {
         return (0.7 * separation + 0.3 * topMean) * (1.0 + sparsityBonus)
     }
 
-    fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.02): Double {
+    private fun calculateRelevanceCutoff(scores: List<Double>, segmentPenaltyMultiplier: Double = 0.02): Double {
         if (scores.isEmpty()) return 0.0
         val n = scores.size
         val minSegmentLength = maxOf(10, sqrt(n.toDouble()).toInt())
@@ -189,11 +194,6 @@ object Reranker {
         return scores[cutoffIndex]
     }
 
-    @JvmName("calculateRelevanceCutoffFloatMap")
-    fun calculateRelevanceCutoff(scoredItems: Map<Long, Float>): Double {
-        return calculateRelevanceCutoff(scoredItems.values.map{it.toDouble()})
-    }
-
     private fun shouldIncludeSegment(
         candidateIndex: Int,
         segments: List<Pair<Int, Int>>,
@@ -203,17 +203,23 @@ object Reranker {
         continuationThreshold: Double = 0.5
     ): Boolean {
         val topScore = scores.max()
+        val topSegment = segments.first()
         val candidateSegment = segments[candidateIndex]
         val nextCandidateSegment = segments.getOrNull(candidateIndex+1)
         val segmentAverageScore = scores.subList(candidateSegment.first, candidateSegment.second+1).average()
         val segmentRatio = segmentAverageScore / topScore
         val strongSegment = segmentRatio >= threshold
+
+        // Additional criteria: the drop in the first segment must be 10% or less and require minimum coverage
+        val topSegmentSpreadRatio = scores[topSegment.second] / scores[topSegment.first]
         val sizes = segments.map { (start, end) -> end - start + 1 }
         val coverageThreshold = ((1 / segments.size.toFloat()) + 0.5) / 2
-        val consistentQuality = ( segmentRatio >= consistencyThreshold) && sizes[candidateIndex] >= coverageThreshold * scores.size
+        val consistentQuality = ( segmentRatio >= consistencyThreshold) && (sizes[candidateIndex] >= coverageThreshold * scores.size) && (topSegmentSpreadRatio >= 0.9)
+
         val candidateSpread =  topScore - scores[candidateSegment.first]
         val nextCandidateSpread = nextCandidateSegment?.let{scores[candidateSegment.first] - scores[it.first]}?: 0.0
         val continuation = (segmentRatio >= continuationThreshold) && nextCandidateSpread >= candidateSpread
+      /*  Log.d(TAG, "segmentRatio=$segmentRatio, strongSegment=$strongSegment, consistentQuality=$consistentQuality, continuation=$continuation")*/
         return strongSegment || consistentQuality || continuation
     }
 
@@ -222,13 +228,9 @@ object Reranker {
         return scores.mapValues { (_, value) -> (value.toDouble() / maxScore).coerceIn(0.0, 1.0) }
     }
 
-    private fun percentile(values: List<Double>, percent: Double): Double {
-        if (values.isEmpty()) return 0.0
-        return values[(values.lastIndex * percent.coerceIn(0.0, 1.0)).toInt()]
-    }
 
     // Uses the sentence-transformer signal when it clearly dominates
-    fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 1.75): Boolean{
+    private fun useSentenceTransformerSignal(signalStrengths: Map<SignalType, Double>, dominance: Double = 1.75): Boolean{
         val sentenceStrength = signalStrengths[SignalType.SENTENCE_TRANSFORMER] ?: return false
         val strongestStrength = signalStrengths.maxOfOrNull { it.value } ?: return false
         if (sentenceStrength != strongestStrength) return false
