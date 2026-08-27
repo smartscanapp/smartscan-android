@@ -102,14 +102,7 @@ class MainViewModel(
 
     fun getUpdates(): List<String> {
         return listOf(
-            application.getString(R.string.update_concepts),
-            application.getString(R.string.update_recent_searches),
-            application.getString(R.string.update_edit_descriptions),
-            application.getString(R.string.update_generate_descriptions),
-            application.getString(R.string.update_openai_api_key),
-            application.getString(R.string.update_recycle_bin),
-            application.getString(R.string.update_auto_collection),
-            application.getString(R.string.update_description_search),
+            application.getString(R.string.update_fix_image_quality),
             )
     }
 
