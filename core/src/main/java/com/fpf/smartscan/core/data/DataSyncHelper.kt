@@ -14,14 +14,6 @@ import java.io.File
 
 object DataSyncHelper {
     const val TAG = "DataSyncHelper"
-    private const val EMBED_DIM: Int = 512
-
-    suspend fun quantEmbedStoresIfNeeded(oldFileToQuantStoreMap: Map<File, FileEmbeddingStore>){
-        oldFileToQuantStoreMap.entries.forEach {
-            if (!it.key.exists()) return@forEach
-            quantizeEmbedStore(it.key, it.value)
-        }
-    }
 
     suspend fun sync(
         context: Context,
@@ -53,16 +45,6 @@ object DataSyncHelper {
         }
         clustersToSync.forEach { clusterManager.sync(it) }
     }
-
-    private suspend fun quantizeEmbedStore( oldEmbedStoreFile: File, quantStore: FileEmbeddingStore){
-        val oldEmbedStore = FileEmbeddingStore(oldEmbedStoreFile, EMBED_DIM)
-        val embeds = oldEmbedStore.get().map { it.copy(embedding = it.embedding.toQInt8Embed()) }
-        quantStore.add(embeds)
-        oldEmbedStore.clear()
-        oldEmbedStoreFile.delete()
-        Log.d(TAG, "Successfully added quantized embeddings from: ${oldEmbedStoreFile.name}")
-    }
-
 
     private suspend fun syncWithMediaStore(
         context: Context,

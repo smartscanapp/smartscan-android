@@ -46,7 +46,6 @@ class MainViewModel(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val imageEmbedStore: FileEmbeddingStore,
     private val videoEmbedStore: FileEmbeddingStore,
-    private val clusterEmbedStore: FileEmbeddingStore,
     private val imageConceptEmbedStore: FileEmbeddingStore,
     private val videoConceptEmbedStore: FileEmbeddingStore,
     private val clusterManager: ClusterManager,
@@ -118,13 +117,6 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val appSettings = loadSettings(sharedPrefs)
 
-            DataSyncHelper.quantEmbedStoresIfNeeded(
-                mapOf(
-                    File(application.filesDir, EmbeddingStoresFiles.IMAGE) to imageEmbedStore,
-                    File(application.filesDir, EmbeddingStoresFiles.VIDEO) to videoEmbedStore,
-                    File(application.filesDir, EmbeddingStoresFiles.MEDIA_CLUSTER) to clusterEmbedStore
-                )
-            )
             // Always run on app start to handle media that may have been deleted from the device
             DataSyncHelper.sync(
                 application,
