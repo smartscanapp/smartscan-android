@@ -1,3 +1,13 @@
+## v2.0.1 - 27/08/2026
+
+### Changed
+* Removed support for old embeddings format (f32)
+
+### Fixed
+* Fixed image display quality in media viewer
+
+___
+
 ## v2.0.0 - 19/08/2026
 
 ### Added
