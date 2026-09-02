@@ -1,6 +1,5 @@
 package com.fpf.smartscan.core.index
 
-import android.content.Context
 import android.util.Log
 import com.fpf.smartscan.core.media.MediaMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,31 +19,31 @@ abstract class BaseIndexListener(protected val tag: String) : ProcessorListener<
 
     abstract val itemName: String
 
-    override suspend fun onProgress(context: Context, progress: Float) {
+    override suspend fun onProgress(progress: Float) {
         _progress.value = progress
     }
 
-    override suspend fun onActive(context: Context) {
+    override suspend fun onActive() {
         _indexingStatus.value = IndexingStatus.ACTIVE
     }
 
-    override suspend fun onComplete(context: Context, result: ProcessorResult.Success) {
+    override suspend fun onComplete( result: ProcessorResult.Success) {
         _result.value = result
         _indexingStatus.value = IndexingStatus.COMPLETE
         _progress.value = 0f
     }
 
-    override suspend fun onFail(context: Context, result: ProcessorResult.Failure) {
+    override suspend fun onFail(result: ProcessorResult.Failure) {
         _result.value = result
         _indexingStatus.value = IndexingStatus.FAILED
         _progress.value = 0f
     }
 
-    override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
+    override suspend fun onError(error: Exception, item: MediaMetadata) {
         Log.e(tag, "Error during processing", error)
     }
 
-    override suspend fun onCancel(context: Context) {
+    override suspend fun onCancel() {
         Log.w(tag, "Cloud indexing job cancelled")
         _indexingStatus.value = IndexingStatus.CANCELLED
     }
