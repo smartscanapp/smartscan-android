@@ -1,15 +1,14 @@
 package com.fpf.smartscan.cloud.index
 
 import android.app.Application
-import android.content.SharedPreferences
-import com.fpf.smartscan.core.concepts.getAllowedClusters
-import com.fpf.smartscan.core.concepts.getAllowedTags
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
+import com.fpf.smartscansdk.core.processors.Concurrency
+import com.fpf.smartscansdk.core.processors.ConcurrencyController
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpflabs.llmconnect.LLMProviderConfig
 import com.fpflabs.llmconnect.openai.OpenaiClient
@@ -34,6 +33,7 @@ class CloudIndexJobManager(
         allowedClusters: List<Long> = emptyList(),
         onResult: (suspend (ProcessorResult, MediaType) -> Unit )? = null
     ): Map<MediaType, ProcessorResult>{
+
         val openaiClient = OpenaiClient(
             apiKey = apiKey ?: throw AppException.MissingApiKey(),
             config = LLMProviderConfig(
@@ -44,7 +44,10 @@ class CloudIndexJobManager(
         )
         if(!textEmbedder.isInitialized()) textEmbedder.initialize()
         val results = mutableMapOf<MediaType, ProcessorResult>()
-
+        val concurrencyController = ConcurrencyController(application)
+        val concurrency = Concurrency.Dynamic{
+            concurrencyController.calculateConcurrency()
+        }
         mediaTypes.forEach { mediaType ->
             when (mediaType) {
                 MediaType.IMAGE -> {
@@ -57,6 +60,7 @@ class CloudIndexJobManager(
                         mediaMetadataRepository = mediaMetadataRepository,
                         mediaJobManager=mediaJobManager,
                         quantize = true,
+                        concurrency=concurrency
                     )
                     val imageResult = imageIndexer.index(allowedTags = allowedTags, allowedClusters = allowedClusters)
                     results[mediaType] = imageResult

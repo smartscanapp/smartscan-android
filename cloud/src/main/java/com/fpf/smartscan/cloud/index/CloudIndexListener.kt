@@ -15,7 +15,7 @@ object CloudImageIndexListener : BaseIndexListener(
 ) {
     override val itemName: String = "Image"
 
-    override suspend fun onError(context: Context, error: Exception, item: MediaMetadata) {
+    override suspend fun onError( error: Exception, item: MediaMetadata) {
         if (error is HttpException) {
             when (error.statusCode) {
                 401, 403 -> throw AppException.InvalidApiKey()

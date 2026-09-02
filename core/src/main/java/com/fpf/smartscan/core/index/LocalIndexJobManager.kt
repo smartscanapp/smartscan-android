@@ -8,6 +8,8 @@ import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.core.errors.AppException
 import com.fpf.smartscansdk.core.embeddings.FileEmbeddingStore
 import com.fpf.smartscansdk.core.embeddings.ImageEmbeddingProvider
+import com.fpf.smartscansdk.core.processors.Concurrency
+import com.fpf.smartscansdk.core.processors.ConcurrencyController
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_X
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder.Companion.IMAGE_SIZE_Y
@@ -35,6 +37,10 @@ class LocalIndexJobManager(
             if(!imageEmbedder.isInitialized()) imageEmbedder.initialize()
 
             val results = mutableMapOf<MediaType, ProcessorResult>()
+            val concurrencyController = ConcurrencyController(application)
+            val concurrency = Concurrency.Dynamic{
+                concurrencyController.calculateConcurrency()
+            }
 
             mediaTypes.forEach { mediaType ->
                 when (mediaType) {
@@ -45,9 +51,10 @@ class LocalIndexJobManager(
                             listener = if(useListener) ImageIndexListener else null,
                             store = imageEmbedStore,
                             mediaMetadataRepository = mediaMetadataRepository,
-                            quantize = true
+                            quantize = true,
+                            concurrency=concurrency
                         )
-                        val imagesResult = imageIndexer.index(application, allowedImageDirs)
+                        val imagesResult = imageIndexer.index(allowedImageDirs)
                         results[mediaType] = imagesResult
                         onResult?.invoke(imagesResult, mediaType)
                     }
@@ -61,9 +68,10 @@ class LocalIndexJobManager(
                             mediaMetadataRepository = mediaMetadataRepository,
                             quantize = true,
                             width = IMAGE_SIZE_X,
-                            height = IMAGE_SIZE_Y
+                            height = IMAGE_SIZE_Y,
+                            concurrency=concurrency
                         )
-                        val videosResult = videoIndexer.index(application, allowedVideoDirs)
+                        val videosResult = videoIndexer.index( allowedVideoDirs)
                         results[mediaType] = videosResult
                         onResult?.invoke(videosResult, mediaType)
                     }

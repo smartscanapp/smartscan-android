@@ -17,8 +17,8 @@ import com.fpf.smartscansdk.core.embeddings.generatePrototypeEmbedding
 import com.fpf.smartscansdk.core.embeddings.toQInt8
 import com.fpf.smartscansdk.core.processors.BatchProcessor
 import com.fpf.smartscansdk.core.media.extractFramesFromVideo
+import com.fpf.smartscansdk.core.processors.Concurrency
 import com.fpf.smartscansdk.core.processors.ProcessorListener
-import com.fpf.smartscansdk.core.processors.MemoryOptions
 import com.fpf.smartscansdk.core.processors.ProcessorResult
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -31,13 +31,13 @@ class VideoIndexer(
     private val store: EmbeddingStore,
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean = false,
-    context: Context,
+    private val context: Context,
+    concurrency: Concurrency,
     listener: ProcessorListener<MediaMetadata>? = null,
     batchSize: Int = 10,
-    memoryOptions: MemoryOptions = MemoryOptions(),
-): BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>(context, listener, memoryOptions, batchSize){
+): BatchProcessor<MediaMetadata, Pair<MediaMetadata, Embedding>>( listener, concurrency, batchSize){
 
-    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, Embedding>>) {
+    override suspend fun onBatchComplete( batch: List<Pair<MediaMetadata, Embedding>>) {
         val embedsToStore = batch.map{
             StoredEmbedding(it.first.id, it.first.dateAdded, it.second)
         }
@@ -47,19 +47,19 @@ class VideoIndexer(
         }
     }
 
-    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, Embedding> {
+    override suspend fun onProcess(item: MediaMetadata): Pair<MediaMetadata, Embedding> {
         val contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id)
-        val frameBitmaps = extractFramesFromVideo(context, contentUri, width = width, height = height, frameCount = frameCount)
-        val rawEmbeddings = embedBatch(context, embedder, frameBitmaps)
+        val frameBitmaps = extractFramesFromVideo(context.applicationContext, contentUri, width = width, height = height, frameCount = frameCount)
+        val rawEmbeddings = embedBatch(embedder, frameBitmaps, batchSize = batchSize, concurrency=concurrency)
         val output: FloatArray = generatePrototypeEmbedding(rawEmbeddings)
         val embedding = if(quantize) Embedding.QInt8(output.toQInt8()) else Embedding.F32(output)
         return Pair(item, embedding)
     }
 
 
-    suspend fun index(context: Context, allowedDirs: List<Uri> = emptyList()): ProcessorResult{
+    suspend fun index(allowedDirs: List<Uri> = emptyList()): ProcessorResult{
         val mediaType = MediaType.VIDEO
-        val idToDateMap = MediaStoreHelper.queryVideoIdDateMap(context, allowedDirs)
+        val idToDateMap = MediaStoreHelper.queryVideoIdDateMap(context.applicationContext, allowedDirs)
         val existingMediaIdsInEmbedStore = store.get().map{it.id}.toSet()
         val existingMediaIdsFromRoom = mediaMetadataRepository.getIds(mediaType).toSet()
         val newMediaIds = idToDateMap.keys.filterNot { existingMediaIdsFromRoom.contains(it) && existingMediaIdsInEmbedStore.contains(it) }

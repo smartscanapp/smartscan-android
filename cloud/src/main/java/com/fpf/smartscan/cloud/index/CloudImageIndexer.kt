@@ -15,6 +15,7 @@ import com.fpf.smartscansdk.core.embeddings.TextEmbeddingProvider
 import com.fpf.smartscansdk.core.embeddings.toF32Embed
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
 import com.fpf.smartscansdk.core.processors.BatchProcessor
+import com.fpf.smartscansdk.core.processors.Concurrency
 import com.fpf.smartscansdk.core.processors.ProcessorListener
 import com.fpf.smartscansdk.core.processors.MemoryOptions
 import com.fpf.smartscansdk.core.processors.ProcessorResult
@@ -24,7 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 
 class CloudImageIndexer(
-    context: Context,
+    private val context: Context,
     private val embedder: TextEmbeddingProvider,
     private val openaiClient: OpenaiClient,
     private val store: EmbeddingStore,
@@ -32,13 +33,13 @@ class CloudImageIndexer(
     private val mediaMetadataRepository: MediaMetadataRepository,
     private val quantize: Boolean,
     private val maxImageSize: Int = 720,
+    concurrency: Concurrency,
     listener: ProcessorListener<MediaMetadata>? = null,
-    memoryOptions: MemoryOptions = MemoryOptions(),
     batchSize: Int = 10,
-): BatchProcessor<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>(context, listener, memoryOptions, batchSize){
+): BatchProcessor<MediaMetadata, Pair<MediaMetadata, StoredEmbedding>?>( listener, concurrency, batchSize){
 
 
-    override suspend fun onBatchComplete(context: Context, batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
+    override suspend fun onBatchComplete( batch: List<Pair<MediaMetadata, StoredEmbedding>?>) {
         val filteredBatch = batch.filterNotNull()
         withContext(NonCancellable){
             store.add(filteredBatch.map{it.second})
@@ -49,9 +50,9 @@ class CloudImageIndexer(
         }
     }
 
-    override suspend fun onProcess(context: Context, item: MediaMetadata): Pair<MediaMetadata, StoredEmbedding>? {
+    override suspend fun onProcess( item: MediaMetadata): Pair<MediaMetadata, StoredEmbedding>? {
         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, item.id)
-        val base64 = uriToBase64(context, contentUri, maxImageSize)
+        val base64 = uriToBase64(context.applicationContext, contentUri, maxImageSize)
         val result = openaiClient.generateJsonFromImage(DEFAULT_PROMPT, base64, ImageSummary.serializer())
         if( result.summary.isBlank()) return null
         val formatted = formatOutput(result)
