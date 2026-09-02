@@ -19,6 +19,8 @@ import com.fpf.smartscan.core.search.getRecentSearches
 import com.fpf.smartscan.receivers.ConceptReminderReceiver
 import com.fpf.smartscansdk.core.embeddings.embedBatch
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
+import com.fpf.smartscansdk.core.processors.Concurrency
+import com.fpf.smartscansdk.core.processors.ConcurrencyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -38,6 +40,7 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
         private const val CANDIDATES_LIMIT = 7 // 1 per day of the week
 
         private const val RECENT_REMINDERS_LIMIT = 28
+        private const val BATCH_SIZE = 10
 
         fun scheduleWorker(context: Context, frequency: Pair<Long, TimeUnit>, reminderTime: Pair<Int, Int>?=null, delay: Pair<Long, TimeUnit>? = null) {
             val inputData = workDataOf(
@@ -72,7 +75,10 @@ class ConceptsReminderWorker(context: Context, workerParams: WorkerParameters) :
             val reminderHour = inputData.getInt(REMINDER_HOUR, 8)
             val reminderMinute = inputData.getInt(REMINDER_MINUTE, 30)
             val searches = getRecentSearches(sharedPrefs, PrefsKeys.RECENT_SEARCHES_KEY)
-            val recentSearchesEmbeds = embedBatch(applicationContext, textEmbedder, searches).map { it.toQInt8Embed() }
+
+            val concurrencyController = ConcurrencyController(applicationContext)
+            val concurrency = Concurrency.Dynamic{concurrencyController.calculateConcurrency()}
+            val recentSearchesEmbeds = embedBatch( textEmbedder, searches, concurrency=concurrency, batchSize = BATCH_SIZE).map { it.toQInt8Embed() }
 
             val recentReminders = getRecentReminders()
             val candidates = conceptManager.getReminderCandidates(recentSearchesEmbeds, recentReminders = recentReminders.toSet(), topN = CANDIDATES_LIMIT)

@@ -15,14 +15,19 @@ import com.fpf.smartscansdk.ml.models.ModelType
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipTextEmbedder
 import kotlinx.coroutines.runBlocking
 import com.fpf.smartscansdk.core.embeddings.embedBatch
+import com.fpf.smartscansdk.core.processors.Concurrency
+import com.fpf.smartscansdk.core.processors.ConcurrencyController
 
 class TextEmbedderAidlService: Service() {
     companion object {
-        const val TAG = "TextEmbedderAidlService"
+        private const val TAG = "TextEmbedderAidlService"
+        private const val BATCH_SIZE = 10
     }
     private lateinit var textEmbedder: TextEmbeddingProvider
 
     private var selectedModel = ModelName.CLIP_VIT_B_32_TEXT.name
+
+    private val concurrencyController by lazy { ConcurrencyController(application)}
 
     override fun onCreate() {
         super.onCreate()
@@ -65,7 +70,8 @@ class TextEmbedderAidlService: Service() {
             return runBlocking {
                 try {
                     if(!textEmbedder.isInitialized()) textEmbedder.initialize()
-                    val embeddings = embedBatch(application, textEmbedder, data)
+                    val concurrency = Concurrency.Dynamic{concurrencyController.calculateConcurrency()}
+                    val embeddings = embedBatch( textEmbedder, data, concurrency=concurrency, batchSize = BATCH_SIZE)
                     val flattenedEmbeddings = flattenEmbeddings(embeddings, textEmbedder.embeddingDim)
                     flattenedEmbeddings
                 }catch(e: Exception){

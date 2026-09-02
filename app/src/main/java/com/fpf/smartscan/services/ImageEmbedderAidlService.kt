@@ -17,14 +17,19 @@ import com.fpf.smartscansdk.ml.models.ModelType
 import com.fpf.smartscansdk.ml.embeddings.clip.ClipImageEmbedder
 import kotlinx.coroutines.runBlocking
 import com.fpf.smartscansdk.core.embeddings.embedBatch
+import com.fpf.smartscansdk.core.processors.Concurrency
+import com.fpf.smartscansdk.core.processors.ConcurrencyController
 
 
 class ImageEmbedderAidlService: Service() {
 
     companion object {
-        const val TAG = "ImageEmbedderAidlService"
+        private const val TAG = "ImageEmbedderAidlService"
+        private const val BATCH_SIZE = 10
     }
     private lateinit var imageEmbedder: ImageEmbeddingProvider
+
+    private val concurrencyController by lazy { ConcurrencyController(application)}
 
     override fun onCreate() {
         super.onCreate()
@@ -69,7 +74,8 @@ class ImageEmbedderAidlService: Service() {
                     if(!imageEmbedder.isInitialized()) imageEmbedder.initialize()
                     val decoded = decodeByteArrayPayload(data, delimiter)
                     val bitmaps = decoded.map { byteArrayToBitmap(it) }
-                    val embeddings = embedBatch(application, imageEmbedder, bitmaps)
+                    val concurrency = Concurrency.Dynamic{concurrencyController.calculateConcurrency()}
+                    val embeddings = embedBatch( imageEmbedder, bitmaps, concurrency=concurrency, batchSize = BATCH_SIZE)
                     flattenEmbeddings(embeddings, imageEmbedder.embeddingDim)
                 }catch(e: Exception){
                     Log.d(TAG, "EMBEDDING_ERROR: ${e.message}")
