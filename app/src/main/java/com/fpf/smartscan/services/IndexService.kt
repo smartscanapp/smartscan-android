@@ -55,7 +55,7 @@ class IndexService : Service(), KoinComponent {
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
-    private val imageEmbedder by lazy { ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
+    private val imageEmbedder by lazy { ClipImageEmbedder(ModelAssetSource.Resource(application.resources, R.raw.clip_image_encoder_quant))}
     private val textEmbedder by lazy { ModelManager.getTextEmbedder(application, ModelName.ALL_MINILM_L6_V2) }
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
     private val clusterManager: ClusterManager by inject()

@@ -80,8 +80,8 @@ class SearchViewModel(
         private const val RECENT_SEARCHES_LIMIT = 10
     }
 
-    private val textEmbedder  = ClipTextEmbedder(application, ModelAssetSource.Resource(R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(R.raw.vocab), mergesSource = ModelAssetSource.Resource(R.raw.merges))
-    private val imageEmbedder = ClipImageEmbedder(application, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))
+    private val textEmbedder  = ClipTextEmbedder(ModelAssetSource.Resource(application.resources, R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(application.resources, R.raw.vocab), mergesSource = ModelAssetSource.Resource(application.resources, R.raw.merges))
+    private val imageEmbedder = ClipImageEmbedder(ModelAssetSource.Resource(application.resources, R.raw.clip_image_encoder_quant))
 
     private val searchEngine = SearchEngine(
         dualEncoderVlm = Pair(textEmbedder, imageEmbedder),

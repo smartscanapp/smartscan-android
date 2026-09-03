@@ -66,7 +66,7 @@ class IndexWorker(context: Context, workerParams: WorkerParameters) :
     }
 
     private val modelRepository: ModelRepository by inject()
-    private val imageEmbedder by lazy { ClipImageEmbedder(applicationContext, ModelAssetSource.Resource(R.raw.clip_image_encoder_quant))}
+    private val imageEmbedder by lazy { ClipImageEmbedder(ModelAssetSource.Resource(applicationContext.resources, R.raw.clip_image_encoder_quant))}
     private val textEmbedder by lazy { modelRepository.getMiniLmTextEmbedder() }
     private val mediaMetadataRepository: MediaMetadataRepository by inject()
     private val clusterManager: ClusterManager by inject()

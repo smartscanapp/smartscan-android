@@ -31,7 +31,7 @@ class TextEmbedderAidlService: Service() {
 
     override fun onCreate() {
         super.onCreate()
-        textEmbedder = ClipTextEmbedder(application, ModelAssetSource.Resource(R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(R.raw.vocab), mergesSource = ModelAssetSource.Resource(R.raw.merges))
+        textEmbedder = ClipTextEmbedder(ModelAssetSource.Resource(application.resources, R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(application.resources, R.raw.vocab), mergesSource = ModelAssetSource.Resource(application.resources, R.raw.merges))
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -102,7 +102,7 @@ class TextEmbedderAidlService: Service() {
                 }
                 ModelName.CLIP_VIT_B_32_TEXT -> {
                     textEmbedder.closeSession()
-                    ClipTextEmbedder(application, ModelAssetSource.Resource(R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(R.raw.vocab), mergesSource = ModelAssetSource.Resource(R.raw.merges))
+                    ClipTextEmbedder(ModelAssetSource.Resource(application.resources, R.raw.clip_text_encoder_quant), vocabSource = ModelAssetSource.Resource(application.resources, R.raw.vocab), mergesSource = ModelAssetSource.Resource(application.resources, R.raw.merges))
                 }
                 else -> return false
             }
