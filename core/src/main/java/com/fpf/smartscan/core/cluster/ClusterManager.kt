@@ -2,6 +2,8 @@ package com.fpf.smartscan.core.cluster
 
 import android.content.Context
 import android.util.Log
+import com.fpf.smartscan.core.collections.CollectionManager
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.data.clusters.ClusterCrossRefRepository
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
 import com.fpf.smartscan.core.data.mappers.toIncrementalClusterMetadata
@@ -18,6 +20,7 @@ import com.fpf.smartscansdk.core.embeddings.StoredEmbedding
 import com.fpf.smartscansdk.core.embeddings.generatePrototypeEmbedding
 import com.fpf.smartscansdk.core.embeddings.getSimilarities
 import com.fpf.smartscansdk.core.embeddings.toQInt8Embed
+import kotlinx.coroutines.flow.first
 import java.io.File
 import kotlin.collections.map
 import kotlin.collections.mapNotNull
@@ -29,7 +32,7 @@ class ClusterManager(
     private val videoEmbedStore: FileEmbeddingStore,
     private val clusterCrossRefRepository: ClusterCrossRefRepository,
     private val clusterMetadataRepository: ClusterMetadataRepository,
-) {
+): CollectionManager<MediaItem, MediaCollection> {
     companion object {
         private const val LARGE_DATASET_SIZE: Int = 10000
         private const val MIN_SAMPLE_SIZE: Int = 500
@@ -41,6 +44,31 @@ class ClusterManager(
     private var idCount: Long = 0L
 
     val allCollectionsFlow = clusterMetadataRepository.getCollections()
+
+    override suspend fun merge(primaryCollectionId: Long, secondaryCollectionIds: List<Long>){
+        val otherClustersCrossRefs = clusterCrossRefRepository.getByClusterIds(secondaryCollectionIds)
+        val updatedClusterCrossRefs = otherClustersCrossRefs.map { it.copy(clusterId = primaryCollectionId) }
+        clusterCrossRefRepository.upsertClusterCrossRefs(updatedClusterCrossRefs)
+
+        // Delete clusters which are being merged (cascades all related crossrefs)
+        clusterMetadataRepository.deleteMetadata(secondaryCollectionIds)
+        clusterEmbedStore.remove(secondaryCollectionIds)
+        sync(primaryCollectionId)
+    }
+
+    override suspend fun move(items: Set<MediaItem>, newCollectionId: Long, currentCollectionId: Long){
+        val crossRefs = items.map { ClusterCrossRef(clusterId = newCollectionId, mediaId = it.id, mediaType = it.type) }
+        clusterCrossRefRepository.upsertClusterCrossRefs(crossRefs)
+        listOf(currentCollectionId, newCollectionId).forEach { sync(it) }
+    }
+
+    override suspend fun rename(collectionId: Long, name: String){
+        val metadata = clusterMetadataRepository.getMetadata(collectionId)?: return
+        val updatedMeta = metadata.copy(label = name)
+        clusterMetadataRepository.updateMetadata(updatedMeta)
+    }
+
+    override suspend fun getCollections(): List<MediaCollection> = allCollectionsFlow.first()
 
     suspend fun cluster(unclusterItems: Map<Long, MediaType> ) {
         val (unclusteredImages, unclusteredVideos) = unclusterItems.keys.partition { unclusterItems[it] == MediaType.IMAGE }
@@ -94,23 +122,6 @@ class ClusterManager(
         }
     }
 
-    suspend fun mergeClusters(primaryClusterId: Long, otherClusters: List<Long>){
-        val otherClustersCrossRefs = clusterCrossRefRepository.getByClusterIds(otherClusters)
-        val updatedClusterCrossRefs = otherClustersCrossRefs.map { it.copy(clusterId = primaryClusterId) }
-        clusterCrossRefRepository.upsertClusterCrossRefs(updatedClusterCrossRefs)
-
-        // Delete clusters which are being merged (cascades all related crossrefs)
-        clusterMetadataRepository.deleteMetadata(otherClusters)
-        clusterEmbedStore.remove(otherClusters)
-        sync(primaryClusterId)
-    }
-
-    suspend fun moveItems(items: Set<MediaItem>, newClusterId: Long, oldClusterId: Long){
-        val crossRefs = items.map { ClusterCrossRef(clusterId = newClusterId, mediaId = it.id, mediaType = it.type) }
-        clusterCrossRefRepository.upsertClusterCrossRefs(crossRefs)
-        listOf(oldClusterId, newClusterId).forEach { sync(it) }
-    }
-
     suspend fun createNewClusterAndMoveItems(items: Set<MediaItem>, newClusterLabel: String, oldClusterId: Long){
         val itemsMap = items.associate { it.id to it.type }
         val (imageItems, videoItems) = items.partition { it.type == MediaType.IMAGE }
@@ -121,11 +132,6 @@ class ClusterManager(
         sync(oldClusterId)
     }
 
-    suspend fun updateLabel(clusterId: Long, newLabel: String){
-        val metadata = clusterMetadataRepository.getMetadata(clusterId)?: return
-        val updatedMeta = metadata.copy(label = newLabel)
-        clusterMetadataRepository.updateMetadata(updatedMeta)
-    }
 
     suspend fun getClustersMatchingMedia(mediaId: Long, mediaType: MediaType): List<StoredClusterMetadata>{
         return clusterMetadataRepository.getClustersForMedia(mediaId, mediaType)

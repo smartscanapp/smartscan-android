@@ -100,8 +100,8 @@ class CollectionsViewModel(
             try{
                 val collection = getSelectedCollections().first()
                 when (collection.type) {
-                    CollectionType.CLUSTER -> clusterManager.updateLabel(collection.id, newName)
-                    CollectionType.TAG -> tagManager.renameTag(collection.name, newName)
+                    CollectionType.CLUSTER -> clusterManager.rename(collection.id, newName)
+                    CollectionType.TAG -> tagManager.rename(collection.id, newName)
                 }
                 resetSelection()
                 _event.emit(CollectionEvent(CollectionEventType.RENAME, success = true))
@@ -120,7 +120,7 @@ class CollectionsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val selectedCollections = getSelectedCollections()
-                tagManager.deleteTags(selectedCollections.map{it.id})
+                tagManager.delete(selectedCollections.map{it.id})
                 resetSelection()
                 val message = if(selectedCollections.size == 1 ) "Deleted ${selectedCollections.size} collection" else "Deleted ${selectedCollections.size} collections"
                 _event.emit(CollectionEvent(CollectionEventType.DELETE, success = true, message = message))
@@ -145,8 +145,8 @@ class CollectionsViewModel(
                     primaryCollection = selectedCollections.firstOrNull()
                     primaryCollection?.let { collection ->
                         when (collection.type) {
-                            CollectionType.CLUSTER -> clusterManager.updateLabel(collection.id, primaryCollectionName)
-                            CollectionType.TAG -> tagManager.renameTag(collection.name, primaryCollectionName)
+                            CollectionType.CLUSTER -> clusterManager.rename(collection.id, primaryCollectionName)
+                            CollectionType.TAG -> tagManager.rename(collection.id, primaryCollectionName)
                         }
                     }
                 }
@@ -154,8 +154,8 @@ class CollectionsViewModel(
                 val newMergedCollection = primaryCollection?: error("No primary collection selected")
                 val otherCollections = selectedCollections.filter { selectedCollection -> selectedCollection.id != newMergedCollection.id }
                 when (newMergedCollection.type) {
-                    CollectionType.CLUSTER -> clusterManager.mergeClusters(newMergedCollection.id, otherCollections.map { it.id })
-                    CollectionType.TAG -> tagManager.mergeTags(newMergedCollection.id, otherCollections.map { it.id })
+                    CollectionType.CLUSTER -> clusterManager.merge(newMergedCollection.id, otherCollections.map { it.id })
+                    CollectionType.TAG -> tagManager.merge(newMergedCollection.id, otherCollections.map { it.id })
                 }
 
                 resetSelection()
@@ -198,14 +198,14 @@ class CollectionsViewModel(
                 if(currentState.showAllCollections) {
                     clusterCollections.value
                 } else {
-                    clusterManager.allCollectionsFlow.first()
+                    clusterManager.getCollections()
                 }
             }
             CollectionType.TAG -> {
                 if(currentState.showAllCollections) {
                     tagCollections.value
                 } else {
-                    tagManager.allCollectionsFlow.first()
+                    tagManager.getCollections()
                 }
             }
         }.toMutableSet()

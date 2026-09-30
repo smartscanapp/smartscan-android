@@ -1,17 +1,46 @@
 package com.fpf.smartscan.core.tag
 
 
+import com.fpf.smartscan.core.collections.CollectionManager
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.data.tags.TagCrossRefRepository
 import com.fpf.smartscan.core.data.tags.TagRepository
 import com.fpf.smartscan.core.media.MediaItem
+import kotlinx.coroutines.flow.first
 
 class TagManager(
     private val tagRepository: TagRepository,
     private val tagCrossRefRepository: TagCrossRefRepository,
-) {
+): CollectionManager<MediaItem, MediaCollection>  {
 
     val allTagsFlow = tagRepository.allTags
     val allCollectionsFlow = tagRepository.getCollections()
+
+    override suspend fun rename(collectionId: Long, name: String){
+        val tag = tagRepository.getTagsById(listOf(collectionId)).firstOrNull()
+        tag?.let { tagRepository.updateTags(listOf((it).copy(name = name))) }
+    }
+
+    override suspend fun remove(collectionId: Long, items: Set<MediaItem>) {
+        val tag = tagRepository.getTagsById(listOf(collectionId)).firstOrNull() ?: return
+        items.groupBy { it.type }.forEach { (type, items) ->
+            tagCrossRefRepository.deleteMediaMatchTag(items.map{it.id}, tag.id, type)
+        }
+    }
+
+    override suspend fun delete(collectionIds: List<Long>) = tagRepository.deleteTagsById(collectionIds)
+
+    override suspend fun merge(primaryCollectionId: Long, secondaryCollectionIds: List<Long>){
+        tagCrossRefRepository.moveTagCrossRefs(primaryCollectionId, secondaryCollectionIds)
+        tagRepository.deleteTagsById(secondaryCollectionIds)
+    }
+
+    override suspend fun move(items: Set<MediaItem>,  newCollectionId: Long, currentCollectionId: Long){
+        moveItems(items, currentCollectionId, newCollectionId)
+    }
+
+    override suspend fun getCollections(): List<MediaCollection> = allCollectionsFlow.first()
+
     suspend fun tagItems( tagName: String, items: Set<MediaItem>){
         val existing = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
         var id = existing?.id
@@ -38,6 +67,7 @@ class TagManager(
         }
     }
 
+
     suspend fun updateLastUsage(tagName: String){
         val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()?: return
         tagRepository.updateTags(listOf(Tag(tag.id, tag.name, System.currentTimeMillis())))
@@ -46,43 +76,17 @@ class TagManager(
     suspend fun getTagByName(name: String): Tag? = tagRepository.getTagsByName(listOf(name)).firstOrNull()
 
 
-    suspend fun renameTag(tagName: String, newName: String){
-        val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull()
-        tag?.let { tagRepository.updateTags(listOf((it).copy(name = newName))) }
+    suspend fun createNewTagAndMoveItems(items: Set<MediaItem>, currentTagId: Long, name: String){
+        val newTagId = tagRepository.insertTags(listOf(NewTag(name = name))).firstOrNull()?: return
+        moveItems(items, currentTagId, newTagId)
     }
 
-    suspend fun removeItems(tagName: String, items: Set<MediaItem>) {
-        val tag = tagRepository.getTagsByName(listOf(tagName)).firstOrNull() ?: return
-        items.groupBy { it.type }.forEach { (type, items) ->
-            tagCrossRefRepository.deleteMediaMatchTag(items.map{it.id}, tag.id, type)
-        }
-    }
-
-    suspend fun deleteTagsByName(names: List<String>) = tagRepository.deleteTagsByName(names)
-    suspend fun deleteTags(ids: List<Long>) = tagRepository.deleteTagsById(ids)
-
-    suspend fun mergeTags(primaryTagId: Long, otherTags: List<Long>){
-        tagCrossRefRepository.moveTagCrossRefs(primaryTagId, otherTags)
-        tagRepository.deleteTagsById(otherTags)
-    }
-
-    suspend fun moveItems(items: Set<MediaItem>, currentTagName: String, destinationTagName: String){
-        val destinationTag = tagRepository.getTagsByName(listOf(destinationTagName)).firstOrNull()?: return
-        moveItems(items, currentTagName, destinationTag.id)
-    }
-
-    suspend fun createNewTagAndMoveItems(items: Set<MediaItem>, currentTagName: String, newTagName: String){
-        val newTagId = tagRepository.insertTags(listOf(NewTag(name = newTagName))).firstOrNull()?: return
-        moveItems(items, currentTagName, newTagId)
-    }
-
-    private suspend fun moveItems(items: Set<MediaItem>, currentTagName: String, destinationTagId: Long){
-        val updatedCrossRef = items.map{ TagCrossRef(mediaId = it.id, tagId = destinationTagId, mediaType = it.type) }
+    private suspend fun moveItems(items: Set<MediaItem>, currentTagId: Long, newTagId: Long){
+        val updatedCrossRef = items.map{ TagCrossRef(mediaId = it.id, tagId = newTagId, mediaType = it.type) }
         tagCrossRefRepository.insertTagCrossRefs(updatedCrossRef)
 
-        val currentTag = tagRepository.getTagsByName(listOf(currentTagName)).firstOrNull()?: return
         items.groupBy { it.type }.forEach { (type, items) ->
-            tagCrossRefRepository.deleteMediaMatchTag(  items.map{it.id}, currentTag.id, type)
+            tagCrossRefRepository.deleteMediaMatchTag(  items.map{it.id}, currentTagId, type)
         }
     }
 }

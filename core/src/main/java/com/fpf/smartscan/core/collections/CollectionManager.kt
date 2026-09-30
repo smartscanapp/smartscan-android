@@ -7,8 +7,8 @@ interface CollectionManager<Item, Collection> {
     suspend fun delete(collectionIds: List<Long>){
         throw NotImplementedError()
     }
-    suspend fun remove(items: Set<Item>, collectionId: Long){
+    suspend fun remove(collectionId: Long, items: Set<Item>){
         throw NotImplementedError()
     }
-    suspend fun get(): List<Collection>
+    suspend fun getCollections(): List<Collection>
 }
