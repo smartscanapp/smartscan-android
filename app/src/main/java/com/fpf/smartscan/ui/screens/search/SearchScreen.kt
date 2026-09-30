@@ -428,11 +428,10 @@ fun SearchScreen(
 
             SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
          Grid(
-             item = { searchResults[it] },
+             items =searchResults,
              numGridColumns = appSettings.resultsPerRow,
-             key = searchResults.itemKey { it.id },
+             key =  { it.id },
              isVisible = searchResultsVisible,
-             count = searchResults.itemCount,
              onOffsetChange = { offset = it },
              maxCollapsePx = maxCollapsePx,
              headerRow = { Header("${state.totalResults} Results") },

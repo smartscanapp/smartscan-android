@@ -220,11 +220,10 @@ fun BinScreen(
             }
 
             Grid(
-                item = {items[it]},
+                items = items,
                 numGridColumns = appSettings.resultsPerRow,
-                key = items.itemKey { it.id },
+                key =  { it.id },
                 isVisible = items.itemCount > 0,
-                count = items.itemCount,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 itemContent = { item ->

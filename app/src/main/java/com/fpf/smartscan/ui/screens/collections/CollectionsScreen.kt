@@ -302,11 +302,10 @@ fun CollectionsScreen(
             }
 
             Grid(
-                item = {collections[it]},
+                items = collections,
                 numGridColumns = 3,
-                key = {collections[it].id},
+                key = {it.id},
                 isVisible = isCollectionVisible,
-                count = collections.size,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 itemContent = { item ->

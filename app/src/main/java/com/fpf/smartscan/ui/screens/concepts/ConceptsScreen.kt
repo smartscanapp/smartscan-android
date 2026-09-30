@@ -231,11 +231,10 @@ fun ConceptsScreen(
                 )
             }
             StaggeredGrid(
-                item = {concepts[it]},
+                items = concepts,
                 numGridColumns = 2,
-                key = {concepts[it].id},
+                key = {it.id},
                 isVisible = isConceptsVisible,
-                count = concepts.size,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 itemContent = { item ->
