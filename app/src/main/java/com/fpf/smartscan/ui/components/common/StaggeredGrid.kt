@@ -1,6 +1,5 @@
 package com.fpf.smartscan.ui.components.common
 
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,15 +33,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun <T: Any>LazyPagingStaggeredGrid(
-    items: LazyPagingItems<T>,
-    key: (T) -> Any,
+fun <T: Any>StaggeredGrid(
+    count: Int,
+    key: (Int) -> Any,
+    item: (Int) -> T?,
     isVisible: Boolean,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
@@ -113,12 +111,9 @@ fun <T: Any>LazyPagingStaggeredGrid(
             }
 
             items(
-                count = items.itemCount,
-                key = items.itemKey { key(it) }
-            ) { index ->
-                val item = items[index] ?: return@items
-                itemContent(item)
-            }
+                count = count,
+                key = key
+            ) { index -> item(index)?.let{itemContent(it)}?: return@items }
         }
 
         AnimatedVisibility(

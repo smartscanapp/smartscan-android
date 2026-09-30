@@ -63,7 +63,8 @@ import com.fpf.smartscan.ui.components.buttons.CustomFloatingActionButton
 import com.fpf.smartscan.ui.components.collections.MultiCollectionPicker
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.LoadingIndicator
-import com.fpf.smartscan.ui.components.concepts.ConceptsList
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
+import com.fpf.smartscan.ui.components.concepts.ConceptCard
 import com.fpf.smartscan.utils.isConnectedToWifi
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -229,29 +230,33 @@ fun ConceptsScreen(
                     onSelectAllChange = { viewModel.onAction(ConceptAction.SetSelectAll(it)) }
                 )
             }
-
-            ConceptsList(
-                isVisible = isConceptsVisible,
+            StaggeredGrid(
+                item = {concepts[it]},
                 numGridColumns = 2,
-                items = concepts,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                selectedItems = state.selection.selectedItems,
-                excludedItems = state.selection.excludedItems,
-                onItemClick = {
-                    if (state.selection.isSelecting) {
-                        viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
-                    } else {
-                        viewModel.onAction(ConceptAction.SetConceptToView(it))
-                    }
-                },
-                onItemLongClick = {
-                    viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
-                    viewModel.onAction(ConceptAction.ToggleSelectionMode)
-                    offset = 0
-                },
+                key = {concepts[it].id},
+                isVisible = isConceptsVisible,
+                count = concepts.size,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
+                itemContent = { item ->
+                    ConceptCard(
+                        item=item,
+                        onItemClick = {
+                            if (state.selection.isSelecting) {
+                                viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
+                            } else {
+                                viewModel.onAction(ConceptAction.SetConceptToView(it))
+                            }
+                        },
+                        onItemLongClick = {
+                            viewModel.onAction(ConceptAction.ToggleSelectedConcept(it))
+                            viewModel.onAction(ConceptAction.ToggleSelectionMode)
+                            offset = 0
+                        },
+                        isSelecting = state.selection.isSelecting,
+                        isChecked = { item in state.selection.selectedItems || ( state.selection.selectAll && item !in  state.selection.excludedItems)},
+                    )
+                }
             )
             EmptyConceptsScreen(
                 isVisible = !isConceptsVisible,
