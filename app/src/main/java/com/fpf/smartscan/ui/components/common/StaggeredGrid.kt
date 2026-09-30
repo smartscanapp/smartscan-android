@@ -47,7 +47,7 @@ fun <T: Any>StaggeredGrid(
     onOffsetChange:( (Int) -> Unit)? = null,
     itemContent: @Composable (T) -> Unit,
     headerRow: (@Composable () -> Unit)? = null,
-    overview: (@Composable () -> Unit)? = null,
+    children: (@Composable () -> Unit)? = null,
 ) {
     if (!isVisible) return
 
@@ -104,7 +104,7 @@ fun <T: Any>StaggeredGrid(
             contentPadding = PaddingValues(0.dp)
         ) {
             item(span = StaggeredGridItemSpan.FullLine) {
-                overview?.invoke()
+                children?.invoke()
             }
             item(span = StaggeredGridItemSpan.FullLine) {
                 headerRow?.invoke()
