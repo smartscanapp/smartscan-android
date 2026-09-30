@@ -23,17 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
 
 @Composable
 fun MultiCollectionPicker(
     collections: List<MediaCollection>,
     onClose: () -> Unit,
     onSaveSelectedCollections: () -> Unit,
-    selectedItems: Set<MediaCollection> = emptySet(),
-    excludedItems: Set<MediaCollection> = emptySet(),
     onItemClick: (MediaCollection) -> Unit,
-    selectAll: Boolean = false,
-) {
+    isChecked: (MediaCollection) -> Boolean,
+    ) {
 
     Popup(
         onDismissRequest = { onClose() },
@@ -73,15 +72,20 @@ fun MultiCollectionPicker(
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
-                    MediaCollectionsList(
-                        isVisible = true,
+                    StaggeredGrid(
+                        item = {collections[it]},
                         numGridColumns = 3,
-                        items = collections,
-                        selectedItems= selectedItems,
-                        excludedItems=excludedItems,
-                        onItemClick= onItemClick,
-                        isSelecting = true,
-                        selectAll  = selectAll,
+                        key = {collections[it].id},
+                        isVisible = true,
+                        count = collections.size,
+                        itemContent = { item ->
+                            CollectionCard(
+                                item=item,
+                                isSelecting = true,
+                                onItemClick= onItemClick,
+                                isChecked = {isChecked(item)}
+                            )
+                        }
                     )
                 }
             }

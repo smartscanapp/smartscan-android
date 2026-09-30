@@ -50,7 +50,6 @@ import androidx.compose.ui.zIndex
 import com.fpf.smartscan.ui.components.modals.SelectorModal
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.modals.TextInputModal
-import com.fpf.smartscan.ui.components.collections.MediaCollectionsList
 import com.fpf.smartscan.ui.screens.collections.CollectionsViewModel.Companion.TOP_N
 import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
@@ -64,7 +63,9 @@ import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.collections.CollectionCard
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import org.koin.compose.viewmodel.koinViewModel
 
 
@@ -300,28 +301,33 @@ fun CollectionsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            MediaCollectionsList(
-                isVisible = isCollectionVisible,
+            StaggeredGrid(
+                item = {collections[it]},
                 numGridColumns = 3,
-                items = collections,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                selectedItems = state.selection.selectedItems,
-                excludedItems = state.selection.excludedItems,
-                onItemClick = {
-                    if(state.selection.isSelecting){
-                        viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
-                    }else{
-                        viewModel.onAction(CollectionAction.SetCollectionToView(it))
-                    }
-                              },
-                onLongItemClick = {
-                    viewModel.onAction(CollectionAction.ToggleSelectionMode)
-                    viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
-                    offset = 0
-                },
-                onOffsetChange = {  offset = it },
+                key = {collections[it].id},
+                isVisible = isCollectionVisible,
+                count = collections.size,
+                onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
+                itemContent = { item ->
+                    CollectionCard(
+                        item=item,
+                        onItemClick = {
+                            if(state.selection.isSelecting){
+                                viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
+                            }else{
+                                viewModel.onAction(CollectionAction.SetCollectionToView(it))
+                            }
+                        },
+                        onLongItemClick = {
+                            viewModel.onAction(CollectionAction.ToggleSelectionMode)
+                            viewModel.onAction(CollectionAction.ToggleSelectedCollection(it))
+                            offset = 0
+                        },
+                        isSelecting = state.selection.isSelecting,
+                        isChecked = { item in state.selection.selectedItems || ( state.selection.selectAll && item !in  state.selection.excludedItems)},
+                    )
+                }
             )
 
             EmptyCollectionScreen(isVisible = !isCollectionVisible, isMainScanRequired =isMainScanRequired, collectionType = state.collectionType )

@@ -314,13 +314,13 @@ fun ConceptsScreen(
         MultiCollectionPicker(
             collections = collections,
             onClose = { viewModel.onAction(ConceptAction.SetCollectionType(null)) },
-            selectedItems = state.collectionsSelection.selectedItems,
             onItemClick = {
                 viewModel.onAction(ConceptAction.ToggleSelectedCollection(it))
             },
             onSaveSelectedCollections = {
                 viewModel.onAction(ConceptAction.SetAllowedCollections)
             },
+            isChecked = {item -> item in state.collectionsSelection.selectedItems}
         )
     }
 

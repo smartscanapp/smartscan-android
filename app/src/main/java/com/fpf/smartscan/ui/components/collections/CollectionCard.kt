@@ -33,7 +33,7 @@ fun CollectionCard(
     modifier: Modifier = Modifier,
     onItemClick: (MediaCollection) -> Unit,
     onLongItemClick: ((item: MediaCollection) -> Unit)? = null,
-    isChecked: () -> Boolean,
+    isChecked: (() -> Boolean)? = null,
     isSelecting: Boolean = false,
 ) {
     Column{
@@ -63,7 +63,7 @@ fun CollectionCard(
 
             if (isSelecting) {
                 CircularCheckbox(
-                    checked = isChecked(),
+                    checked = isChecked?.invoke()?: false,
                     onCheckedChange = { onItemClick(item) },
                     modifier = Modifier
                         .offset(x = 8.dp, y = 8.dp)

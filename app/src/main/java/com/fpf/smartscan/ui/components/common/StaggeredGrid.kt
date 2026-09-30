@@ -44,7 +44,7 @@ fun <T: Any>StaggeredGrid(
     isVisible: Boolean,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
-    onOffsetChange: (Int) -> Unit,
+    onOffsetChange:( (Int) -> Unit)? = null,
     itemContent: @Composable (T) -> Unit,
     headerRow: (@Composable () -> Unit)? = null,
     overview: (@Composable () -> Unit)? = null,
@@ -65,7 +65,7 @@ fun <T: Any>StaggeredGrid(
             ): Offset {
                 val deltaPx = -available.y
                 totalScrollPx = (totalScrollPx + deltaPx.roundToInt()).coerceIn(0, maxCollapsePx)
-                onOffsetChange(totalScrollPx)
+                onOffsetChange?.invoke(totalScrollPx)
                 return Offset.Zero
             }
         }
@@ -128,7 +128,7 @@ fun <T: Any>StaggeredGrid(
                 onClick = {
                     scope.launch {
                         showScrollToTop = false
-                        onOffsetChange(0)
+                        onOffsetChange?.invoke(0)
                         gridState.scrollToItem(0)
                     }
                 },
