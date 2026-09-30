@@ -2,7 +2,7 @@ package com.fpf.smartscan.core.data.tags
 
 import com.fpf.smartscan.core.data.mappers.toDomain
 import com.fpf.smartscan.core.data.mappers.toEntity
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.tag.NewTag
 import com.fpf.smartscan.core.tag.Tag

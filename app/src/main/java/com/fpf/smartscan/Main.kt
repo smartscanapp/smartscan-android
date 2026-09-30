@@ -22,7 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.fpf.smartscan.core.concepts.Concept
 import com.fpf.smartscan.core.models.ModelDownloadStatus
 import com.fpf.smartscan.core.index.IndexingStatus
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.navigation.Routes
 import com.fpf.smartscan.navigation.BottomNavigationBar

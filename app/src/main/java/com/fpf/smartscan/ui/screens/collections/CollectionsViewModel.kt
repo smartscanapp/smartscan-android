@@ -6,10 +6,10 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpf.smartscan.core.cluster.ClusterManager
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.events.CollectionEvent
 import com.fpf.smartscan.events.CollectionEventType
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 import com.fpf.smartscan.core.tag.TagManager
 import com.fpf.smartscan.ui.utils.SelectionUtils
 import kotlinx.coroutines.Dispatchers

@@ -47,7 +47,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.fpf.smartscan.R
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.ui.components.modals.TextInputModal

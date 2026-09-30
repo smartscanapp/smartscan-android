@@ -1,4 +1,4 @@
-package com.fpf.smartscan.core.media
+package com.fpf.smartscan.core.collections
 
 import android.net.Uri
 import android.os.Parcelable

@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 
 @Composable
 fun EmptyCollectionScreen(

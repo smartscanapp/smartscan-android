@@ -54,8 +54,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.core.media.CollectionType
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.CollectionType
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.format
@@ -70,7 +70,6 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.common.Grid
-import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal

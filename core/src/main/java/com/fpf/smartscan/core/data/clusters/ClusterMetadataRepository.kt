@@ -3,7 +3,7 @@ package com.fpf.smartscan.core.data.clusters
 import com.fpf.smartscan.core.cluster.StoredClusterMetadata
 import com.fpf.smartscan.core.data.mappers.toDomain
 import com.fpf.smartscan.core.data.mappers.toEntity
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

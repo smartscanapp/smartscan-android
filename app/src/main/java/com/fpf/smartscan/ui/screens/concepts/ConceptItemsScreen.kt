@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +38,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.concepts.Concept
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.PlayerPool

@@ -5,10 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.compose.AsyncImagePainter
 import com.fpf.smartscan.core.data.clusters.ClusterMetadataRepository
-import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.core.data.tags.TagRepository
-import com.fpf.smartscan.core.media.CollectionType
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.CollectionType
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaJobManager
 import com.fpf.smartscan.core.media.MediaType

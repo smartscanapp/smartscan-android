@@ -17,14 +17,14 @@ import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.constants.PrefsKeys
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.data.paging.TagPagingSource
 import com.fpf.smartscan.core.data.paging.ClusterPagingSource
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionItemEvent
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti

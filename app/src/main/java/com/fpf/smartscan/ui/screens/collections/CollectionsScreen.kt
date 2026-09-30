@@ -55,9 +55,9 @@ import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
 import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.events.CollectionEventType
-import com.fpf.smartscan.core.media.CollectionType
-import com.fpf.smartscan.core.media.MediaCollection
-import com.fpf.smartscan.core.media.MediaCollection.Companion.UNLABELLED_COLLECTION
+import com.fpf.smartscan.core.collections.CollectionType
+import com.fpf.smartscan.core.collections.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection.Companion.UNLABELLED_COLLECTION
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
@@ -66,7 +66,6 @@ import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.collections.CollectionCard
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.Grid
-import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import org.koin.compose.viewmodel.koinViewModel
 
 

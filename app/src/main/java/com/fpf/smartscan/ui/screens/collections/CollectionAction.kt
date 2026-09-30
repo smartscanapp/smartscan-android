@@ -1,7 +1,7 @@
 package com.fpf.smartscan.ui.screens.collections
 
-import com.fpf.smartscan.core.media.CollectionType
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.CollectionType
+import com.fpf.smartscan.core.collections.MediaCollection
 
 sealed interface CollectionAction {
     data class MergeCollections(val primaryCollectionName: String, val isNewMergedLabel: Boolean = false): CollectionAction
