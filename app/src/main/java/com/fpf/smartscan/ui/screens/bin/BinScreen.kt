@@ -57,6 +57,7 @@ import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
+import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
@@ -218,7 +219,7 @@ fun BinScreen(
                 )
             }
 
-            StaggeredGrid(
+            Grid(
                 item = {items[it]},
                 numGridColumns = appSettings.resultsPerRow,
                 key = items.itemKey { it.id },

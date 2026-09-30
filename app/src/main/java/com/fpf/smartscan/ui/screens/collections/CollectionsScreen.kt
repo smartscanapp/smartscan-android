@@ -65,6 +65,7 @@ import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.collections.CollectionCard
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -301,7 +302,7 @@ fun CollectionsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            StaggeredGrid(
+            Grid(
                 item = {collections[it]},
                 numGridColumns = 3,
                 key = {collections[it].id},

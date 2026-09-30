@@ -63,6 +63,7 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
+import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.Header
 import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
@@ -427,36 +428,36 @@ fun SearchScreen(
             }
 
             SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
-            StaggeredGrid(
-                 item = {searchResults[it]},
-                 numGridColumns = appSettings.resultsPerRow,
-                 key = searchResults.itemKey { it.id },
-                 isVisible = searchResultsVisible,
-                 count = searchResults.itemCount,
-                 onOffsetChange = { offset = it },
-                 maxCollapsePx = maxCollapsePx,
-                 headerRow = { Header("${state.totalResults} Results") },
-                 itemContent = { item ->
-                     MediaItemCard(
-                         item=item,
-                         onItemClick = {
-                             if(state.selection.isSelecting){
-                                 searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
-                             }else{
-                                 searchViewModel.onAction(SearchAction.ViewResult(it))
-                             }
-                         },
-                         onLongItemClick = {
-                             searchViewModel.onAction(SearchAction.ToggleSelectionMode)
+         Grid(
+             item = { searchResults[it] },
+             numGridColumns = appSettings.resultsPerRow,
+             key = searchResults.itemKey { it.id },
+             isVisible = searchResultsVisible,
+             count = searchResults.itemCount,
+             onOffsetChange = { offset = it },
+             maxCollapsePx = maxCollapsePx,
+             headerRow = { Header("${state.totalResults} Results") },
+             itemContent = { item ->
+                 MediaItemCard(
+                     item = item,
+                     onItemClick = {
+                         if (state.selection.isSelecting) {
                              searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
-                             offset = 0
-                         },
-                         isSelecting = state.selection.isSelecting,
-                         isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
-                         onError = mediaViewModel::onErrorAsyncImage
-                     )
-                 }
-            )
+                         } else {
+                             searchViewModel.onAction(SearchAction.ViewResult(it))
+                         }
+                     },
+                     onLongItemClick = {
+                         searchViewModel.onAction(SearchAction.ToggleSelectionMode)
+                         searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
+                         offset = 0
+                     },
+                     isSelecting = state.selection.isSelecting,
+                     isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems) },
+                     onError = mediaViewModel::onErrorAsyncImage
+                 )
+             }
+         )
         }
 
         if(state.resultToView != null && mediaItems != null){

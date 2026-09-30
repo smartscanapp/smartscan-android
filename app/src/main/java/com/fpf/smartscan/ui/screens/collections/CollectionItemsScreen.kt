@@ -69,6 +69,7 @@ import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
+import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
@@ -299,60 +300,61 @@ fun CollectionItemsScreen(
         modifier = Modifier.fillMaxSize()
     ) {
        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top
+        ) {
+            SlideRevealBox(
+                isVisible = state.selection.isSelecting,
+                reverse = true,
+                offsetPx = offset,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Top
+                    .zIndex(1f)
+                    .heightIn(max = maxCollapsablePx.dp)
+                    .padding(bottom = 8.dp)
             ) {
-                SlideRevealBox(
-                    isVisible = state.selection.isSelecting,
-                    reverse = true,
-                    offsetPx = offset,
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .heightIn(max = maxCollapsablePx.dp)
-                        .padding(bottom = 8.dp)
-                ) {
-                    SelectionHeaderRow(
-                        selectedCount = state.selection.selectedCount,
-                        checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalItems),
-                        onSelectAllChange = { viewModel.onAction(CollectionItemAction.SetSelectAll(it)) }
-                    )
-                }
-
-                StaggeredGrid(
-                    item = {items[it]},
-                    numGridColumns = appSettings.resultsPerRow,
-                    key = items.itemKey { it.id },
-                    isVisible = items.itemCount > 0,
-                    count = items.itemCount,
-                    onOffsetChange = { offset = it },
-                    maxCollapsePx = maxCollapsablePx,
-                    itemContent = { item ->
-                        MediaItemCard(
-                           item=item,
-                           onItemClick = {
-                               if(state.selection.isSelecting){
-                                   viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                               }else {
-                                   viewModel.onAction(CollectionItemAction.SetMediaToView(it))
-                               }
-                           },
-                           onLongItemClick = {
-                               viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
-                               viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                               offset = 0
-                           },
-                           isSelecting = state.selection.isSelecting,
-                           isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
-                           onError = mediaViewModel::onErrorAsyncImage
-                        )
-                    }
-                )
-                EmptyItemsScreen(
-                    isVisible = items.itemCount == 0
+                SelectionHeaderRow(
+                    selectedCount = state.selection.selectedCount,
+                    checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalItems),
+                    onSelectAllChange = { viewModel.onAction(CollectionItemAction.SetSelectAll(it)) }
                 )
             }
+
+            Grid(
+               item = {items[it]},
+               numGridColumns = appSettings.resultsPerRow,
+               key = items.itemKey { it.id },
+               isVisible = items.itemCount > 0,
+               count = items.itemCount,
+               onOffsetChange = { offset = it },
+               maxCollapsePx = maxCollapsablePx,
+               itemContent = { item ->
+                   MediaItemCard(
+                      item=item,
+                      onItemClick = {
+                          if(state.selection.isSelecting){
+                              viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                          }else {
+                              viewModel.onAction(CollectionItemAction.SetMediaToView(it))
+                          }
+                      },
+                      onLongItemClick = {
+                          viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                          viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                          offset = 0
+                      },
+                      isSelecting = state.selection.isSelecting,
+                      isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
+                      onError = mediaViewModel::onErrorAsyncImage
+                   )
+               }
+           )
+
+            EmptyItemsScreen(
+                isVisible = items.itemCount == 0
+            )
+        }
 
         if(state.mediaToView != null && mediaItems != null){
             AnimatedVisibility(
