@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.media.MediaCollection
@@ -62,7 +63,9 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
-import com.fpf.smartscan.ui.components.media.MediaItemsList
+import com.fpf.smartscan.ui.components.common.Header
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
+import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
 import com.fpf.smartscan.ui.components.pickers.DateRangePicker
@@ -424,31 +427,35 @@ fun SearchScreen(
             }
 
             SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
-
-            MediaItemsList(
-                headerTitle = "${state.totalResults} Results",
-                isVisible = searchResultsVisible,
-                numGridColumns = appSettings.resultsPerRow,
-                items = searchResults,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                excludedItems = state.selection.excludedItems,
-                selectedItems = state.selection.selectedItems,
-                onItemClick = {
-                    if(state.selection.isSelecting){
-                        searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
-                    }else{
-                        searchViewModel.onAction(SearchAction.ViewResult(it))
-                    }
-                              },
-                onLongItemClick = {
-                    searchViewModel.onAction(SearchAction.ToggleSelectionMode)
-                    searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
-                    offset = 0
-                },
-                onOffsetChange = { offset = it },
-                maxCollapsePx = maxCollapsePx,
-                onError = mediaViewModel::onErrorAsyncImage
+            StaggeredGrid(
+                 item = {searchResults[it]},
+                 numGridColumns = appSettings.resultsPerRow,
+                 key = searchResults.itemKey { it.id },
+                 isVisible = searchResultsVisible,
+                 count = searchResults.itemCount,
+                 onOffsetChange = { offset = it },
+                 maxCollapsePx = maxCollapsePx,
+                 headerRow = { Header("${state.totalResults} Results") },
+                 itemContent = { item ->
+                     MediaItemCard(
+                         item=item,
+                         onItemClick = {
+                             if(state.selection.isSelecting){
+                                 searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
+                             }else{
+                                 searchViewModel.onAction(SearchAction.ViewResult(it))
+                             }
+                         },
+                         onLongItemClick = {
+                             searchViewModel.onAction(SearchAction.ToggleSelectionMode)
+                             searchViewModel.onAction(SearchAction.ToggleSelectedResult(it))
+                             offset = 0
+                         },
+                         isSelecting = state.selection.isSelecting,
+                         isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
+                         onError = mediaViewModel::onErrorAsyncImage
+                     )
+                 }
             )
         }
 

@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.navigation.TopBarState
@@ -56,7 +57,8 @@ import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.components.media.MediaItemsList
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
+import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.placeholders.EmptyItemsScreen
 import com.fpf.smartscan.ui.shared.MediaViewModel
@@ -215,29 +217,35 @@ fun BinScreen(
                     onSelectAllChange = { viewModel.onAction(BinAction.SetSelectAll(it)) }
                 )
             }
-            MediaItemsList(
-                isVisible = items.itemCount > 0,
+
+            StaggeredGrid(
+                item = {items[it]},
                 numGridColumns = appSettings.resultsPerRow,
-                items = items,
-                isSelecting = state.selection.isSelecting,
-                selectAll = state.selection.selectAll,
-                excludedItems = state.selection.excludedItems,
-                selectedItems = state.selection.selectedItems,
-                onItemClick = { item ->
-                    if(state.selection.isSelecting){
-                        viewModel.onAction(BinAction.ToggleSelectedMedia(item))
-                    }else{
-                        viewModel.onAction(BinAction.SetMediaToView(item))
-                    }
-                },
-                onLongItemClick = {
-                    viewModel.onAction(BinAction.ToggleSelectionMode)
-                    viewModel.onAction(BinAction.ToggleSelectedMedia(it))
-                    offset = 0
-                },
+                key = items.itemKey { it.id },
+                isVisible = items.itemCount > 0,
+                count = items.itemCount,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
-                onError = mediaViewModel::onErrorAsyncImage
+                itemContent = { item ->
+                    MediaItemCard(
+                        item=item,
+                        onItemClick = { item ->
+                            if(state.selection.isSelecting){
+                                viewModel.onAction(BinAction.ToggleSelectedMedia(item))
+                            }else{
+                                viewModel.onAction(BinAction.SetMediaToView(item))
+                            }
+                        },
+                        onLongItemClick = {
+                            viewModel.onAction(BinAction.ToggleSelectionMode)
+                            viewModel.onAction(BinAction.ToggleSelectedMedia(it))
+                            offset = 0
+                        },
+                        isSelecting = state.selection.isSelecting,
+                        isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
+                        onError = mediaViewModel::onErrorAsyncImage
+                    )
+                }
             )
 
             EmptyItemsScreen(

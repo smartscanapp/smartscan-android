@@ -2,7 +2,6 @@ package com.fpf.smartscan.ui.screens.collections
 
 import android.app.Activity
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +51,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.CollectionItemEventType
 import com.fpf.smartscan.core.media.CollectionType
@@ -69,8 +68,9 @@ import com.fpf.smartscan.ui.components.common.SlideRevealBox
 import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
-import com.fpf.smartscan.ui.components.media.MediaItemsList
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
+import com.fpf.smartscan.ui.components.common.StaggeredGrid
+import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
@@ -316,40 +316,39 @@ fun CollectionItemsScreen(
                     SelectionHeaderRow(
                         selectedCount = state.selection.selectedCount,
                         checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalItems),
-                        onSelectAllChange = {
-                            viewModel.onAction(
-                                CollectionItemAction.SetSelectAll(
-                                    it
-                                )
-                            )
-                        }
+                        onSelectAllChange = { viewModel.onAction(CollectionItemAction.SetSelectAll(it)) }
                     )
                 }
-                MediaItemsList(
-                    isVisible = items.itemCount > 0,
+
+                StaggeredGrid(
+                    item = {items[it]},
                     numGridColumns = appSettings.resultsPerRow,
-                    items = items,
-                    isSelecting = state.selection.isSelecting,
-                    selectAll = state.selection.selectAll,
-                    excludedItems = state.selection.excludedItems,
-                    selectedItems = state.selection.selectedItems,
-                    onItemClick = {
-                        if(state.selection.isSelecting){
-                            viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                        }else {
-                            viewModel.onAction(CollectionItemAction.SetMediaToView(it))
-                        }
-                    },
-                    onLongItemClick = {
-                        viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
-                        viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                        offset = 0
-                    },
+                    key = items.itemKey { it.id },
+                    isVisible = items.itemCount > 0,
+                    count = items.itemCount,
                     onOffsetChange = { offset = it },
                     maxCollapsePx = maxCollapsablePx,
-                    onError = mediaViewModel::onErrorAsyncImage
+                    itemContent = { item ->
+                        MediaItemCard(
+                           item=item,
+                           onItemClick = {
+                               if(state.selection.isSelecting){
+                                   viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                               }else {
+                                   viewModel.onAction(CollectionItemAction.SetMediaToView(it))
+                               }
+                           },
+                           onLongItemClick = {
+                               viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                               viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                               offset = 0
+                           },
+                           isSelecting = state.selection.isSelecting,
+                           isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
+                           onError = mediaViewModel::onErrorAsyncImage
+                        )
+                    }
                 )
-
                 EmptyItemsScreen(
                     isVisible = items.itemCount == 0
                 )
