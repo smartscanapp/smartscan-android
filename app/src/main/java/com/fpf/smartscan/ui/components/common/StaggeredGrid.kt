@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
@@ -33,19 +34,76 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun <T: Any>StaggeredGrid(
-    count: Int,
-    key: (Int) -> Any,
-    item: (Int) -> T?,
+fun <T : Any> StaggeredGrid(
+    items: LazyPagingItems<T>,
     isVisible: Boolean,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
-    onOffsetChange:( (Int) -> Unit)? = null,
+    key: ((T) -> Any)? = null,
+    onOffsetChange: ((Int) -> Unit)? = null,
     itemContent: @Composable (T) -> Unit,
+    headerRow: (@Composable () -> Unit)? = null,
+    children: (@Composable () -> Unit)? = null,
+) {
+    StaggeredGridContainer(
+        isVisible = isVisible,
+        numGridColumns = numGridColumns,
+        maxCollapsePx = maxCollapsePx,
+        onOffsetChange = onOffsetChange,
+        headerRow = headerRow,
+        children = children,
+        gridItems = { gridScope ->
+            gridScope.items(
+                count = items.itemCount,
+                key = key?.let{ keyFunction -> items.itemKey { keyFunction(it) }}
+            ) { index -> items[index]?.let{itemContent(it)}?: return@items }
+        }
+    )
+}
+
+@Composable
+fun <T : Any> StaggeredGrid(
+    items: List<T>,
+    isVisible: Boolean,
+    numGridColumns: Int = 2,
+    maxCollapsePx: Int = 0,
+    key: ((T) -> Any)? = null,
+    onOffsetChange: ((Int) -> Unit)? = null,
+    itemContent: @Composable (T) -> Unit,
+    headerRow: (@Composable () -> Unit)? = null,
+    children: (@Composable () -> Unit)? = null,
+) {
+    StaggeredGridContainer(
+        isVisible = isVisible,
+        numGridColumns = numGridColumns,
+        maxCollapsePx = maxCollapsePx,
+        onOffsetChange = onOffsetChange,
+        headerRow = headerRow,
+        children = children,
+        gridItems = { gridScope ->
+            gridScope.items(
+                count = items.size,
+                key = key?.let { itemKey -> { index -> itemKey(items[index]) } }
+            ) { index -> itemContent(items[index]) }
+        }
+    )
+}
+
+
+
+@Composable
+private fun StaggeredGridContainer(
+    isVisible: Boolean,
+    numGridColumns: Int = 2,
+    maxCollapsePx: Int = 0,
+    gridItems: (LazyStaggeredGridScope) -> Unit,
+    onOffsetChange:( (Int) -> Unit)? = null,
     headerRow: (@Composable () -> Unit)? = null,
     children: (@Composable () -> Unit)? = null,
 ) {
@@ -56,6 +114,7 @@ fun <T: Any>StaggeredGrid(
 
     var showScrollToTop by remember { mutableStateOf(false) }
     var totalScrollPx by remember { mutableIntStateOf(0) }
+    var initialVisibleItemCount by remember { mutableIntStateOf(0) }
 
     val connection = remember {
         object : NestedScrollConnection {
@@ -78,14 +137,20 @@ fun <T: Any>StaggeredGrid(
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
         }.collect { (index, offset) ->
-
+            val visibleItemCount = gridState.layoutInfo.visibleItemsInfo.size
             val movedDown = index > previousIndex || (index == previousIndex && offset > previousOffset)
             val movedUp = index < previousIndex || (index == previousIndex && offset < previousOffset)
+
+            if (initialVisibleItemCount == 0 && visibleItemCount > 0) {
+                initialVisibleItemCount = visibleItemCount
+            }
+
+            val scrolledPastThreshold = initialVisibleItemCount > 0 && index >= 2 * initialVisibleItemCount
 
             showScrollToTop = when {
                 index == 0 && offset == 0 -> false
                 movedUp -> false
-                movedDown -> true
+                movedDown && scrolledPastThreshold -> true
                 else -> showScrollToTop
             }
 
@@ -93,6 +158,7 @@ fun <T: Any>StaggeredGrid(
             previousOffset = offset
         }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         LazyVerticalStaggeredGrid (
@@ -109,11 +175,7 @@ fun <T: Any>StaggeredGrid(
             item(span = StaggeredGridItemSpan.FullLine) {
                 headerRow?.invoke()
             }
-
-            items(
-                count = count,
-                key = key
-            ) { index -> item(index)?.let{itemContent(it)}?: return@items }
+            gridItems(this)
         }
 
         AnimatedVisibility(

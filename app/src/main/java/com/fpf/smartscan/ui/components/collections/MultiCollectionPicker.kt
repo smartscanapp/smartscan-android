@@ -22,8 +22,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import com.fpf.smartscan.core.media.MediaCollection
-import com.fpf.smartscan.ui.components.common.StaggeredGrid
+import com.fpf.smartscan.core.collections.MediaCollection
+import com.fpf.smartscan.ui.components.common.Grid
 
 @Composable
 fun MultiCollectionPicker(
@@ -72,12 +72,11 @@ fun MultiCollectionPicker(
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
-                    StaggeredGrid(
-                        item = {collections[it]},
+                    Grid(
+                        items = collections,
                         numGridColumns = 3,
-                        key = {collections[it].id},
+                        key = {it.id},
                         isVisible = true,
-                        count = collections.size,
                         itemContent = { item ->
                             CollectionCard(
                                 item=item,

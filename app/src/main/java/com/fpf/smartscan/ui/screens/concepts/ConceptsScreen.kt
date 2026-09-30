@@ -53,7 +53,7 @@ import kotlinx.coroutines.FlowPreview
 import com.fpf.smartscan.R
 import androidx.compose.ui.res.stringResource
 import com.fpf.smartscan.core.concepts.Concept
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.ActionBar
@@ -231,11 +231,10 @@ fun ConceptsScreen(
                 )
             }
             StaggeredGrid(
-                item = {concepts[it]},
+                items = concepts,
                 numGridColumns = 2,
-                key = {concepts[it].id},
+                key = {it.id},
                 isVisible = isConceptsVisible,
-                count = concepts.size,
                 onOffsetChange = { offset = it },
                 maxCollapsePx = maxCollapsablePx,
                 itemContent = { item ->

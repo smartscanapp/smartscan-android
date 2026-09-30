@@ -1,6 +1,6 @@
 package com.fpf.smartscan.ui.screens.collections
 
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaFilter
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.search.SortBy

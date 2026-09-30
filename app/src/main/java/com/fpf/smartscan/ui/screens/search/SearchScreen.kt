@@ -42,7 +42,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.SearchEventType
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.format
@@ -65,7 +65,6 @@ import com.fpf.smartscan.ui.action.MenuActionConfig
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.Header
-import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
@@ -429,11 +428,10 @@ fun SearchScreen(
 
             SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
          Grid(
-             item = { searchResults[it] },
+             items =searchResults,
              numGridColumns = appSettings.resultsPerRow,
-             key = searchResults.itemKey { it.id },
+             key =  { it.id },
              isVisible = searchResultsVisible,
-             count = searchResults.itemCount,
              onOffsetChange = { offset = it },
              maxCollapsePx = maxCollapsePx,
              headerRow = { Header("${state.totalResults} Results") },

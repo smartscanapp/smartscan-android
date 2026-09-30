@@ -51,11 +51,10 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.core.media.CollectionType
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.CollectionType
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.format
@@ -70,7 +69,6 @@ import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.components.collections.CollectionPicker
 import com.fpf.smartscan.ui.components.common.Grid
-import com.fpf.smartscan.ui.components.common.StaggeredGrid
 import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.modals.TextInputModal
@@ -321,35 +319,34 @@ fun CollectionItemsScreen(
                 )
             }
 
-            Grid(
-               item = {items[it]},
-               numGridColumns = appSettings.resultsPerRow,
-               key = items.itemKey { it.id },
-               isVisible = items.itemCount > 0,
-               count = items.itemCount,
-               onOffsetChange = { offset = it },
-               maxCollapsePx = maxCollapsablePx,
-               itemContent = { item ->
-                   MediaItemCard(
-                      item=item,
-                      onItemClick = {
-                          if(state.selection.isSelecting){
-                              viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                          }else {
-                              viewModel.onAction(CollectionItemAction.SetMediaToView(it))
-                          }
-                      },
-                      onLongItemClick = {
-                          viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
-                          viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
-                          offset = 0
-                      },
-                      isSelecting = state.selection.isSelecting,
-                      isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
-                      onError = mediaViewModel::onErrorAsyncImage
-                   )
-               }
-           )
+           Grid(
+              items = items,
+              numGridColumns = appSettings.resultsPerRow,
+              key = {it.id},
+              isVisible = items.itemCount > 0,
+              onOffsetChange = { offset = it },
+              maxCollapsePx = maxCollapsablePx,
+              itemContent = { item ->
+                  MediaItemCard(
+                     item=item,
+                     onItemClick = {
+                         if(state.selection.isSelecting){
+                             viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                         }else {
+                             viewModel.onAction(CollectionItemAction.SetMediaToView(it))
+                         }
+                     },
+                     onLongItemClick = {
+                         viewModel.onAction(CollectionItemAction.ToggleSelectionMode)
+                         viewModel.onAction(CollectionItemAction.ToggleSelectedMedia(it))
+                         offset = 0
+                     },
+                     isSelecting = state.selection.isSelecting,
+                     isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems)},
+                     onError = mediaViewModel::onErrorAsyncImage
+                  )
+              }
+          )
 
             EmptyItemsScreen(
                 isVisible = items.itemCount == 0

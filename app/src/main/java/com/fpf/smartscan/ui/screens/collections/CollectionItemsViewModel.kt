@@ -17,14 +17,14 @@ import androidx.paging.cachedIn
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.cluster.ClusterManager
 import com.fpf.smartscan.constants.PrefsKeys
-import com.fpf.smartscan.core.media.MediaCollection
+import com.fpf.smartscan.core.collections.MediaCollection
 import com.fpf.smartscan.core.data.paging.TagPagingSource
 import com.fpf.smartscan.core.data.paging.ClusterPagingSource
 import com.fpf.smartscan.core.data.mappers.toItem
 import com.fpf.smartscan.core.data.media.MediaMetadataRepository
 import com.fpf.smartscan.events.CollectionItemEvent
 import com.fpf.smartscan.events.CollectionItemEventType
-import com.fpf.smartscan.core.media.CollectionType
+import com.fpf.smartscan.core.collections.CollectionType
 import com.fpf.smartscan.core.media.MediaItem
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.shareMediaMulti
@@ -204,7 +204,7 @@ class CollectionItemsViewModel(
         viewModelScope.launch (Dispatchers.IO){
             try {
                 val selectedItems = getSelectedItems()
-                tagManager.removeItems(currentCollection.name, selectedItems)
+                tagManager.remove(currentCollection.id, selectedItems)
                 resetSelection()
                 val message = if(selectedItems.size == 1 ) "Removed ${selectedItems.size} item" else "Removed ${selectedItems.size} items"
                 _event.emit(CollectionItemEvent(CollectionItemEventType.REMOVE, success = true, message = message))
@@ -235,8 +235,8 @@ class CollectionItemsViewModel(
                 val selectedItems = getSelectedItems()
                 if (selectedItems.isEmpty()) return@launch
                 when(newCollection.type) {
-                    CollectionType.CLUSTER -> clusterManager.moveItems(selectedItems, newCollection.id, currentCollection.id)
-                    CollectionType.TAG -> tagManager.moveItems(selectedItems, currentCollection.name, newCollection.name)
+                    CollectionType.CLUSTER -> clusterManager.move(selectedItems, newCollectionId=newCollection.id, currentCollectionId=currentCollection.id)
+                    CollectionType.TAG -> tagManager.move(selectedItems, newCollectionId = newCollection.id, currentCollectionId = currentCollection.id)
                 }
                 resetSelection()
                 val message = if(selectedItems.size == 1 ) "Moved ${selectedItems.size} item" else "Moved ${selectedItems.size} items"
@@ -279,7 +279,7 @@ class CollectionItemsViewModel(
                 val selectedItems = getSelectedItems()
                 if (selectedItems.isEmpty()) return@launch
                 when(currentCollection.type){
-                    CollectionType.TAG -> tagManager.createNewTagAndMoveItems(selectedItems, currentCollection.name, newCollectionName)
+                    CollectionType.TAG -> tagManager.createNewTagAndMoveItems(selectedItems, currentCollection.id, newCollectionName)
                     CollectionType.CLUSTER -> clusterManager.createNewClusterAndMoveItems(selectedItems, newCollectionName, currentCollection.id)
                 }
                 resetSelection()
