@@ -48,6 +48,7 @@ import com.fpf.smartscan.R
 import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaType
 import com.fpf.smartscan.core.media.format
+import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.media.ImageDisplay
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 
@@ -55,11 +56,12 @@ import com.fpf.smartscan.ui.components.pickers.OptionPicker
 fun ImageSearcher(
     uri: Uri?,
     mediaType: MediaType,
+    loading: Boolean,
     mediaTypeSelectorEnabled: Boolean = true,
     onMediaTypeChange: (type: MediaType) -> Unit,
     onSearch: () -> Unit,
     onRemoveImage: () -> Unit,
-    imageSize: Dp = 150.dp
+    imageSize: Dp = 150.dp,
 ){
     if(uri == null) return
 
@@ -150,12 +152,21 @@ fun ImageSearcher(
                     )
                 }
             }
-            Icon(
-                imageVector = Icons.Filled.ImageSearch,
-                modifier = Modifier.size(112.dp),
-                contentDescription = "ImageSearch",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha= 0.1f)
-            )
+            if (loading){
+                LoadingIndicator(
+                    size = 48.dp,
+                    isVisible = true,
+                    strokeWidth = 4.dp,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }else{
+                Icon(
+                    imageVector = Icons.Filled.ImageSearch,
+                    modifier = Modifier.size(112.dp),
+                    contentDescription = "ImageSearch",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha= 0.1f)
+                )
+            }
         }
     }
 

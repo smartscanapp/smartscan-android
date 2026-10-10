@@ -1,8 +1,6 @@
 package com.fpf.smartscan.ui.components.search
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -61,27 +59,23 @@ fun SearchBar(
     enabled: Boolean,
     placeholders: List<String>,
     onSearch: () -> Unit,
-    onSearchImage: (Uri) -> Unit,
     onClearResults : () -> Unit,
     modifier: Modifier = Modifier,
     placeholderChangeDuration: Long = 2000L,
+    onPasteImage: ((Uri) -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     onFocusedChange: ((focused: Boolean) -> Unit)? = null
 ) {
     var currentPlaceHolder by remember { mutableStateOf(placeholders[0]) }
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: Uri? ->
-            uri?.let { onSearchImage(it) }
-        }
-    )
+
     val receiveContentListener = remember {
         ReceiveContentListener { transferableContent ->
             when {
                 transferableContent.hasMediaType(MediaType.Image) -> {
                     transferableContent.consume { item ->
                         val uri = item.uri
-                        if (uri != null) onSearchImage(uri)
+                        if (uri != null) onPasteImage?.invoke(uri)
                         uri != null
                     }
                 }
@@ -120,7 +114,6 @@ fun SearchBar(
         }
     }
 
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -158,19 +151,8 @@ fun SearchBar(
                         .padding(horizontal = 8.dp)
                         .heightIn(min = 56.dp)
                 ) {
-                    IconButton(
-                        onClick = { imagePickerLauncher.launch("image/*") },
-                        enabled = enabled,
-                        modifier = Modifier
-                            .align(Alignment.Top)
-                            .padding(top = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.AddPhotoAlternate,
-                            contentDescription = "Upload image",
-                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (enabled) 1f else 0.3f)
-                        )
-                    }
+
+                    leadingIcon?.invoke()
 
                     Box(
                         contentAlignment = Alignment.CenterStart,
@@ -193,7 +175,6 @@ fun SearchBar(
 
                     if (searchFieldState.text.isNotBlank()) {
                         IconButton(
-                            enabled = enabled,
                             onClick = {
                                 searchFieldState.clearText()
                                 onClearResults()
@@ -216,11 +197,7 @@ fun SearchBar(
                             )
                         }
                     }
-                    Box(modifier = Modifier
-                        .align(Alignment.Top)
-                        .padding(top = 4.dp)){
-                        trailingIcon?.invoke()
-                    }
+                    trailingIcon?.invoke()
                 }
             }
         )

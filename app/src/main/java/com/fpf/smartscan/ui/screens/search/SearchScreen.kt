@@ -1,6 +1,7 @@
 package com.fpf.smartscan.ui.screens.search
 
 import android.app.Activity
+import android.net.Uri
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -18,6 +19,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -115,6 +117,7 @@ fun SearchScreen(
         stringResource(R.string.placeholders_search_by_tag_query),
     )
     val searchResultsVisible = searchResults.itemCount > 0
+    val searchEnabled =  hasStoragePermission && !state.loading
     var mediaItems by remember {mutableStateOf<List<MediaItem>?>(null)}
 
     // Dynamic hide animation
@@ -140,6 +143,13 @@ fun SearchScreen(
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) }
+        }
+    )
 
     val trashLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -353,13 +363,10 @@ fun SearchScreen(
                             uri = state.queryImage,
                             mediaType = state.mediaType,
                             imageSize = 140.dp,
-                            onSearch = {
-                                searchViewModel.onAction(SearchAction.Search)
-                            },
+                            loading = state.loading,
+                            onSearch = { searchViewModel.onAction(SearchAction.Search) },
                             onMediaTypeChange = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it)) },
-                            onRemoveImage = {
-                                searchViewModel.onAction(SearchAction.RemoveUploadedImage)
-                            }
+                            onRemoveImage = { searchViewModel.onAction(SearchAction.RemoveUploadedImage) }
                         )
                     }
                 }
@@ -389,12 +396,36 @@ fun SearchScreen(
                             SearchBar(
                                 modifier = Modifier.weight(1f),
                                 searchFieldState = searchViewModel.searchFieldState,
-                                enabled = hasStoragePermission && !state.loading ,
+                                enabled = searchEnabled ,
                                 placeholders = searchBarPlaceholders,
                                 onSearch = { searchViewModel.onAction(SearchAction.Search) },
-                                onSearchImage = { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) },
+                                onPasteImage = { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) },
                                 onClearResults = { searchViewModel.onAction(SearchAction.Reset) },
                                 onFocusedChange = {showRecentSearches = it},
+                                leadingIcon = {
+                                    IconButton(
+                                        onClick = { imagePickerLauncher.launch("image/*") },
+                                        enabled = searchEnabled,
+                                        modifier = Modifier
+                                            .align(Alignment.Top)
+                                            .padding(top = 4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.AddPhotoAlternate,
+                                            contentDescription = "Upload image",
+                                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (searchEnabled) 1f else 0.3f)
+                                        )
+                                    }
+                                },
+                                trailingIcon = if (state.loading){
+                                    {
+                                        LoadingIndicator(
+                                            isVisible = true,
+                                            strokeWidth = 2.dp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }else null
                             )
                         }
                     }
@@ -419,13 +450,7 @@ fun SearchScreen(
                 )
             }
 
-                LoadingIndicator(isVisible = state.loading, size = 48.dp, strokeWidth = 4.dp, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp))
-
-            state.error?.let {
-                Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
-            }
+            state.error?.let { Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp)) }
 
          Grid(
              items =searchResults,
@@ -603,5 +628,3 @@ fun SearchScreen(
         onClose = { showDuplicateOptions = false }
     )
 }
-
-
