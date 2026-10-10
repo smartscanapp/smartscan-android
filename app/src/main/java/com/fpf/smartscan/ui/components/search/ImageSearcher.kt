@@ -77,7 +77,7 @@ fun ImageSearcher(
             color = MaterialTheme.colorScheme.surfaceContainer,
             shape = MaterialTheme.shapes.medium
         ).padding(12.dp),
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Box(
@@ -120,7 +120,6 @@ fun ImageSearcher(
         }
         Column(
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.End,
             modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             OutlinedButton (
@@ -153,7 +152,7 @@ fun ImageSearcher(
             }
             Icon(
                 imageVector = Icons.Filled.ImageSearch,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.size(112.dp),
                 contentDescription = "ImageSearch",
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha= 0.1f)
             )
