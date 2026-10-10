@@ -320,7 +320,7 @@ fun SearchScreen(
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
             if(!hasStoragePermission && !state.loading){
                 Text(
@@ -330,7 +330,9 @@ fun SearchScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            if (state.queryImage != null) {
+         SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
+
+         if (state.queryImage != null) {
                 SlideRevealBox(
                     reverse = true,
                     offsetPx = offset,
@@ -426,7 +428,6 @@ fun SearchScreen(
                 Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp))
             }
 
-            SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
          Grid(
              items =searchResults,
              numGridColumns = appSettings.resultsPerRow,
