@@ -123,7 +123,7 @@ fun SearchScreen(
     val density = LocalDensity.current
     val actionBarHeight = 70
     val actionBarHeightPx = with(density) {actionBarHeight.dp.toPx() }
-    val searchBarHeightPx = with(density) { (if(state.queryImage != null) 200 else 120).dp.toPx() }
+    val searchBarHeightPx = with(density) { (if(state.queryImage != null) 240 else 120).dp.toPx() }
     val maxCollapsePx = max(actionBarHeightPx, searchBarHeightPx).toInt()
 
     var showMenu by remember { mutableStateOf(false) }
@@ -338,7 +338,6 @@ fun SearchScreen(
                     offsetPx = offset,
                     modifier = Modifier
                         .zIndex(1f)
-                        .heightIn(max = 180.dp)
                         .padding(bottom = 8.dp)
                 ) {
                     Column {
