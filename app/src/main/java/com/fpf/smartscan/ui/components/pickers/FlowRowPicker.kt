@@ -43,6 +43,10 @@ fun <T> FlowRowPicker(
             options.forEach { (optionLabel, value) ->
                 val selected = selectedOption == value
                 val shape = MaterialTheme.shapes.extraLarge
+                val textColor = if (selected) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                val borderColor =  if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outline
 
                 Row(
                     modifier = Modifier
@@ -50,8 +54,7 @@ fun <T> FlowRowPicker(
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         .border(
                             width = 1.dp,
-                            color = if (selected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outline,
+                            color = borderColor,
                             shape = shape
                         )
                         .clickable { onClick(value) }
@@ -60,8 +63,7 @@ fun <T> FlowRowPicker(
                 ) {
                     Text(
                         text = optionLabel,
-                        color = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface.copy(0.7f),
+                        color = textColor,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
