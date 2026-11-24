@@ -432,11 +432,6 @@ fun SearchScreen(
                     ){
 
 
-                    HorizontalDivider(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
                         FlowRowPicker(
                             label = stringResource(R.string.duplicate_label),
                             selectedOption = state.filter.isDuplicate,
@@ -460,6 +455,11 @@ fun SearchScreen(
                         )
                     }
 
+             HorizontalDivider(
+                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                 thickness = 1.dp,
+                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+             )
                 RecentSearchesList(
                     isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
                     recentSearches = state.recentSearches.toList(),

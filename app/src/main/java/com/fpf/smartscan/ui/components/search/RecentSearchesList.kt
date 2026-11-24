@@ -49,21 +49,15 @@ fun RecentSearchesList(
             .heightIn(max = screenHeight / 2)
             .verticalScroll(rememberScrollState())
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end=16.dp, top=8.dp)
+            modifier = Modifier.fillMaxWidth()
         ){
             label?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                Text(text = it, style = MaterialTheme.typography.titleMedium)
             }
 
             TextButton(
@@ -78,7 +72,7 @@ fun RecentSearchesList(
 
 
         BoxWithConstraints(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         ) {
             val itemMaxWidth = maxWidth
 
@@ -94,13 +88,14 @@ fun RecentSearchesList(
                             .clip(MaterialTheme.shapes.extraLarge)
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             .clickable { onSelect(query) }
-                            .padding(start = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 8.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
                             text = query,
                             color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.bodyLarge,
+//                            style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(
@@ -112,13 +107,14 @@ fun RecentSearchesList(
                         IconButton(
                             onClick = {
                                 onRemoveRecentSearch(query)
-                            }
+                            },
+                            modifier = Modifier.size(16.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Remove recent search",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
+//                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
