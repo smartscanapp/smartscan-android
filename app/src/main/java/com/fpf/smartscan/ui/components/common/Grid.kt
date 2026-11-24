@@ -43,6 +43,7 @@ import kotlin.math.roundToInt
 fun <T : Any> Grid(
     items: LazyPagingItems<T>,
     isVisible: Boolean,
+    modifier: Modifier = Modifier,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
     key: ((T) -> Any)? = null,
@@ -53,6 +54,7 @@ fun <T : Any> Grid(
 ) {
     GridContainer(
         isVisible = isVisible,
+        modifier=modifier,
         numGridColumns = numGridColumns,
         maxCollapsePx = maxCollapsePx,
         onOffsetChange = onOffsetChange,
@@ -71,6 +73,7 @@ fun <T : Any> Grid(
 fun <T : Any> Grid(
     items: List<T>,
     isVisible: Boolean,
+    modifier: Modifier = Modifier,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
     key: ((T) -> Any)? = null,
@@ -81,6 +84,7 @@ fun <T : Any> Grid(
 ) {
     GridContainer(
         isVisible = isVisible,
+        modifier=modifier,
         numGridColumns = numGridColumns,
         maxCollapsePx = maxCollapsePx,
         onOffsetChange = onOffsetChange,
@@ -99,6 +103,7 @@ fun <T : Any> Grid(
 @Composable
 private fun GridContainer(
     isVisible: Boolean,
+    modifier: Modifier = Modifier,
     numGridColumns: Int = 2,
     maxCollapsePx: Int = 0,
     gridItems: (LazyGridScope) -> Unit,
@@ -159,7 +164,7 @@ private fun GridContainer(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(numGridColumns),
