@@ -14,7 +14,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -38,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -59,8 +57,6 @@ import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
-import com.fpf.smartscan.ui.components.pickers.DatePickerModal
-import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.search.AutoCompleter
 import com.fpf.smartscan.ui.components.search.ImageSearcher
 import com.fpf.smartscan.ui.components.search.SearchBar
@@ -73,17 +69,16 @@ import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.Header
 import com.fpf.smartscan.ui.components.media.MediaItemCard
-import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
-import com.fpf.smartscan.ui.components.pickers.DateRangePicker
 import com.fpf.smartscan.ui.components.pickers.FlowRowPicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.toEpochSeconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.koin.compose.viewmodel.koinViewModel
+import java.util.Calendar
+import java.util.TimeZone
 import kotlin.collections.map
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
@@ -142,12 +137,6 @@ fun SearchScreen(
     var showMoreActions by remember { mutableStateOf(false) }
     var showRecentSearches by remember { mutableStateOf(false) }
 
-    // Filters
-    var showDateRangePicker by remember { mutableStateOf(false) }
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
@@ -167,12 +156,35 @@ fun SearchScreen(
         }
     }
 
+    val dateOptions = remember {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        listOf(
+            "Past week" to (calendar.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, -7)
+            }.timeInMillis / 1000,
+            "Past month" to (calendar.clone() as Calendar).apply {
+                add(Calendar.MONTH, -1)
+            }.timeInMillis / 1000,
+            "Past year" to (calendar.clone() as Calendar).apply {
+                add(Calendar.YEAR, -1)
+            }.timeInMillis / 1000
+        )
+    }
+
+    val duplicateOptions = remember {
+        listOf(true, false)
+    }.map {
+        when (it) {
+            true -> stringResource(R.string.only_button)
+            false -> stringResource(R.string.hide_action)
+        } to it
+    }
+
+    val mediaTypeOptions = remember {
+        MediaType.entries.map { it.format() to it }
+    }
+
     val menuActions: List<MenuActionConfig> = listOf(
-        MenuActionConfig.Button(
-            label = stringResource(R.string.search_date_range_label),
-            onClick = { showDateRangePicker = true },
-            enabled = !state.loading,
-        ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
@@ -439,7 +451,7 @@ fun SearchScreen(
                         FlowRowPicker(
                             label = stringResource(R.string.media_type_title),
                             selectedOption = state.filter.mediaType,
-                            options = MediaType.entries.map { it.format() to it },
+                            options = mediaTypeOptions,
                             onClick = {
                                 searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
                             }
@@ -448,18 +460,22 @@ fun SearchScreen(
                         FlowRowPicker(
                             label = stringResource(R.string.duplicate_label),
                             selectedOption = state.filter.isDuplicate,
-                            options = listOf(true, false, null).map {
-                                when (it) {
-                                    true -> stringResource(R.string.only_button)
-                                    false -> stringResource(R.string.exclude_button)
-                                    else -> stringResource(R.string.include_button)
-                                } to it
-                            },
+                            options =duplicateOptions,
                             onClick = {
-                                searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
+                                val value = if(state.filter.isDuplicate == it) null else it
+                                searchViewModel.onAction(SearchAction.SetDuplicateFilter(value))
                             },
                         )
-
+                        Spacer(modifier = Modifier.height(4.dp))
+                        FlowRowPicker(
+                            label = "Date",
+                            selectedOption = state.filter.startDate,
+                            options = dateOptions,
+                            onClick = {
+                                val value = if(state.filter.startDate == it) null else it
+                                searchViewModel.onAction(SearchAction.SetStartDateFilter(value))
+                            },
+                        )
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                             thickness = 1.dp,
@@ -588,43 +604,6 @@ fun SearchScreen(
                 }
             }
         }
-    }
-    DatePickerModal(
-        show = showStartDatePicker,
-        onDismiss = { showStartDatePicker = false },
-        onDateSelected = { y, m, d ->
-            val startDate = toEpochSeconds(y, m, d)
-            searchViewModel.onAction(SearchAction.SetStartDateFilter(startDate))
-            showStartDatePicker = false
-        },
-        initialDateMillis = state.filter.startDate?.times(1000)
-
-    )
-
-    DatePickerModal(
-        show = showEndDatePicker,
-        onDismiss = { showEndDatePicker = false },
-        onDateSelected = { y, m, d ->
-            val endDate = toEpochSeconds(y, m, d)
-            searchViewModel.onAction(SearchAction.SetEndDateFilter(endDate))
-            showEndDatePicker = false
-        },
-        initialDateMillis = state.filter.endDate?.times(1000)
-    )
-
-    BottomSheet(
-        show = showDateRangePicker,
-        onDismiss = { showDateRangePicker = false }
-    ) {
-        DateRangePicker(
-            startDate = state.filter.startDate,
-            endDate = state.filter.endDate,
-            label = stringResource(R.string.search_date_range_label),
-            onSelectStartDate = {showStartDatePicker = true},
-            onSelectEndDate = {showEndDatePicker = true},
-            onRemoveStartDate = {searchViewModel.onAction(SearchAction.ClearStartDateFilter)},
-            onRemoveEndDate = {searchViewModel.onAction(SearchAction.ClearEndDateFilter)},
-        )
     }
 
     TagAdder(
