@@ -37,6 +37,7 @@ fun RecentSearchesList(
     onSelect: (String) -> Unit,
     onRemoveRecentSearch: (String) -> Unit,
     onClearAll: () -> Unit,
+    modifier: Modifier = Modifier,
     label: String? = null
 ) {
     if (!isVisible) return
@@ -44,7 +45,7 @@ fun RecentSearchesList(
     val screenHeight = LocalWindowInfo.current.containerSize.height.dp
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(max = screenHeight / 2)
             .verticalScroll(rememberScrollState())
@@ -95,7 +96,6 @@ fun RecentSearchesList(
                         Text(
                             text = query,
                             color = MaterialTheme.colorScheme.onSurface,
-//                            style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(
@@ -114,7 +114,6 @@ fun RecentSearchesList(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Remove recent search",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }

@@ -428,19 +428,24 @@ fun SearchScreen(
                     label = "Filters",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                    ){
-
-
+                        .verticalScroll(rememberScrollState()),
+                    headerModifier  = Modifier
+                    ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         FlowRowPicker(
                             label = stringResource(R.string.duplicate_label),
                             selectedOption = state.filter.isDuplicate,
-                            options = listOf(true, false, null).map{ when(it){
-                                true -> stringResource(R.string.only_button)
-                                false -> stringResource(R.string.exclude_button)
-                                else -> stringResource(R.string.include_button)
-                            } to it },
-                            onClick =  {
+                            options = listOf(true, false, null).map {
+                                when (it) {
+                                    true -> stringResource(R.string.only_button)
+                                    false -> stringResource(R.string.exclude_button)
+                                    else -> stringResource(R.string.include_button)
+                                } to it
+                            },
+                            onClick = {
                                 searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
                             },
                         )
@@ -448,12 +453,13 @@ fun SearchScreen(
                         FlowRowPicker(
                             label = stringResource(R.string.media_type_title),
                             selectedOption = state.filter.mediaType,
-                            options = MediaType.entries.map{it.format() to it},
+                            options = MediaType.entries.map { it.format() to it },
                             onClick = {
                                 searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
                             }
                         )
                     }
+                }
 
              HorizontalDivider(
                  modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -461,6 +467,7 @@ fun SearchScreen(
                  color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
              )
                 RecentSearchesList(
+                    modifier = Modifier.padding(8.dp),
                     isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
                     recentSearches = state.recentSearches.toList(),
                     onSelect = {

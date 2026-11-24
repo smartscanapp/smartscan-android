@@ -29,15 +29,18 @@ import androidx.compose.ui.unit.dp
 fun Collapsable(
     label: String,
     modifier: Modifier = Modifier,
+    headerModifier: Modifier = Modifier,
     children: @Composable () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(modifier = modifier) {
         Row(
-            modifier = Modifier
+            modifier = headerModifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium)
-                .clickable { expanded = !expanded },
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 8.dp)
+            ,
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -55,9 +58,7 @@ fun Collapsable(
             enter = expandVertically(spring(dampingRatio = 0.85f, stiffness = 300f)) + fadeIn(),
             exit = shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 300f)) + fadeOut()
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                children()
-            }
+            children()
         }
     }
 }
