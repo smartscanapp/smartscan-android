@@ -14,16 +14,20 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -41,7 +46,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.collections.MediaCollection
@@ -64,6 +68,7 @@ import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
 import com.fpf.smartscan.ui.action.MenuActionConfig
+import com.fpf.smartscan.ui.components.common.Collapsable
 import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.Header
@@ -71,6 +76,7 @@ import com.fpf.smartscan.ui.components.media.MediaItemCard
 import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
 import com.fpf.smartscan.ui.components.pickers.DateRangePicker
+import com.fpf.smartscan.ui.components.pickers.FlowRowPicker
 import com.fpf.smartscan.ui.shared.MediaViewModel
 import com.fpf.smartscan.utils.toEpochSeconds
 import kotlinx.coroutines.FlowPreview
@@ -137,8 +143,6 @@ fun SearchScreen(
     var showRecentSearches by remember { mutableStateOf(false) }
 
     // Filters
-    var showMediaTypeOptions by remember { mutableStateOf(false) }
-    var showDuplicateOptions by remember { mutableStateOf(false) }
     var showDateRangePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
@@ -164,16 +168,6 @@ fun SearchScreen(
     }
 
     val menuActions: List<MenuActionConfig> = listOf(
-        MenuActionConfig.Button(
-            label = stringResource(R.string.media_type_title),
-            onClick = { showMediaTypeOptions = true },
-            enabled = !state.loading,
-        ),
-        MenuActionConfig.Button(
-            label = stringResource(R.string.duplicate_label),
-            onClick = { showDuplicateOptions = true },
-            enabled = !state.loading,
-        ),
         MenuActionConfig.Button(
             label = stringResource(R.string.search_date_range_label),
             onClick = { showDateRangePicker = true },
@@ -430,6 +424,42 @@ fun SearchScreen(
                         }
                     }
                 }
+                Collapsable(
+                    label = "Filters",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                    ){
+
+
+                    HorizontalDivider(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                        FlowRowPicker(
+                            label = stringResource(R.string.duplicate_label),
+                            selectedOption = state.filter.isDuplicate,
+                            options = listOf(true, false, null).map{ when(it){
+                                true -> stringResource(R.string.only_button)
+                                false -> stringResource(R.string.exclude_button)
+                                else -> stringResource(R.string.include_button)
+                            } to it },
+                            onClick =  {
+                                searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
+                            },
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        FlowRowPicker(
+                            label = stringResource(R.string.media_type_title),
+                            selectedOption = state.filter.mediaType,
+                            options = MediaType.entries.map{it.format() to it},
+                            onClick = {
+                                searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
+                            }
+                        )
+                    }
+
                 RecentSearchesList(
                     isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
                     recentSearches = state.recentSearches.toList(),
@@ -598,33 +628,5 @@ fun SearchScreen(
             isAddingTag = false
         },
         onCheckAutoCompletion = searchViewModel::handleAutoCompletionCheck
-    )
-
-    OptionPicker(
-        isVisible = showMediaTypeOptions,
-        title = stringResource(R.string.media_type_title),
-        options = MediaType.entries.map{it.format() to it},
-        selectedOption = state.filter.mediaType,
-        onSelect = {
-            searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
-            showMediaTypeOptions = false
-        },
-        onClose = { showMediaTypeOptions = false }
-    )
-
-    OptionPicker(
-        isVisible = showDuplicateOptions,
-        title = stringResource(R.string.duplicate_label),
-        options = listOf(true, false, null).map{ when(it){
-            true -> stringResource(R.string.only_button)
-            false -> stringResource(R.string.exclude_button)
-            else -> stringResource(R.string.include_button)
-        } to it},
-        selectedOption = state.filter.isDuplicate,
-        onSelect = {
-            searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
-            showDuplicateOptions = false
-        },
-        onClose = { showDuplicateOptions = false }
     )
 }
