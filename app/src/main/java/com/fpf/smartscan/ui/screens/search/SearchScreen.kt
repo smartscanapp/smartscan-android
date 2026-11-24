@@ -438,6 +438,7 @@ fun SearchScreen(
                 }
                 Collapsable(
                     initialValue = true,
+                    collapse = state.totalResults > 0 || state.loading,
                     label = "Filters",
                     modifier = Modifier
                         .fillMaxWidth()
