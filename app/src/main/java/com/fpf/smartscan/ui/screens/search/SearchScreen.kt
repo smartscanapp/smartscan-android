@@ -425,6 +425,7 @@ fun SearchScreen(
                     }
                 }
                 Collapsable(
+                    initialValue = true,
                     label = "Filters",
                     modifier = Modifier
                         .fillMaxWidth()

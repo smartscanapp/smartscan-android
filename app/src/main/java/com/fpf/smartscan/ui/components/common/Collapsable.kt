@@ -30,9 +30,11 @@ fun Collapsable(
     label: String,
     modifier: Modifier = Modifier,
     headerModifier: Modifier = Modifier,
+    initialValue: Boolean = false,
     children: @Composable () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(initialValue) }
+
     Column(modifier = modifier) {
         Row(
             modifier = headerModifier
