@@ -436,6 +436,15 @@ fun SearchScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FlowRowPicker(
+                            label = stringResource(R.string.media_type_title),
+                            selectedOption = state.filter.mediaType,
+                            options = MediaType.entries.map { it.format() to it },
+                            onClick = {
+                                searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        FlowRowPicker(
                             label = stringResource(R.string.duplicate_label),
                             selectedOption = state.filter.isDuplicate,
                             options = listOf(true, false, null).map {
@@ -449,26 +458,18 @@ fun SearchScreen(
                                 searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
                             },
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        FlowRowPicker(
-                            label = stringResource(R.string.media_type_title),
-                            selectedOption = state.filter.mediaType,
-                            options = MediaType.entries.map { it.format() to it },
-                            onClick = {
-                                searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
-                            }
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
                 }
 
-             HorizontalDivider(
-                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                 thickness = 1.dp,
-                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-             )
                 RecentSearchesList(
                     modifier = Modifier.padding(8.dp),
-                    isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
+                    isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank(),
                     recentSearches = state.recentSearches.toList(),
                     onSelect = {
                         searchViewModel.searchFieldState.edit { replace(0, searchViewModel.searchFieldState.text.length, it) }
