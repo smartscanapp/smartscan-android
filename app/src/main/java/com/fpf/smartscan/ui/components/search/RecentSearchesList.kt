@@ -85,6 +85,7 @@ fun RecentSearchesList(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
+                            style = MaterialTheme.typography.bodySmall,
                             text = query,
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
@@ -99,7 +100,7 @@ fun RecentSearchesList(
                             onClick = {
                                 onRemoveRecentSearch(query)
                             },
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
