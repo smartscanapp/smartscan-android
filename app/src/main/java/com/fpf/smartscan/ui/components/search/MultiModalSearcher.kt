@@ -27,13 +27,11 @@ fun MultiModalSearcher(
     onSearch: () -> Unit,
     onUploadImage: () -> Unit,
     onRemoveUploadedImage: () -> Unit,
-    onMediaTypeChange: (MediaType) -> Unit,
     onClearResults: () -> Unit,
     onFocusedChange: ((focused: Boolean) -> Unit)? = null
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -41,10 +39,9 @@ fun MultiModalSearcher(
             ImageSearcher(
                 uri = queryImage,
                 mediaType = mediaType,
-                imageSize = 140.dp,
+                imageSize = 110.dp,
                 loading = loading,
                 onSearch = onSearch,
-                onMediaTypeChange = onMediaTypeChange,
                 onRemoveImage = onRemoveUploadedImage
             )
         } else {

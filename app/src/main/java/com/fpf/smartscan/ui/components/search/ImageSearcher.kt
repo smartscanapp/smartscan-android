@@ -1,5 +1,5 @@
-package com.fpf.smartscan.ui.components.search
 
+package com.fpf.smartscan.ui.components.search
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,22 +9,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ImageSearch
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,147 +31,114 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.fpf.smartscan.R
-import com.fpf.smartscan.constants.mediaTypeOptions
 import com.fpf.smartscan.core.media.MediaType
-import com.fpf.smartscan.core.media.format
-import com.fpf.smartscan.ui.components.common.LoadingIndicator
+import com.fpf.smartscan.ui.components.common.ScannerLoadingIndicator
 import com.fpf.smartscan.ui.components.media.ImageDisplay
-import com.fpf.smartscan.ui.components.pickers.OptionPicker
 
 @Composable
 fun ImageSearcher(
     uri: Uri?,
     mediaType: MediaType,
     loading: Boolean,
-    mediaTypeSelectorEnabled: Boolean = true,
-    onMediaTypeChange: (type: MediaType) -> Unit,
     onSearch: () -> Unit,
     onRemoveImage: () -> Unit,
-    imageSize: Dp = 150.dp,
-){
-    if(uri == null) return
+    imageSize: Dp = 132.dp,
+) {
+    if (uri == null) return
 
     var currentMediaType by remember { mutableStateOf(mediaType) }
-    var showPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(mediaType) {
-        if(currentMediaType == mediaType) return@LaunchedEffect
-        onSearch()
-        currentMediaType = mediaType
+        if (currentMediaType != mediaType) {
+            currentMediaType = mediaType
+            onSearch()
+        }
     }
 
-    Row (
-        modifier = Modifier.fillMaxWidth().background(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = MaterialTheme.shapes.medium
-        ).padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    val shape = MaterialTheme.shapes.large
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .padding(12.dp)
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .heightIn(max = 160.dp)
-                .size(imageSize)
-                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f))
-                .dropShadow(
-                    shape = RoundedCornerShape(4.dp),
-                    shadow = Shadow(
-                        radius = 4.dp,
-                        spread = 2.dp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(0.15f),
-                        offset = DpOffset(x = 2.dp, 2.dp)
-                    )
-                )
+                .fillMaxWidth()
+                .padding(top = 4.dp, end = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ImageDisplay(
-                size = 720,
-                uri = uri,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-            IconButton(
-                onClick = { onRemoveImage() },
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-6).dp, y = 6.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
-                    .size(16.dp)
-                    .padding(2.dp)
+                    .size(imageSize)
+                    .dropShadow(
+                        shape = RoundedCornerShape(12.dp),
+                        shadow = Shadow(
+                            radius = 5.dp,
+                            spread = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+                            offset = DpOffset(0.dp, 2.dp)
+                        )
+                    )
+                    .clip(RoundedCornerShape(12.dp))
+
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "Remove Image",
-                    tint = MaterialTheme.colorScheme.inversePrimary
+                ImageDisplay(
+                    size = 720,
+                    uri = uri,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
             }
-        }
-        Column(
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        ) {
-            OutlinedButton (
-                enabled = mediaTypeSelectorEnabled,
-                onClick = { showPicker = true },
-                modifier = Modifier.widthIn(max = 140.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = mediaTypeOptions[mediaType]!!,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.onSurface
-
-                    )
                     Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Dropdown",
-                        tint =MaterialTheme.colorScheme.onSurface
+                        imageVector = Icons.Filled.ImageSearch,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if(loading)  "Searching..." else "Image search",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-            }
-            if (loading){
-                LoadingIndicator(
-                    size = 48.dp,
-                    isVisible = true,
-                    strokeWidth = 4.dp,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }else{
-                Icon(
-                    imageVector = Icons.Filled.ImageSearch,
-                    modifier = Modifier.size(112.dp),
-                    contentDescription = "ImageSearch",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha= 0.1f)
+
+                ScannerLoadingIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    loading = loading
                 )
             }
         }
-    }
 
-    OptionPicker(
-        isVisible = showPicker,
-        title = stringResource(R.string.media_type_title),
-        options = MediaType.entries.map{it.format() to it},
-        selectedOption = mediaType,
-        onSelect = { selected ->
-            onMediaTypeChange(selected)
-            showPicker = false
-        },
-        onClose = { showPicker = false }
-    )
+        IconButton(
+            onClick = onRemoveImage,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Remove image",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+    }
 }
+
