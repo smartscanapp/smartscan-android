@@ -19,7 +19,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -41,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.fpf.smartscan.R
 import com.fpf.smartscan.events.SearchEventType
 import com.fpf.smartscan.core.collections.MediaCollection
@@ -51,15 +49,10 @@ import com.fpf.smartscan.core.media.format
 import com.fpf.smartscan.navigation.TopBarState
 import com.fpf.smartscan.core.search.SearchQuery
 import com.fpf.smartscan.settings.AppSettings
-import com.fpf.smartscan.ui.components.common.LoadingIndicator
 import com.fpf.smartscan.ui.components.media.MediaViewer
 import com.fpf.smartscan.ui.components.common.SelectionHeaderRow
 import com.fpf.smartscan.ui.components.common.SlideRevealBox
-import com.fpf.smartscan.ui.components.pickers.DatePickerModal
-import com.fpf.smartscan.ui.components.modals.BottomSheet
 import com.fpf.smartscan.ui.components.search.AutoCompleter
-import com.fpf.smartscan.ui.components.search.ImageSearcher
-import com.fpf.smartscan.ui.components.search.SearchBar
 import com.fpf.smartscan.ui.components.tags.TagAdder
 import com.fpf.smartscan.ui.components.common.ActionBar
 import com.fpf.smartscan.ui.action.ActionConfig
@@ -68,16 +61,17 @@ import com.fpf.smartscan.ui.components.common.DropDownMenuWrapper
 import com.fpf.smartscan.ui.components.common.Grid
 import com.fpf.smartscan.ui.components.common.Header
 import com.fpf.smartscan.ui.components.media.MediaItemCard
-import com.fpf.smartscan.ui.components.pickers.OptionPicker
 import com.fpf.smartscan.ui.components.search.RecentSearchesList
-import com.fpf.smartscan.ui.components.pickers.DateRangePicker
+import com.fpf.smartscan.ui.components.search.FilterControls
+import com.fpf.smartscan.ui.components.search.MultiModalSearcher
 import com.fpf.smartscan.ui.shared.MediaViewModel
-import com.fpf.smartscan.utils.toEpochSeconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.koin.compose.viewmodel.koinViewModel
+import java.util.Calendar
+import java.util.TimeZone
 import kotlin.collections.map
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
@@ -136,14 +130,6 @@ fun SearchScreen(
     var showMoreActions by remember { mutableStateOf(false) }
     var showRecentSearches by remember { mutableStateOf(false) }
 
-    // Filters
-    var showMediaTypeOptions by remember { mutableStateOf(false) }
-    var showDuplicateOptions by remember { mutableStateOf(false) }
-    var showDateRangePicker by remember { mutableStateOf(false) }
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
@@ -163,22 +149,35 @@ fun SearchScreen(
         }
     }
 
+    val dateOptions = remember {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        listOf(
+            "Past week" to (calendar.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, -7)
+            }.timeInMillis / 1000,
+            "Past month" to (calendar.clone() as Calendar).apply {
+                add(Calendar.MONTH, -1)
+            }.timeInMillis / 1000,
+            "Past year" to (calendar.clone() as Calendar).apply {
+                add(Calendar.YEAR, -1)
+            }.timeInMillis / 1000
+        )
+    }
+
+    val duplicateOptions = remember {
+        listOf(true, false)
+    }.map {
+        when (it) {
+            true -> stringResource(R.string.only_button)
+            false -> stringResource(R.string.hide_action)
+        } to it
+    }
+
+    val mediaTypeOptions = remember {
+        MediaType.entries.map { it.format() to it }
+    }
+
     val menuActions: List<MenuActionConfig> = listOf(
-        MenuActionConfig.Button(
-            label = stringResource(R.string.media_type_title),
-            onClick = { showMediaTypeOptions = true },
-            enabled = !state.loading,
-        ),
-        MenuActionConfig.Button(
-            label = stringResource(R.string.duplicate_label),
-            onClick = { showDuplicateOptions = true },
-            enabled = !state.loading,
-        ),
-        MenuActionConfig.Button(
-            label = stringResource(R.string.search_date_range_label),
-            onClick = { showDateRangePicker = true },
-            enabled = !state.loading,
-        ),
         MenuActionConfig.Button(
             label = stringResource(R.string.title_recycle_bin),
             onClick = { onNavigateToRecyclingBin() },
@@ -332,134 +331,37 @@ fun SearchScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            if(!hasStoragePermission && !state.loading){
-                Text(
-                    text = stringResource(R.string.search_storage_permissions),
-                    color = Color.Red,
-                    modifier = Modifier.padding(vertical=8.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-         SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
+         if (!hasStoragePermission && !state.loading) {
+             Text(
+                 text = stringResource(R.string.search_storage_permissions),
+                 color = Color.Red,
+                 modifier = Modifier.padding(vertical = 8.dp),
+                 style = MaterialTheme.typography.bodyMedium
+             )
+         }
 
-         if (state.queryImage != null) {
-                SlideRevealBox(
-                    reverse = true,
-                    offsetPx = offset,
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .padding(bottom = 8.dp)
-                ) {
-                    Column {
-                        if (state.selection.isSelecting) {
-                            SelectionHeaderRow (
-                                selectedCount = state.selection.selectedCount,
-                                checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalResults),
-                                onSelectAllChange = {searchViewModel.onAction(SearchAction.SetSelectAll(it))}
-                            )
-                        }
-
-                        ImageSearcher(
-                            uri = state.queryImage,
-                            mediaType = state.mediaType,
-                            imageSize = 140.dp,
-                            loading = state.loading,
-                            onSearch = { searchViewModel.onAction(SearchAction.Search) },
-                            onMediaTypeChange = { searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it)) },
-                            onRemoveImage = { searchViewModel.onAction(SearchAction.RemoveUploadedImage) }
-                        )
-                    }
-                }
-            } else {
-                SlideRevealBox(
-                    reverse = true,
-                    offsetPx = offset,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .heightIn(max = 120.dp)
-
-                ) {
-                    Column {
-                        if (state.selection.isSelecting) {
-                            SelectionHeaderRow (
-                                selectedCount = state.selection.selectedCount,
-                                checked = state.selection.selectAll && state.selection.excludedItems.isEmpty(),
-                                onSelectAllChange = {searchViewModel.onAction(SearchAction.SetSelectAll(it))}
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            SearchBar(
-                                modifier = Modifier.weight(1f),
-                                searchFieldState = searchViewModel.searchFieldState,
-                                enabled = searchEnabled ,
-                                placeholders = searchBarPlaceholders,
-                                onSearch = { searchViewModel.onAction(SearchAction.Search) },
-                                onPasteImage = { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) },
-                                onClearResults = { searchViewModel.onAction(SearchAction.Reset) },
-                                onFocusedChange = {showRecentSearches = it},
-                                leadingIcon = {
-                                    IconButton(
-                                        onClick = { imagePickerLauncher.launch("image/*") },
-                                        enabled = searchEnabled,
-                                        modifier = Modifier
-                                            .align(Alignment.Top)
-                                            .padding(top = 4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.AddPhotoAlternate,
-                                            contentDescription = "Upload image",
-                                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (searchEnabled) 1f else 0.3f)
-                                        )
-                                    }
-                                },
-                                trailingIcon = if (state.loading){
-                                    {
-                                        LoadingIndicator(
-                                            isVisible = true,
-                                            strokeWidth = 2.dp,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }else null
-                            )
-                        }
-                    }
-                }
-                RecentSearchesList(
-                    isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && showRecentSearches,
-                    recentSearches = state.recentSearches.toList(),
-                    onSelect = {
-                        searchViewModel.searchFieldState.edit { replace(0, searchViewModel.searchFieldState.text.length, it) }
-                        searchViewModel.onAction(SearchAction.Search)
-                    },
-                    onRemoveRecentSearch = {searchViewModel.onAction(SearchAction.RemoveRecentSearch(it))},
-                    onClearAll = {searchViewModel.onAction(SearchAction.ClearRecentSearches)},
-                    label = stringResource(R.string.search_recent_searches_label)
-                )
-                AutoCompleter(
-                    isVisible = tagAutoCompleteTagResults.isNotEmpty() && !isAddingTag,
-                    autoCompleteResults = tagAutoCompleteTagResults,
-                    query = searchViewModel.searchFieldState.text.toString(),
-                    onSelect = searchViewModel::onSelectAutoCompleteResult,
-                    label = stringResource(R.string.search_tags_label)
-                )
-            }
-
-            state.error?.let { Text(text = it, color = Color.Red, modifier = Modifier.padding(vertical=8.dp)) }
+         SlideRevealBox(
+             isVisible = state.selection.isSelecting,
+             offsetPx = offset,
+             modifier = Modifier.zIndex(1f).fillMaxWidth()
+         ) {
+             SelectionHeaderRow(
+                 selectedCount = state.selection.selectedCount,
+                 checked = (state.selection.selectAll && state.selection.excludedItems.isEmpty()) || (state.selection.selectedItems.size == state.totalResults),
+                 onSelectAllChange = { searchViewModel.onAction(SearchAction.SetSelectAll(it)) }
+             )
+         }
 
          Grid(
-             items =searchResults,
+             items = searchResults,
              numGridColumns = appSettings.resultsPerRow,
-             key =  { it.id },
-             isVisible = searchResultsVisible,
+             key = { it.id },
+             isVisible = true,
              onOffsetChange = { offset = it },
              maxCollapsePx = maxCollapsePx,
-             headerRow = { Header("${state.totalResults} Results") },
+             headerRow = if (state.totalResults > 0) {
+                 { Header("${state.totalResults} Results") }
+             } else null,
              itemContent = { item ->
                  MediaItemCard(
                      item = item,
@@ -477,11 +379,81 @@ fun SearchScreen(
                      },
                      isSelecting = state.selection.isSelecting,
                      isChecked = { item in state.selection.selectedItems || (state.selection.selectAll && item !in state.selection.excludedItems) },
-                     onError = mediaViewModel::onErrorAsyncImage
+                     onError = mediaViewModel::onErrorAsyncImage,
                  )
              }
-         )
-        }
+         ) {
+             Column(
+                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                 modifier = Modifier.fillMaxSize(),
+             ) {
+                 SearchPlaceholderDisplay(isVisible = !searchResultsVisible)
+
+                 MultiModalSearcher(
+                     searchEnabled = searchEnabled,
+                     searchBarFieldState = searchViewModel.searchFieldState,
+                     queryImage = state.queryImage,
+                     mediaType = state.mediaType,
+                     loading = state.loading,
+                     onPasteImage = { searchViewModel.onAction(SearchAction.SetQueryImageAndSearch(it)) },
+                     onClearResults = { searchViewModel.onAction(SearchAction.Reset) },
+                     onFocusedChange = { showRecentSearches = it },
+                     searchBarPlaceholders = searchBarPlaceholders,
+                     onSearch = { searchViewModel.onAction(SearchAction.Search) },
+                     onUploadImage = { imagePickerLauncher.launch("image/*") },
+                     onRemoveUploadedImage = { searchViewModel.onAction(SearchAction.RemoveUploadedImage) }
+                 )
+                 FilterControls(
+                     duplicateFilter = state.filter.isDuplicate,
+                     mediaTypeFilter = state.filter.mediaType,
+                     dateFilter = state.filter.startDate,
+                     mediaTypeOptions = mediaTypeOptions,
+                     duplicateOptions = duplicateOptions,
+                     dateOptions = dateOptions,
+                     collapse = state.totalResults > 0 || state.loading,
+                     onDuplicateChange = {
+                         val value = if (state.filter.isDuplicate == it) null else it
+                         searchViewModel.onAction(SearchAction.SetDuplicateFilter(value))
+                     },
+                     onDateChange = {
+                         val value = if (state.filter.startDate == it) null else it
+                         searchViewModel.onAction(SearchAction.SetStartDateFilter(value))
+                     },
+                     onMediaTypeChange = {
+                         searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
+                     }
+
+                 )
+
+                 RecentSearchesList(
+                     modifier = Modifier.padding(horizontal = 8.dp),
+                     isVisible = state.recentSearches.isNotEmpty() && searchViewModel.searchFieldState.text.isBlank() && state.queryImage == null,
+                     recentSearches = state.recentSearches.toList(),
+                     onSelect = {
+                         searchViewModel.searchFieldState.edit { replace(0, searchViewModel.searchFieldState.text.length, it) }
+                         searchViewModel.onAction(SearchAction.Search)
+                     },
+                     onRemoveRecentSearch = { searchViewModel.onAction(SearchAction.RemoveRecentSearch(it)) },
+                     onClearAll = { searchViewModel.onAction(SearchAction.ClearRecentSearches) },
+                     label = stringResource(R.string.search_recent_searches_label)
+                 )
+                 AutoCompleter(
+                     isVisible = tagAutoCompleteTagResults.isNotEmpty() && !isAddingTag,
+                     autoCompleteResults = tagAutoCompleteTagResults,
+                     query = searchViewModel.searchFieldState.text.toString(),
+                     onSelect = searchViewModel::onSelectAutoCompleteResult,
+                     label = stringResource(R.string.search_tags_label)
+                 )
+                 state.error?.let {
+                     Text(
+                         text = it,
+                         color = Color.Red,
+                         modifier = Modifier.padding(vertical = 8.dp)
+                     )
+                 }
+             }
+         }
+     }
 
         if(state.resultToView != null && mediaItems != null){
            val result = state.resultToView!!
@@ -550,43 +522,6 @@ fun SearchScreen(
             }
         }
     }
-    DatePickerModal(
-        show = showStartDatePicker,
-        onDismiss = { showStartDatePicker = false },
-        onDateSelected = { y, m, d ->
-            val startDate = toEpochSeconds(y, m, d)
-            searchViewModel.onAction(SearchAction.SetStartDateFilter(startDate))
-            showStartDatePicker = false
-        },
-        initialDateMillis = state.filter.startDate?.times(1000)
-
-    )
-
-    DatePickerModal(
-        show = showEndDatePicker,
-        onDismiss = { showEndDatePicker = false },
-        onDateSelected = { y, m, d ->
-            val endDate = toEpochSeconds(y, m, d)
-            searchViewModel.onAction(SearchAction.SetEndDateFilter(endDate))
-            showEndDatePicker = false
-        },
-        initialDateMillis = state.filter.endDate?.times(1000)
-    )
-
-    BottomSheet(
-        show = showDateRangePicker,
-        onDismiss = { showDateRangePicker = false }
-    ) {
-        DateRangePicker(
-            startDate = state.filter.startDate,
-            endDate = state.filter.endDate,
-            label = stringResource(R.string.search_date_range_label),
-            onSelectStartDate = {showStartDatePicker = true},
-            onSelectEndDate = {showEndDatePicker = true},
-            onRemoveStartDate = {searchViewModel.onAction(SearchAction.ClearStartDateFilter)},
-            onRemoveEndDate = {searchViewModel.onAction(SearchAction.ClearEndDateFilter)},
-        )
-    }
 
     TagAdder(
         isVisible = isAddingTag,
@@ -598,33 +533,5 @@ fun SearchScreen(
             isAddingTag = false
         },
         onCheckAutoCompletion = searchViewModel::handleAutoCompletionCheck
-    )
-
-    OptionPicker(
-        isVisible = showMediaTypeOptions,
-        title = stringResource(R.string.media_type_title),
-        options = MediaType.entries.map{it.format() to it},
-        selectedOption = state.filter.mediaType,
-        onSelect = {
-            searchViewModel.onAction(SearchAction.SetMediaTypeFilter(it))
-            showMediaTypeOptions = false
-        },
-        onClose = { showMediaTypeOptions = false }
-    )
-
-    OptionPicker(
-        isVisible = showDuplicateOptions,
-        title = stringResource(R.string.duplicate_label),
-        options = listOf(true, false, null).map{ when(it){
-            true -> stringResource(R.string.only_button)
-            false -> stringResource(R.string.exclude_button)
-            else -> stringResource(R.string.include_button)
-        } to it},
-        selectedOption = state.filter.isDuplicate,
-        onSelect = {
-            searchViewModel.onAction(SearchAction.SetDuplicateFilter(it))
-            showDuplicateOptions = false
-        },
-        onClose = { showDuplicateOptions = false }
     )
 }
