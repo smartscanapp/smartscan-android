@@ -48,6 +48,7 @@ fun <T : Any> Grid(
     maxCollapsePx: Int = 0,
     key: ((T) -> Any)? = null,
     onOffsetChange: ((Int) -> Unit)? = null,
+    placeholder:  (@Composable () -> Unit)? = null,
     itemContent: @Composable (T) -> Unit,
     headerRow: (@Composable () -> Unit)? = null,
     children: (@Composable () -> Unit)? = null,
@@ -58,6 +59,7 @@ fun <T : Any> Grid(
         numGridColumns = numGridColumns,
         maxCollapsePx = maxCollapsePx,
         onOffsetChange = onOffsetChange,
+        placeholder=placeholder,
         headerRow = headerRow,
         children = children,
         gridItems = { gridScope ->
@@ -78,6 +80,7 @@ fun <T : Any> Grid(
     maxCollapsePx: Int = 0,
     key: ((T) -> Any)? = null,
     onOffsetChange: ((Int) -> Unit)? = null,
+    placeholder:  (@Composable () -> Unit)? = null,
     itemContent: @Composable (T) -> Unit,
     headerRow: (@Composable () -> Unit)? = null,
     children: (@Composable () -> Unit)? = null,
@@ -88,6 +91,7 @@ fun <T : Any> Grid(
         numGridColumns = numGridColumns,
         maxCollapsePx = maxCollapsePx,
         onOffsetChange = onOffsetChange,
+        placeholder=placeholder,
         headerRow = headerRow,
         children = children,
         gridItems = { gridScope ->
@@ -108,10 +112,10 @@ private fun GridContainer(
     maxCollapsePx: Int = 0,
     gridItems: (LazyGridScope) -> Unit,
     onOffsetChange:( (Int) -> Unit)? = null,
+    placeholder:  (@Composable () -> Unit)? = null,
     headerRow: (@Composable () -> Unit)? = null,
     children: (@Composable () -> Unit)? = null,
 ) {
-    if (!isVisible) return
 
     val scope = rememberCoroutineScope()
     val gridState = rememberLazyGridState()
@@ -165,52 +169,56 @@ private fun GridContainer(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        if (isVisible) {
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(numGridColumns),
-            state = gridState,
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(connection),
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            item(span = { GridItemSpan(numGridColumns) }) {
-                children?.invoke()
-            }
-            item(span = { GridItemSpan(numGridColumns) }) {
-                headerRow?.invoke()
-            }
-            gridItems(this)
-        }
-
-        AnimatedVisibility(
-            visible = showScrollToTop,
-            enter = fadeIn(animationSpec = tween(300)),
-            exit = fadeOut(animationSpec = tween(300)),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            FloatingActionButton(
-                onClick = {
-                    scope.launch {
-                        showScrollToTop = false
-                        onOffsetChange?.invoke(0)
-                        gridState.scrollToItem(0)
-                    }
-                },
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 0.dp,
-                    pressedElevation = 0.dp,
-                    focusedElevation = 0.dp,
-                    hoveredElevation = 0.dp
-                )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(numGridColumns),
+                state = gridState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(connection),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Icon(
-                    Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Scroll to Top"
-                )
+                item(span = { GridItemSpan(numGridColumns) }) {
+                    children?.invoke()
+                }
+                item(span = { GridItemSpan(numGridColumns) }) {
+                    headerRow?.invoke()
+                }
+                gridItems(this)
             }
+
+            AnimatedVisibility(
+                visible = showScrollToTop,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            showScrollToTop = false
+                            onOffsetChange?.invoke(0)
+                            gridState.scrollToItem(0)
+                        }
+                    },
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        focusedElevation = 0.dp,
+                        hoveredElevation = 0.dp
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Scroll to Top"
+                    )
+                }
+            }
+        }else{
+            placeholder?.invoke()
         }
     }
 }
