@@ -1,5 +1,7 @@
 package com.fpf.smartscan.ui.components.media
 
+import android.content.ClipData
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -14,12 +16,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.fpf.smartscan.R
 import com.fpf.smartscan.core.collections.CollectionType
+import kotlinx.coroutines.launch
 
 @Composable
 fun MediaDetailsCard(
@@ -30,6 +38,13 @@ fun MediaDetailsCard(
     onEditDescription: (() -> Unit)? = null,
 ) {
     val viewCollectionEnabled = onCollectionClick != null
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val textColor = if (description.isNullOrBlank()) {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Column(
         modifier = modifier
@@ -58,13 +73,19 @@ fun MediaDetailsCard(
         HorizontalDivider(modifier = Modifier.padding(bottom = 12.dp))
 
         Text(
-            text = description?.takeIf { it.isNotBlank() }
-                ?: stringResource(R.string.placeholders_media_detail_description),
+            text = description?.takeIf { it.isNotBlank() } ?: stringResource(R.string.placeholders_media_detail_description),
             style = MaterialTheme.typography.bodyLarge,
-            color = if (description.isNullOrBlank()) {
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+            color = textColor,
+            modifier = Modifier.pointerInput(description) {
+                detectTapGestures (
+                    onLongPress = {
+                        description?.takeIf { it.isNotBlank() }?.let {
+                            scope.launch {
+                                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Description", AnnotatedString(it))))
+                            }
+                        }
+                    }
+                )
             }
         )
 
